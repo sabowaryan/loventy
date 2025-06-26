@@ -1,0 +1,27 @@
+# robots.txt for Loventy
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /error/
+Disallow: /500
+Disallow: /404
+
+# Allow public pages
+Allow: /
+Allow: /templates
+Allow: /pricing
+Allow: /testimonials
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+# Allow public invitation views
+Allow: /invitation/
+
+# Sitemap location
+Sitemap: https://loventy.org/sitemap.xml

@@ -317,7 +317,7 @@ const Guests: React.FC = () => {
           </div>
           
           <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            {canExportGuests && (
+            {canExportGuests() && (
               <button
                 onClick={handleExport}
                 className="btn-secondary"
@@ -327,7 +327,7 @@ const Guests: React.FC = () => {
               </button>
             )}
             
-            {canImportGuests && isPremiumUser() && (
+            {canImportGuests() && isPremiumUser() && (
               <button
                 onClick={() => setShowImportModal(true)}
                 className="btn-secondary"
@@ -337,7 +337,7 @@ const Guests: React.FC = () => {
               </button>
             )}
             
-            {canManageGuests && canAddGuest ? (
+            {canManageGuests() && canAddGuest ? (
               <button
                 onClick={() => setShowAddModal(true)}
                 className="btn-accent"

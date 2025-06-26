@@ -52,7 +52,7 @@ const Invitations: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
   const { canCreateInvitations, canEditInvitations, canDeleteInvitations, canSendInvitations, isPremiumUser } = usePermissions();
   const { canCreateInvitation } = usePlanLimits();
   
@@ -247,7 +247,7 @@ const Invitations: React.FC = () => {
           : 'Commencez par créer votre première invitation de mariage.'
         }
       </p>
-      {(!searchTerm && statusFilter === 'all') && canCreateInvitations && (
+      {(!searchTerm && statusFilter === 'all') && canCreateInvitations() && (
         <Link
           to="/templates"
           className="btn-accent"
@@ -281,7 +281,7 @@ const Invitations: React.FC = () => {
                   <span className="ml-1">{getStatusText(invitation.status)}</span>
                 </span>
                 {invitation.is_premium_template && (
-                  <Crown className="h-4 w-4 text-secondary" title="Modèle Premium" />
+                  <Crown className="h-4 w-4 text-secondary" />
                 )}
               </div>
             </div>
@@ -307,7 +307,7 @@ const Invitations: React.FC = () => {
                   Aperçu
                 </Link>
                 
-                {canEditInvitations && (
+                {canEditInvitations() && (
                   <Link
                     to={`/editor/${invitation.id}`}
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
@@ -343,7 +343,7 @@ const Invitations: React.FC = () => {
                   </button>
                 )}
                 
-                {canSendInvitations && invitation.status === 'published' && (
+                {canSendInvitations() && invitation.status === 'published' && (
                   <button 
                     onClick={() => {
                       setShowActionMenu(null);
@@ -358,7 +358,7 @@ const Invitations: React.FC = () => {
                 
                 <hr className="my-1 border-gray-200" />
                 
-                {canDeleteInvitations && (
+                {canDeleteInvitations() && (
                   <button
                     onClick={() => handleDeleteInvitation(invitation.id)}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center"
@@ -463,7 +463,7 @@ const Invitations: React.FC = () => {
             >
               <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </Link>
-            {canEditInvitations && (
+            {canEditInvitations() && (
               <Link
                 to={`/editor/${invitation.id}`}
                 className="p-1.5 sm:p-2 text-gray-400 hover:text-secondary transition-colors rounded-lg hover:bg-white"
@@ -496,7 +496,7 @@ const Invitations: React.FC = () => {
                 </button>
               )}
               
-              {canSendInvitations && invitation.status === 'published' && (
+              {canSendInvitations() && invitation.status === 'published' && (
                 <button 
                   className="p-2 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-white" 
                   title="Envoyer"
@@ -506,7 +506,7 @@ const Invitations: React.FC = () => {
                 </button>
               )}
               
-              {canDeleteInvitations && (
+              {canDeleteInvitations() && (
                 <button
                   onClick={() => handleDeleteInvitation(invitation.id)}
                   className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-white"
@@ -570,7 +570,7 @@ const Invitations: React.FC = () => {
           </div>
           
           <div className="mt-4 lg:mt-0 flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
-            {canCreateInvitations && canCreateInvitation ? (
+            {canCreateInvitations() && canCreateInvitation ? (
               <Link
                 to="/templates"
                 className="btn-accent"

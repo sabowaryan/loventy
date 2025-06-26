@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
+import LoventyLogo from '../LoventyLogo';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -40,7 +41,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
               animationDuration: `${3 + Math.random() * 4}s`
             }}
           >
-            <Heart className="h-4 w-4 text-[#D4A5A5]/20 fill-current" />
+            <LoventyLogo className="h-4 w-4 text-[#D4A5A5]/20 fill-current" />
           </div>
         ))}
       </div>
@@ -69,7 +70,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
           <div className="flex justify-center mb-8">
             <Link to="/" className="group flex items-center space-x-3">
               <div className="relative">
-                <Heart className="h-12 w-12 text-[#D4A5A5] fill-current group-hover:scale-110 transition-transform duration-300" />
+                <LoventyLogo className="h-12 w-12 text-[#D4A5A5] fill-current group-hover:scale-110 transition-transform duration-300" />
                 <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-[#E16939] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <span className="text-4xl font-bold text-[#131837] font-serif group-hover:text-[#D4A5A5] transition-colors duration-300">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, Menu, X, User } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import LoventyLogo from '../LoventyLogo';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -210,7 +211,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2 group">
-              <Heart className="h-8 w-8 text-[#D4A5A5] fill-current group-hover:scale-110 transition-transform duration-300" />
+              <LoventyLogo className="h-8 w-8 text-[#D4A5A5] fill-current group-hover:scale-110 transition-transform duration-300" />
               <span className="text-2xl font-bold font-serif text-gray-800 group-hover:text-[#D4A5A5] transition-colors duration-300">Loventy</span>
             </Link>
 
@@ -297,7 +298,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <Heart className="h-8 w-8 text-[#D4A5A5] fill-current" />
+                <LoventyLogo className="h-8 w-8 text-[#D4A5A5] fill-current" />
                 <span className="text-2xl font-bold font-serif">Loventy</span>
               </div>
               <p className="text-gray-300 text-sm mb-4">

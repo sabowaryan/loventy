@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Heart, 
   Menu, 
   X, 
   Home, 
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
+import LoventyLogo from '../LoventyLogo';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -85,7 +85,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Sidebar Header - Fixed */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <Link to="/" className="flex items-center space-x-2">
-            <Heart className="h-8 w-8 text-secondary fill-current" />
+            <LoventyLogo className="h-8 w-8 text-secondary fill-current" />
             <span className="text-xl font-bold text-primary font-serif">Loventy</span>
           </Link>
           <button

@@ -1,12 +1,16 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Crown, Sparkles, Heart } from 'lucide-react';
+import { Plus, Users, Mail, CheckCircle, Clock, BarChart3, Download, Eye, Send, Edit, X, Crown, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
+import { usePlanLimits } from '../hooks/usePlanLimits';
+import { useEvents } from '../hooks/useEvents';
 
 const UserWelcome: React.FC = () => {
   const { user } = useAuth();
   const { isPremiumUser } = usePermissions();
+  const { canCreateEvent, canCreateInvitation } = usePlanLimits();
+  const { events, isLoading: eventsLoading } = useEvents({ limit: 1 });
 
   if (!user) return null;
 
@@ -30,6 +34,8 @@ const UserWelcome: React.FC = () => {
     const diffInHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
     return diffInHours < 24; // Nouveau si créé dans les dernières 24h
   };
+
+  const hasEvents = events && events.length > 0;
 
   return (
     <div className="bg-gradient-to-r from-[#D4A5A5] to-[#C5D2C2] rounded-2xl p-6 text-white mb-6">
@@ -55,8 +61,10 @@ const UserWelcome: React.FC = () => {
           
           <p className="text-lg opacity-90">
             {isNewUser() 
-              ? 'Bienvenue sur Loventy ! Créez votre première invitation de mariage.' 
-              : 'Prêt à créer de magnifiques invitations pour votre grand jour ?'
+              ? 'Bienvenue sur Loventy ! Commencez par créer un événement pour vos invitations.' 
+              : hasEvents 
+                ? 'Prêt à créer de magnifiques invitations pour votre grand jour ?' 
+                : 'Créez votre premier événement pour commencer à envoyer des invitations.'
             }
           </p>
         </div>
@@ -79,26 +87,41 @@ const UserWelcome: React.FC = () => {
       {isNewUser() && (
         <div className="mt-4 pt-4 border-t border-white/20">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link
-              to="/templates"
-              className="flex-1 bg-white/20 hover:bg-white/30 rounded-lg px-4 py-3 text-center font-medium transition-colors"
-            >
-              🎨 Choisir un modèle
-            </Link>
-            <Link
-              to="/dashboard/invitations"
-              className="flex-1 bg-white/20 hover:bg-white/30 rounded-lg px-4 py-3 text-center font-medium transition-colors"
-            >
-              📋 Voir mes invitations
-            </Link>
-            {!isPremiumUser() && (
+            {canCreateEvent ? (
+              <Link
+                to="/events"
+                className="flex-1 bg-white/20 hover:bg-white/30 rounded-lg px-4 py-3 text-center font-medium transition-colors"
+              >
+                <Calendar className="h-4 w-4 mr-2 inline-block" />
+                Créer un événement
+              </Link>
+            ) : (
               <Link
                 to="/pricing"
                 className="flex-1 bg-yellow-500/30 hover:bg-yellow-500/40 rounded-lg px-4 py-3 text-center font-medium transition-colors"
               >
-                ⭐ Découvrir Premium
+                <Crown className="h-4 w-4 mr-2 inline-block" />
+                Débloquer plus d'événements
               </Link>
             )}
+            
+            {hasEvents && canCreateInvitation && (
+              <Link
+                to="/templates"
+                className="flex-1 bg-white/20 hover:bg-white/30 rounded-lg px-4 py-3 text-center font-medium transition-colors"
+              >
+                <Mail className="h-4 w-4 mr-2 inline-block" />
+                Créer une invitation
+              </Link>
+            )}
+            
+            <Link
+              to="/dashboard/guests"
+              className="flex-1 bg-white/20 hover:bg-white/30 rounded-lg px-4 py-3 text-center font-medium transition-colors"
+            >
+              <Users className="h-4 w-4 mr-2 inline-block" />
+              Gérer les invités
+            </Link>
           </div>
         </div>
       )}

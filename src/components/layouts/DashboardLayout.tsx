@@ -10,7 +10,8 @@ import {
   LogOut,
   Bell,
   User,
-  Crown
+  Crown,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -30,6 +31,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   const navigation = [
     { name: 'Tableau de bord', href: '/dashboard', icon: Home },
+    { name: 'Événements', href: '/events', icon: Calendar },
     { name: 'Mes invitations', href: '/dashboard/invitations', icon: Mail },
     { name: 'Invités', href: '/dashboard/guests', icon: Users },
     { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },

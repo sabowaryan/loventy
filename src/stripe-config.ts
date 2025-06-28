@@ -12,6 +12,7 @@ export interface StripeProduct {
     templates: number;
     storage: number; // in MB
     emailsPerMonth: number;
+    events: number; // Nouvelle limite pour les événements
     customDomain: boolean;
     analytics: boolean;
     support: 'basic' | 'priority' | 'dedicated';
@@ -35,6 +36,7 @@ export const stripeProducts: StripeProduct[] = [
       '2 modèles gratuits',
       '3 invitations par mois',
       '50 invités maximum',
+      '1 événement par mois',
       'Envoi par email uniquement',
       'Suivi RSVP basique',
       'Logo Loventy visible'
@@ -45,6 +47,7 @@ export const stripeProducts: StripeProduct[] = [
       templates: 2,
       storage: 10,
       emailsPerMonth: 100,
+      events: 1, // 1 événement par mois pour le plan gratuit
       customDomain: false,
       analytics: false,
       support: 'basic'
@@ -66,6 +69,7 @@ export const stripeProducts: StripeProduct[] = [
       '10 modèles premium',
       '25 invitations par mois',
       '300 invités maximum',
+      '5 événements par mois',
       'Tous les canaux d\'envoi',
       'Suppression du watermark',
       'Support prioritaire',
@@ -78,6 +82,7 @@ export const stripeProducts: StripeProduct[] = [
       templates: 10,
       storage: 100,
       emailsPerMonth: 1000,
+      events: 5, // 5 événements par mois pour le plan Essentiel
       customDomain: false,
       analytics: true,
       support: 'priority'
@@ -99,6 +104,7 @@ export const stripeProducts: StripeProduct[] = [
       'Tous les modèles inclus',
       'Invitations illimitées',
       'Invités illimités',
+      'Événements illimités',
       'Page personnalisée',
       'Relances automatiques',
       'RSVP avancé avec formulaires',
@@ -113,6 +119,7 @@ export const stripeProducts: StripeProduct[] = [
       templates: -1,
       storage: 1000,
       emailsPerMonth: -1,
+      events: -1, // Événements illimités pour le plan Prestige
       customDomain: true,
       analytics: true,
       support: 'dedicated'

@@ -6,7 +6,9 @@ import { usePlanLimits } from '../hooks/usePlanLimits';
 import { useCreateInvitation } from '../hooks/useCreateInvitation';
 import { useAuth } from '../contexts/AuthContext';
 import { useTemplates } from '../hooks/useTemplates';
+import { useEvents } from '../hooks/useEvents';
 import PlanLimitWarning from '../components/PlanLimitWarning';
+import EventCreatorModal from '../components/events/EventCreatorModal';
 import type { TemplateDetails } from '../types/models';
 import SeoHead from '../components/SeoHead';
 
@@ -23,6 +25,8 @@ const Templates: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   // Utiliser le hook useTemplates pour charger les modèles depuis la base de données
   const { 
@@ -37,12 +41,21 @@ const Templates: React.FC = () => {
     initialSearchTerm: searchTerm
   });
 
-  // Récupérer le template sélectionné depuis l'URL si présent
+  // Utiliser le hook useEvents pour vérifier si l'utilisateur a des événements
+  const { events, isLoading: eventsLoading } = useEvents();
+
+  // Récupérer le template et l'événement sélectionnés depuis l'URL si présents
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const templateId = params.get('template');
+    const eventId = params.get('event');
+    
     if (templateId) {
       setSelectedTemplateId(templateId);
+    }
+    
+    if (eventId) {
+      setSelectedEventId(eventId);
     }
   }, [location]);
 
@@ -98,13 +111,37 @@ const Templates: React.FC = () => {
       return;
     }
 
-    // Créer l'invitation avec le modèle sélectionné
+    // Vérifier si l'utilisateur a déjà sélectionné un événement
+    if (selectedEventId) {
+      // Créer l'invitation avec l'événement sélectionné
+      try {
+        await createInvitation({
+          title: `Invitation ${template.name}`,
+          templateId: template.id,
+          eventId: selectedEventId
+        });
+        // La redirection vers l'éditeur est gérée dans le hook useCreateInvitation
+      } catch (err) {
+        console.error('Erreur lors de la création de l\'invitation:', err);
+      }
+    } else {
+      // Stocker le modèle sélectionné et ouvrir le modal de sélection d'événement
+      setSelectedTemplateId(template.id);
+      setShowEventModal(true);
+    }
+  };
+
+  // Fonction pour gérer la sélection d'un événement
+  const handleEventSelected = async (eventId: string) => {
+    if (!selectedTemplateId) return;
+    
+    setShowEventModal(false);
+    
     try {
       await createInvitation({
-        title: `Invitation ${template.name}`,
-        templateId: template.id,
-        brideName: '',
-        groomName: ''
+        title: `Invitation ${templates.find(t => t.id === selectedTemplateId)?.name || 'Personnalisée'}`,
+        templateId: selectedTemplateId,
+        eventId: eventId
       });
       // La redirection vers l'éditeur est gérée dans le hook useCreateInvitation
     } catch (err) {
@@ -114,7 +151,7 @@ const Templates: React.FC = () => {
 
   // Afficher un état de chargement pendant que les données sont récupérées
   // Amélioration: vérifier tous les états de chargement pertinents
-  const isLoading = (limitsLoading && isAuthenticated) || authLoading || templatesLoading;
+  const isLoading = (limitsLoading && isAuthenticated) || authLoading || templatesLoading || eventsLoading;
   
   if (isLoading) {
     return (
@@ -297,7 +334,14 @@ const Templates: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {templates.map((template) => (
-                <TemplateCard key={template.id} template={template} />
+                <TemplateCard 
+                  key={template.id} 
+                  template={template} 
+                  onTemplateSelect={handleTemplateSelect}
+                  isSelected={selectedTemplateId === template.id}
+                  isCreating={creatingInvitation && selectedTemplateId === template.id}
+                  error={creationError && selectedTemplateId === template.id ? creationError : null}
+                />
               ))}
             </div>
           )}
@@ -329,6 +373,15 @@ const Templates: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modal de sélection d'événement */}
+      {showEventModal && (
+        <EventCreatorModal
+          onClose={() => setShowEventModal(false)}
+          onEventSelected={handleEventSelected}
+          templateId={selectedTemplateId || undefined}
+        />
+      )}
     </>
   );
 };
@@ -336,30 +389,27 @@ const Templates: React.FC = () => {
 export default Templates;
 
 // Template Card Component
-const TemplateCard = ({ template }: { template: TemplateDetails }) => {
+const TemplateCard = ({ 
+  template, 
+  onTemplateSelect, 
+  isSelected, 
+  isCreating, 
+  error 
+}: { 
+  template: TemplateDetails; 
+  onTemplateSelect: (template: TemplateDetails) => void;
+  isSelected: boolean;
+  isCreating: boolean;
+  error: string | null;
+}) => {
   const { limits, canCreateInvitation, features } = usePlanLimits();
   const { isAuthenticated } = useAuth();
-  const { createInvitation, isLoading: creatingInvitation, error: creationError, clearError } = useCreateInvitation();
   const navigate = useNavigate();
-
+  
   // Vérifier si l'utilisateur peut utiliser ce modèle
   const canUseTemplate = isAuthenticated && 
                         canCreateInvitation && 
                         (!template.is_premium || features?.hasAnalytics === true);
-  
-  // Vérifier si c'est le modèle sélectionné depuis l'URL
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const location = useLocation();
-  
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const templateId = params.get('template');
-    if (templateId) {
-      setSelectedTemplateId(templateId);
-    }
-  }, [location]);
-  
-  const isSelected = selectedTemplateId === template.id;
   
   // Extraire les couleurs du modèle
   const colors = {
@@ -368,45 +418,6 @@ const TemplateCard = ({ template }: { template: TemplateDetails }) => {
     accent: template.color_palette?.accent || '#E16939'
   };
 
-  // Fonction pour gérer la sélection d'un modèle
-  const handleTemplateSelect = async () => {
-    // Effacer les erreurs précédentes
-    clearError();
-    
-    // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
-    if (!isAuthenticated) {
-      navigate(`/auth/login?redirect=/templates&template=${template.id}`);
-      return;
-    }
-
-    // Vérifier si l'utilisateur peut créer une invitation
-    if (!canCreateInvitation) {
-      return; // L'erreur sera affichée par PlanLimitWarning
-    }
-
-    // Vérifier si le template est premium et si l'utilisateur y a accès
-    if (template.is_premium && features?.hasAnalytics === false) {
-      // Proposer une mise à niveau
-      if (confirm('Ce modèle est réservé aux utilisateurs Premium. Souhaitez-vous découvrir nos offres Premium ?')) {
-        navigate('/pricing');
-      }
-      return;
-    }
-
-    // Créer l'invitation avec le modèle sélectionné
-    try {
-      await createInvitation({
-        title: `Invitation ${template.name}`,
-        templateId: template.id,
-        brideName: '',
-        groomName: ''
-      });
-      // La redirection vers l'éditeur est gérée dans le hook useCreateInvitation
-    } catch (err) {
-      console.error('Erreur lors de la création de l\'invitation:', err);
-    }
-  };
-  
   return (
     <div className={`group relative card hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:scale-[1.02] ${
       isSelected ? 'ring-4 ring-[#D4A5A5] scale-[1.02]' : ''
@@ -593,11 +604,11 @@ const TemplateCard = ({ template }: { template: TemplateDetails }) => {
           {isAuthenticated ? (
             canUseTemplate ? (
               <button
-                onClick={handleTemplateSelect}
-                disabled={creatingInvitation}
+                onClick={() => onTemplateSelect(template)}
+                disabled={isCreating}
                 className="px-6 py-2 bg-gradient-to-r from-[#D4A5A5] to-[#E16939] text-white text-sm font-medium rounded-full hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95"
               >
-                {creatingInvitation && selectedTemplateId === template.id ? 'Création...' : 'Utiliser ce modèle'}
+                {isCreating && isSelected ? 'Création...' : 'Utiliser ce modèle'}
               </button>
             ) : (
               <div className="flex items-center space-x-2 text-amber-600">
@@ -609,7 +620,7 @@ const TemplateCard = ({ template }: { template: TemplateDetails }) => {
             )
           ) : (
             <button
-              onClick={handleTemplateSelect}
+              onClick={() => onTemplateSelect(template)}
               className="px-6 py-2 bg-gradient-to-r from-[#D4A5A5] to-[#E16939] text-white text-sm font-medium rounded-full hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
             >
               Utiliser ce modèle
@@ -617,9 +628,9 @@ const TemplateCard = ({ template }: { template: TemplateDetails }) => {
           )}
         </div>
         
-        {creationError && selectedTemplateId === template.id && (
+        {error && isSelected && (
           <div className="mt-3 p-3 notification-error rounded-lg text-xs">
-            {creationError}
+            {error}
           </div>
         )}
       </div>

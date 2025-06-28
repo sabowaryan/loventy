@@ -5,7 +5,7 @@ import { usePlanLimits } from '../hooks/usePlanLimits';
 import { formatLimit } from '../stripe-config';
 
 interface PlanLimitWarningProps {
-  type: 'invitation' | 'guest' | 'email' | 'storage';
+  type: 'invitation' | 'guest' | 'email' | 'storage' | 'event';
   className?: string;
   showUpgrade?: boolean;
 }
@@ -46,6 +46,12 @@ const PlanLimitWarning: React.FC<PlanLimitWarningProps> = ({
         return {
           title: 'Limite de stockage atteinte',
           description: 'Vous avez atteint votre limite de stockage.',
+          icon: AlertTriangle
+        };
+      case 'event':
+        return {
+          title: 'Limite d\'événements atteinte',
+          description: 'Vous avez atteint votre limite mensuelle d\'événements.',
           icon: AlertTriangle
         };
       default:

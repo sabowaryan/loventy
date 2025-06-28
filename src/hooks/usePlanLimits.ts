@@ -8,6 +8,7 @@ interface UsageStats {
   guests: number;
   emailsSent: number;
   storageUsed: number; // in MB
+  events: number; // Nouveau champ pour les événements
 }
 
 interface PlanLimits extends StripeProduct['limits'] {
@@ -16,12 +17,14 @@ interface PlanLimits extends StripeProduct['limits'] {
   canCreate: {
     invitation: boolean;
     guest: boolean;
+    event: boolean; // Nouveau champ pour les événements
   };
   percentageUsed: {
     invitations: number;
     guests: number;
     emails: number;
     storage: number;
+    events: number; // Nouveau champ pour les événements
   };
 }
 
@@ -38,15 +41,16 @@ const defaultUsageStats: UsageStats = {
   invitations: 0,
   guests: 0,
   emailsSent: 0,
-  storageUsed: 0
+  storageUsed: 0,
+  events: 0 // Initialisation du compteur d'événements
 };
 
 const defaultPlanLimits: PlanLimits = {
   ...getDefaultLimits(),
   isActive: false,
   usage: defaultUsageStats,
-  canCreate: { invitation: false, guest: false },
-  percentageUsed: { invitations: 0, guests: 0, emails: 0, storage: 0 }
+  canCreate: { invitation: false, guest: false, event: false },
+  percentageUsed: { invitations: 0, guests: 0, emails: 0, storage: 0, events: 0 }
 };
 
 export const usePlanLimits = () => {
@@ -67,7 +71,8 @@ export const usePlanLimits = () => {
   // Fonction pour déterminer ce qui peut être créé
   const getCanCreate = useCallback((usage: UsageStats, planLimits: StripeProduct['limits']) => ({
     invitation: isUnlimited(planLimits.invitations) || usage.invitations < planLimits.invitations,
-    guest: isUnlimited(planLimits.guests) || usage.guests < planLimits.guests
+    guest: isUnlimited(planLimits.guests) || usage.guests < planLimits.guests,
+    event: isUnlimited(planLimits.events) || usage.events < planLimits.events // Vérification pour les événements
   }), []);
 
   // Fonction pour calculer les pourcentages d'utilisation
@@ -75,7 +80,8 @@ export const usePlanLimits = () => {
     invitations: calculatePercentage(usage.invitations, planLimits.invitations),
     guests: calculatePercentage(usage.guests, planLimits.guests),
     emails: calculatePercentage(usage.emailsSent, planLimits.emailsPerMonth),
-    storage: calculatePercentage(usage.storageUsed, planLimits.storage)
+    storage: calculatePercentage(usage.storageUsed, planLimits.storage),
+    events: calculatePercentage(usage.events, planLimits.events) // Calcul pour les événements
   }), [calculatePercentage]);
 
   // Fonction pour charger les statistiques d'utilisation
@@ -91,7 +97,7 @@ export const usePlanLimits = () => {
       startOfMonth.setHours(0, 0, 0, 0);
 
       // Exécuter les requêtes en parallèle pour de meilleures performances
-      const [invitationsResult, guestsResult, emailsResult, storageResult] = await Promise.allSettled([
+      const [invitationsResult, guestsResult, emailsResult, storageResult, eventsResult] = await Promise.allSettled([
         supabase
           .from('invitations')
           .select('id', { count: 'exact' })
@@ -112,7 +118,14 @@ export const usePlanLimits = () => {
         supabase
           .from('user_files')
           .select('file_size')
+          .eq('user_id', user.id),
+        
+        // Nouvelle requête pour compter les événements
+        supabase
+          .from('event')
+          .select('id', { count: 'exact' })
           .eq('user_id', user.id)
+          .gte('created_at', startOfMonth.toISOString())
       ]);
 
       // Gérer les erreurs potentielles
@@ -131,11 +144,16 @@ export const usePlanLimits = () => {
       if (storageResult.status === 'rejected') {
         console.error('Error loading storage usage:', storageResult.reason);
       }
+      
+      if (eventsResult.status === 'rejected') {
+        console.error('Error loading events count:', eventsResult.reason);
+      }
 
       // Extraire les résultats
       const invitationsCount = invitationsResult.status === 'fulfilled' ? invitationsResult.value.count || 0 : 0;
       const guestsCount = guestsResult.status === 'fulfilled' ? guestsResult.value.count || 0 : 0;
       const emailsCount = emailsResult.status === 'fulfilled' ? emailsResult.value.count || 0 : 0;
+      const eventsCount = eventsResult.status === 'fulfilled' ? eventsResult.value.count || 0 : 0;
       
       // Calculer l'utilisation du stockage en MB
       const storageUsed = storageResult.status === 'fulfilled' && storageResult.value.data
@@ -148,7 +166,8 @@ export const usePlanLimits = () => {
         invitations: invitationsCount,
         guests: guestsCount,
         emailsSent: emailsCount,
-        storageUsed: storageUsedMB
+        storageUsed: storageUsedMB,
+        events: eventsCount // Ajout du compteur d'événements
       };
     } catch (error) {
       console.error('Error loading usage stats:', error);
@@ -235,7 +254,7 @@ export const usePlanLimits = () => {
   }, [user, loadUsageStats, getPercentageUsed, getCanCreate]);
 
   // Fonction pour vérifier si une action est autorisée
-  const checkLimit = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage', amount: number = 1): boolean => {
+  const checkLimit = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage' | 'event', amount: number = 1): boolean => {
     if (!limits) return false;
 
     switch (action) {
@@ -247,13 +266,15 @@ export const usePlanLimits = () => {
         return isUnlimited(limits.emailsPerMonth) || (limits.usage.emailsSent + amount) <= limits.emailsPerMonth;
       case 'storage':
         return isUnlimited(limits.storage) || (limits.usage.storageUsed + amount) <= limits.storage;
+      case 'event':
+        return isUnlimited(limits.events) || (limits.usage.events + amount) <= limits.events;
       default:
         return false;
     }
   }, [limits]);
 
   // Fonction pour obtenir le message d'erreur de limite
-  const getLimitMessage = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage'): string => {
+  const getLimitMessage = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage' | 'event'): string => {
     if (!limits) return 'Limites non disponibles';
 
     switch (action) {
@@ -269,13 +290,16 @@ export const usePlanLimits = () => {
       case 'storage':
         if (isUnlimited(limits.storage)) return '';
         return `Limite atteinte: ${limits.usage.storageUsed}/${limits.storage} MB de stockage`;
+      case 'event':
+        if (isUnlimited(limits.events)) return '';
+        return `Limite atteinte: ${limits.usage.events}/${limits.events} événements ce mois`;
       default:
         return 'Limite inconnue';
     }
   }, [limits]);
 
   // Fonction pour obtenir les informations de quota pour l'UI
-  const getQuota = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage'): QuotaInfo | null => {
+  const getQuota = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage' | 'event'): QuotaInfo | null => {
     if (!limits) return null;
     
     const { usage } = limits;
@@ -309,6 +333,13 @@ export const usePlanLimits = () => {
           percent: limits.percentageUsed.storage,
           isUnlimited: isUnlimited(limits.storage),
           unit: 'MB'
+        };
+      case 'event':
+        return {
+          used: usage.events,
+          total: limits.events,
+          percent: limits.percentageUsed.events,
+          isUnlimited: isUnlimited(limits.events)
         };
       default:
         return null;
@@ -416,6 +447,19 @@ export const usePlanLimits = () => {
             console.log('User files changed, refreshing limits...');
             refreshLimits();
           }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'event',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            console.log('Events changed, refreshing limits...');
+            refreshLimits();
+          }
         );
 
       // Stocker la référence du canal
@@ -455,12 +499,14 @@ export const usePlanLimits = () => {
     invitation: getQuota('invitation'),
     guest: getQuota('guest'),
     email: getQuota('email'),
-    storage: getQuota('storage')
+    storage: getQuota('storage'),
+    event: getQuota('event')
   }), [getQuota]);
 
   const features = useMemo(() => ({
     canCreateInvitation: limits?.canCreate?.invitation ?? false,
     canAddGuest: limits?.canCreate?.guest ?? false,
+    canCreateEvent: limits?.canCreate?.event ?? false,
     hasAnalytics: limits?.analytics ?? false,
     hasCustomDomain: limits?.customDomain ?? false,
     supportLevel: limits?.support ?? 'basic'
@@ -480,6 +526,7 @@ export const usePlanLimits = () => {
     // Helpers pour les vérifications courantes
     canCreateInvitation: limits?.canCreate?.invitation ?? false,
     canAddGuest: limits?.canCreate?.guest ?? false,
+    canCreateEvent: limits?.canCreate?.event ?? false,
     hasAnalytics: limits?.analytics ?? false,
     hasCustomDomain: limits?.customDomain ?? false,
     supportLevel: limits?.support ?? 'basic'

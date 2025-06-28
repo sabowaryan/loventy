@@ -37,6 +37,7 @@ import Editor from './pages/Editor';
 import Invitations from './pages/dashboard/Invitations';
 import Guests from './pages/dashboard/Guests';
 import Settings from './pages/dashboard/Settings';
+import Events from './pages/Events';
 
 // Invitation Pages
 import InvitationView from './pages/invitation/InvitationView';
@@ -179,6 +180,15 @@ function App() {
               <Route path="/editor/:templateId?" element={
                 <ProtectedRoute requiredPermission="invitations.create">
                   <Editor />
+                </ProtectedRoute>
+              } />
+
+              {/* Events Route */}
+              <Route path="/events" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Events />
+                  </DashboardLayout>
                 </ProtectedRoute>
               } />
 

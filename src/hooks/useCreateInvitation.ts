@@ -7,6 +7,7 @@ import { usePlanLimits } from './usePlanLimits';
 interface CreateInvitationData {
   title: string;
   templateId: string;
+  eventId: string; // Nouveau paramètre obligatoire
   brideName?: string;
   groomName?: string;
   date?: string;
@@ -23,6 +24,11 @@ export const useCreateInvitation = () => {
   const createInvitation = async (data: CreateInvitationData) => {
     if (!user) {
       setError('Vous devez être connecté pour créer une invitation');
+      return null;
+    }
+
+    if (!data.eventId) {
+      setError('Un événement doit être sélectionné pour créer une invitation');
       return null;
     }
 
@@ -43,6 +49,7 @@ export const useCreateInvitation = () => {
           user_uuid: user.id,
           template_uuid: data.templateId,
           invitation_title: data.title,
+          event_uuid: data.eventId, // Utiliser l'ID de l'événement
           bride_name: data.brideName || null,
           groom_name: data.groomName || null,
           event_date: data.date || null,

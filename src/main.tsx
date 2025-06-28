@@ -7,7 +7,6 @@ import CookieConsentProvider from './components/CookieConsentManager.tsx';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
 import StripeProvider from './components/StripeProvider';
-import DevCycleAuthWrapper from './components/DevCycleAuthWrapper';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,9 +15,7 @@ createRoot(document.getElementById('root')!).render(
         <StripeProvider>
           <AuthProvider>
             <CookieConsentProvider>
-              <DevCycleAuthWrapper>
-                <App />
-              </DevCycleAuthWrapper>
+              <App />
             </CookieConsentProvider>
           </AuthProvider>
         </StripeProvider>

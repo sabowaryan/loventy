@@ -5,12 +5,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { usePlanLimits } from '../hooks/usePlanLimits';
 import { useEvents } from '../hooks/useEvents';
+import { useFeature } from '../hooks/useFeature';
 
 const UserWelcome: React.FC = () => {
   const { user } = useAuth();
   const { isPremiumUser } = usePermissions();
   const { canCreateEvent, canCreateInvitation } = usePlanLimits();
   const { events, isLoading: eventsLoading } = useEvents({ limit: 1 });
+  const { isEnabled } = useFeature();
 
   if (!user) return null;
 
@@ -130,3 +132,22 @@ const UserWelcome: React.FC = () => {
 };
 
 export default UserWelcome;
+
+// Placeholder for the Sparkles component that was used in the original code
+// but wasn't imported. Adding it here for the code to work.
+const Sparkles: React.FC<{ className?: string }> = ({ className }) => {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M12 3v18M9 6l3-3 3 3M9 18l3 3 3-3M3 12h18M6 9l-3 3 3 3M18 9l3 3-3 3" />
+    </svg>
+  );
+};

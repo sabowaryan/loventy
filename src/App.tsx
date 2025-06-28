@@ -181,6 +181,22 @@ function App() {
             </ProtectedRoute>
           } />
           
+          <Route path="/dashboard/events/:eventId" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Events />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/dashboard/events/edit/:eventId" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Events />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
+          
           <Route path="/editor/:templateId?" element={
             <ProtectedRoute requiredPermission="invitations.create">
               <Editor />

@@ -155,7 +155,7 @@ const Events: React.FC = () => {
   };
 
   const handleCopyLink = (event: Event) => {
-    const url = `${window.location.origin}/event/${event.id}`;
+    const url = `${window.location.origin}/dashboard/events/${event.id}`;
     navigator.clipboard.writeText(url);
     setCopySuccess(event.id);
     setShowActionMenu(null);
@@ -486,13 +486,13 @@ const Events: React.FC = () => {
                         {showActionMenu === event.id && (
                           <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                             <Link
-                              to={`/event/${event.id}`}
+                              to={`/dashboard/events/${event.id}`}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
                             >
                               <Eye className="h-4 w-4 mr-2" /> Aperçu
                             </Link>
                             <Link
-                              to={`/event/edit/${event.id}`}
+                              to={`/dashboard/events/edit/${event.id}`}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center"
                             >
                               <Edit className="h-4 w-4 mr-2" /> Modifier
@@ -574,7 +574,7 @@ const Events: React.FC = () => {
                     <div className="flex items-center space-x-1 sm:space-x-2">
                       {/* Actions pour tous les écrans */}
                       <Link
-                        to={`/event/${event.id}`}
+                        to={`/dashboard/events/${event.id}`}
                         className="p-1.5 sm:p-2 text-gray-400 hover:text-[#D4A5A5] transition-colors rounded-lg hover:bg-white"
                         title="Aperçu"
                         aria-label="Aperçu de l'événement"
@@ -583,7 +583,7 @@ const Events: React.FC = () => {
                       </Link>
                       
                       <Link
-                        to={`/event/edit/${event.id}`}
+                        to={`/dashboard/events/edit/${event.id}`}
                         className="p-1.5 sm:p-2 text-gray-400 hover:text-[#D4A5A5] transition-colors rounded-lg hover:bg-white"
                         title="Modifier"
                         aria-label="Modifier l'événement"

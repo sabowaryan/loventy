@@ -46,18 +46,21 @@ const Events: React.FC = () => {
   const { isPremiumUser } = usePermissions();
   const { canCreateEvent, quotas } = usePlanLimits();
   
-  const [sortBy, sortOrder] = useState<['event_date' | 'title' | 'type', 'asc' | 'desc']>(['event_date', 'asc']);
+  // State for sortBy and sortOrder
+  const [sortBy, setSortBy] = useState<'event_date' | 'title' | 'type'>('event_date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  // Mettre à jour le tri lorsque sortValue change
+  // Update sortBy and sortOrder when sortValue changes
   useEffect(() => {
     const [field, order] = sortValue.split('-') as ['date' | 'name' | 'type', 'asc' | 'desc'];
     if (field === 'date') {
-      setSortBy(['event_date', order]);
+      setSortBy('event_date');
     } else if (field === 'name') {
-      setSortBy(['title', order]);
+      setSortBy('title');
     } else {
-      setSortBy(['type', order]);
+      setSortBy('type');
     }
+    setSortOrder(order);
   }, [sortValue]);
 
   const { 
@@ -69,8 +72,8 @@ const Events: React.FC = () => {
     createEvent
   } = useEvents({
     searchTerm: searchTerm || undefined,
-    sortBy: sortBy[0],
-    sortOrder: sortBy[1]
+    sortBy: sortBy,
+    sortOrder: sortOrder
   });
 
   // Reset selection when filters change or events are reloaded

@@ -173,18 +173,17 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/editor/:templateId?" element={
-            <ProtectedRoute requiredPermission="invitations.create">
-              <Editor />
-            </ProtectedRoute>
-          } />
-
-          {/* Events Route */}
           <Route path="/dashboard/events" element={
             <ProtectedRoute>
               <DashboardLayout>
                 <Events />
               </DashboardLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/editor/:templateId?" element={
+            <ProtectedRoute requiredPermission="invitations.create">
+              <Editor />
             </ProtectedRoute>
           } />
 

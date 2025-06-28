@@ -12,6 +12,7 @@ const DevCycleContext = createContext<DevCycleContextType | undefined>(undefined
 
 // Custom hook to use the DevCycle context
 export const useDevCycle = () => {
+  }
   const context = useContext(DevCycleContext);
   
   if (context === undefined) {
@@ -87,3 +88,4 @@ export const DevCycleContextProvider: React.FC<DevCycleContextProviderProps> = (
 };
 
 export default DevCycleContextProvider;
+}

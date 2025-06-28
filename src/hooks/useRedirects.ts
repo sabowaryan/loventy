@@ -26,11 +26,11 @@ export const useRedirects = () => {
       setError(null);
 
       try {
-        // Create abort controller with longer timeout for better reliability
+        // Create abort controller with shorter timeout since redirects are not critical
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
           controller.abort();
-        }, 10000); // Increased to 10 seconds
+        }, 5000); // Reduced to 5 seconds for faster fallback
 
         const { data, error: dbError } = await supabase
           .from('redirects')
@@ -116,7 +116,14 @@ export const useRedirects = () => {
       return;
     }
 
-    checkRedirect();
+    // Add a small delay to avoid blocking initial page load
+    const timeoutId = setTimeout(() => {
+      checkRedirect();
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [location.pathname, navigate, isChecking]);
 
   return { isChecking, error };

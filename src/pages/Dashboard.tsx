@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, Mail, CheckCircle, Clock, BarChart3, Download, Eye, Send, Edit, X, Crown, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Users, Mail, CheckCircle, Clock, BarChart3, Download, Eye, Send, Edit, X, Crown, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
@@ -9,6 +9,9 @@ import { useInvitations } from '../hooks/useInvitations';
 import { useInvitationGuests } from '../hooks/useInvitationGuests';
 import UserWelcome from '../components/UserWelcome';
 import UsageDisplay from '../components/UsageDisplay';
+import FeatureToggle from '../components/FeatureToggle';
+import FeatureVariant from '../components/FeatureVariant';
+import { useFeature } from '../hooks/useFeature';
 
 const Dashboard: React.FC = () => {
   usePageTitle('Tableau de bord');
@@ -29,6 +32,7 @@ const Dashboard: React.FC = () => {
     isAdmin
   } = usePermissions();
   const { canCreateInvitation } = usePlanLimits();
+  const { isEnabled } = useFeature();
 
   // Utiliser les hooks pour récupérer les données réelles
   const { 
@@ -180,20 +184,35 @@ const Dashboard: React.FC = () => {
     <div className="card mb-6">
       <h3 className="text-lg font-semibold text-primary mb-4">Actions rapides</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {canCreateInvitations && canCreateInvitation && (
+        <FeatureToggle featureKey="enable_events" fallback={
+          canCreateInvitations && canCreateInvitation && (
+            <Link
+              to="/templates"
+              className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-secondary hover:bg-secondary/5 transition-colors group"
+            >
+              <div className="flex-shrink-0 p-2 bg-secondary/10 rounded-lg group-hover:bg-secondary/20 transition-colors">
+                <Plus className="h-5 w-5 text-secondary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-primary truncate">Nouvelle invitation</div>
+                <div className="text-sm text-gray-600 truncate">Créer une invitation</div>
+              </div>
+            </Link>
+          )
+        }>
           <Link
-            to="/templates"
+            to="/events"
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-secondary hover:bg-secondary/5 transition-colors group"
           >
             <div className="flex-shrink-0 p-2 bg-secondary/10 rounded-lg group-hover:bg-secondary/20 transition-colors">
-              <Plus className="h-5 w-5 text-secondary" />
+              <Calendar className="h-5 w-5 text-secondary" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-primary truncate">Nouvelle invitation</div>
-              <div className="text-sm text-gray-600 truncate">Créer une invitation</div>
+              <div className="font-medium text-primary truncate">Gérer les événements</div>
+              <div className="text-sm text-gray-600 truncate">Créer ou modifier</div>
             </div>
           </Link>
-        )}
+        </FeatureToggle>
         
         <Link
           to="/dashboard/invitations"
@@ -302,15 +321,25 @@ const Dashboard: React.FC = () => {
             <Mail className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h4 className="text-lg font-medium text-gray-900 mb-2">Aucune invitation</h4>
             <p className="text-gray-500 mb-4">Commencez par créer votre première invitation</p>
-            {canCreateInvitations && canCreateInvitation && (
+            <FeatureToggle featureKey="enable_events" fallback={
+              canCreateInvitations && canCreateInvitation && (
+                <Link
+                  to="/templates"
+                  className="btn-accent"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Créer une invitation
+                </Link>
+              )
+            }>
               <Link
-                to="/templates"
+                to="/events"
                 className="btn-accent"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Créer une invitation
+                <Calendar className="h-4 w-4 mr-2" />
+                Créer un événement
               </Link>
-            )}
+            </FeatureToggle>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -452,14 +481,30 @@ const Dashboard: React.FC = () => {
             <div className="card">
               <h3 className="text-lg font-semibold text-primary mb-4">💡 Conseils</h3>
               <div className="space-y-3 text-sm">
-                <div className="p-3 notification-info rounded-lg">
-                  <p className="font-medium text-blue-900 mb-1">Personnalisez vos invitations</p>
-                  <p className="text-blue-700">Ajoutez votre photo de couple pour un rendu plus personnel</p>
-                </div>
-                <div className="p-3 notification-success rounded-lg">
-                  <p className="font-medium text-green-900 mb-1">Suivez les réponses</p>
-                  <p className="text-green-700">Relancez gentiment les invités qui n'ont pas encore répondu</p>
-                </div>
+                <FeatureVariant variableKey="dashboard_tips" defaultValue={[
+                  {
+                    title: "Personnalisez vos invitations",
+                    text: "Ajoutez votre photo de couple pour un rendu plus personnel",
+                    type: "info"
+                  },
+                  {
+                    title: "Suivez les réponses",
+                    text: "Relancez gentiment les invités qui n'ont pas encore répondu",
+                    type: "success"
+                  }
+                ]}>
+                  {(tips) => (
+                    <>
+                      {tips.map((tip, index) => (
+                        <div key={index} className={`p-3 notification-${tip.type} rounded-lg`}>
+                          <p className={`font-medium text-${tip.type === 'info' ? 'blue' : tip.type === 'success' ? 'green' : 'yellow'}-900 mb-1`}>{tip.title}</p>
+                          <p className={`text-${tip.type === 'info' ? 'blue' : tip.type === 'success' ? 'green' : 'yellow'}-700`}>{tip.text}</p>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </FeatureVariant>
+                
                 {!isPremiumUser() && (
                   <div className="p-3 notification-warning rounded-lg">
                     <p className="font-medium text-yellow-900 mb-1">Passez Premium</p>

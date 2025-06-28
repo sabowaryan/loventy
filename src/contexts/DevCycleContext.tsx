@@ -12,7 +12,6 @@ const DevCycleContext = createContext<DevCycleContextType | undefined>(undefined
 
 // Hook personnalisé pour utiliser le contexte DevCycle
 export const useDevCycle = () => {
-  }
   const context = useContext(DevCycleContext);
   if (context === undefined) {
     throw new Error('useDevCycle must be used within a DevCycleContextProvider');
@@ -47,7 +46,6 @@ const DevCycleFeatures: React.FC<{ children: ReactNode }> = ({ children }) => {
 
 // Composant principal qui initialise DevCycle
 interface DevCycleContextProviderProps {
-  }
   children: ReactNode;
 }
 

@@ -14,12 +14,15 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [canCreate, setCanCreate] = useState(false);
   const [isCheckingLimit, setIsCheckingLimit] = useState(true);
-  const [newEvent, setNewEvent] = useState<Partial<Event>>({
-    title: '',
+  const [newEvent, setNewEvent] = useState({
+    title: 'Nouvel événement',
     description: '',
+    type: 'wedding',
     location: '',
     event_date: new Date().toISOString().split('T')[0],
-    is_private: true
+    rsvp_deadline: '',
+    is_private: true,
+    cover_color: '#D4A5A5'
   });
 
   const { events, isLoading, error, createEvent, canCreateEvent } = useEvents();
@@ -96,7 +99,7 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
           {isCheckingLimit ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-[#D4A5A5]" />

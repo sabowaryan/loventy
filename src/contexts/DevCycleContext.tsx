@@ -21,6 +21,12 @@ export const useDevCycle = () => {
   return context;
 };
 
+// Custom hook to check feature flags
+export const useFeatureFlag = (featureKey: string): boolean => {
+  const { isEnabled } = useDevCycle();
+  return isEnabled(featureKey);
+};
+
 // Props for the DevCycleContextProvider
 interface DevCycleContextProviderProps {
   children: ReactNode;

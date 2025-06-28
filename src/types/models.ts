@@ -12,7 +12,7 @@ export interface TemplateCategory {
   updated_at: string;
 }
 
-export interface InvitationTemplate {
+interface InvitationTemplate {
   id: string;
   name: string;
   slug: string;
@@ -43,7 +43,7 @@ export interface InvitationTemplate {
   updated_at: string;
 }
 
-export interface TemplateImage {
+interface TemplateImage {
   id: string;
   template_id: string;
   image_url: string;
@@ -52,7 +52,7 @@ export interface TemplateImage {
   created_at: string;
 }
 
-export interface InvitationTable {
+interface InvitationTable {
   id: string;
   invitation_id: string;
   name: string;
@@ -65,7 +65,7 @@ export interface InvitationTable {
   updated_at: string;
 }
 
-export interface InvitationGuestExtended {
+interface InvitationGuestExtended {
   id: string;
   guest_id: string;
   table_id?: string;
@@ -87,7 +87,7 @@ export interface InvitationGuestExtended {
   updated_at: string;
 }
 
-export interface InvitationMedia {
+interface InvitationMedia {
   id: string;
   invitation_id: string;
   user_id: string;
@@ -101,7 +101,7 @@ export interface InvitationMedia {
   updated_at: string;
 }
 
-export interface InvitationThankYou {
+interface InvitationThankYou {
   id: string;
   invitation_id: string;
   guest_id?: string;
@@ -113,7 +113,7 @@ export interface InvitationThankYou {
   created_at: string;
 }
 
-export interface InvitationRSVPQuestion {
+interface InvitationRSVPQuestion {
   id: string;
   invitation_id: string;
   question: string;
@@ -125,7 +125,7 @@ export interface InvitationRSVPQuestion {
   updated_at: string;
 }
 
-export interface InvitationRSVPAnswer {
+interface InvitationRSVPAnswer {
   id: string;
   question_id: string;
   guest_id: string;
@@ -175,7 +175,7 @@ export interface QuizQuestion {
   updated_at: string;
 }
 
-export interface QuizAnswer {
+interface QuizAnswer {
   id: string;
   question_id: string;
   guest_id: string;
@@ -209,7 +209,7 @@ export interface SocialWallComment {
   updated_at: string;
 }
 
-export interface SocialWallReaction {
+interface SocialWallReaction {
   id: string;
   post_id?: string;
   comment_id?: string;
@@ -260,7 +260,7 @@ export interface InvitationDetails {
   rsvp_question_count: number;
 }
 
-export interface TableDetails {
+interface TableDetails {
   id: string;
   invitation_id: string;
   invitation_title: string;
@@ -312,7 +312,7 @@ export interface GuestDetails {
   special_access_code?: string;
 }
 
-export interface MediaDetails {
+interface MediaDetails {
   id: string;
   invitation_id: string;
   invitation_title: string;

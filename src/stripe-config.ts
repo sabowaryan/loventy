@@ -129,7 +129,7 @@ export const getProductByPriceId = (priceId: string): StripeProduct | undefined 
   return stripeProducts.find(product => product.priceId === priceId);
 };
 
-export const getProductById = (id: string): StripeProduct | undefined => {
+const getProductById = (id: string): StripeProduct | undefined => {
   return stripeProducts.find(product => product.id === id);
 };
 

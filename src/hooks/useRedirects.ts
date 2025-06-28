@@ -15,13 +15,22 @@ export const useRedirects = () => {
       // Skip checking for redirects if we're already checking
       if (isChecking) return;
       
+      // Skip redirect check if we know there are connection issues
+      const connectionError = sessionStorage.getItem('connection_error');
+      if (connectionError) {
+        console.warn('Skipping redirect check due to known connection issues');
+        return;
+      }
+      
       setIsChecking(true);
       setError(null);
 
       try {
-        // Check for redirects in the database with timeout
+        // Create abort controller with longer timeout for better reliability
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 10000); // Increased to 10 seconds
 
         const { data, error: dbError } = await supabase
           .from('redirects')
@@ -45,6 +54,7 @@ export const useRedirects = () => {
               dbError.message?.includes('fetch') ||
               dbError.message?.includes('AbortError')) {
             console.warn('Network error checking redirects, continuing without redirect check:', dbError.message);
+            sessionStorage.setItem('connection_error', 'network_error');
             return;
           }
           
@@ -66,11 +76,15 @@ export const useRedirects = () => {
         }
 
         // No redirect found - this is normal for most pages
+        // Clear any previous connection errors since this request succeeded
+        sessionStorage.removeItem('connection_error');
+        
       } catch (err) {
-        // Handle network errors gracefully
+        // Handle all errors gracefully to prevent app crashes
         if (err instanceof Error) {
           if (err.name === 'AbortError') {
             console.warn('Redirect check timed out, continuing without redirect check');
+            sessionStorage.setItem('connection_error', 'timeout');
             return;
           }
           
@@ -78,22 +92,26 @@ export const useRedirects = () => {
               err.message?.includes('fetch') ||
               err.message?.includes('Failed to fetch')) {
             console.warn('Network error checking redirects, continuing without redirect check:', err.message);
+            sessionStorage.setItem('connection_error', 'network_error');
             return;
           }
         }
         
         // For unexpected errors, log but don't break the app
         console.error('Unexpected error checking redirects:', err);
-        setError('Unable to check for redirects due to connectivity issues');
+        sessionStorage.setItem('connection_error', 'unknown_error');
+        
+        // Don't set error state to avoid showing error messages to users
+        // since redirects are not critical functionality
+        
       } finally {
         setIsChecking(false);
       }
     };
 
-    // Only check redirects if we have a valid Supabase connection
-    const connectionError = sessionStorage.getItem('connection_error');
-    if (connectionError) {
-      console.warn('Skipping redirect check due to known connection issues');
+    // Only run redirect check if we have valid environment variables
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.warn('Supabase environment variables not configured, skipping redirect check');
       setIsChecking(false);
       return;
     }

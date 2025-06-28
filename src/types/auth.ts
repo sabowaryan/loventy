@@ -8,7 +8,7 @@ export interface User {
   updatedAt: string;
 }
 
-export interface UserRole {
+interface UserRole {
   id: string;
   userId: string;
   roleId: string;

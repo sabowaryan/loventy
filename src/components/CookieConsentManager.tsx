@@ -29,13 +29,13 @@ const CookieConsentContext = createContext<CookieConsentContextType>({
   resetConsent: () => {},
 });
 
-export const useCookieConsent = () => useContext(CookieConsentContext);
+const useCookieConsent = () => useContext(CookieConsentContext);
 
 interface CookieConsentProviderProps {
   children: ReactNode;
 }
 
-export const CookieConsentProvider: React.FC<CookieConsentProviderProps> = ({ children }) => {
+const CookieConsentProvider: React.FC<CookieConsentProviderProps> = ({ children }) => {
   const [preferences, setPreferences] = useState<CookiePreferences>(defaultPreferences);
   const [hasConsented, setHasConsented] = useState<boolean>(false);
 

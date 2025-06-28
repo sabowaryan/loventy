@@ -126,7 +126,7 @@ export const handleSupabaseError = (error: any, context: string = '') => {
 };
 
 // Types pour l'authentification
-export type AuthUser = Database['auth']['Tables']['users']['Row'];
-export type UserRole = Database['public']['Tables']['user_roles']['Row'];
-export type Role = Database['public']['Tables']['roles']['Row'];
-export type Permission = Database['public']['Tables']['permissions']['Row'];
+type AuthUser = Database['auth']['Tables']['users']['Row'];
+type UserRole = Database['public']['Tables']['user_roles']['Row'];
+type Role = Database['public']['Tables']['roles']['Row'];
+type Permission = Database['public']['Tables']['permissions']['Row'];

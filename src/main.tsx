@@ -6,16 +6,22 @@ import ErrorBoundary from './components/ErrorBoundary.tsx';
 import CookieConsentProvider from './components/CookieConsentManager.tsx';
 import { HelmetProvider } from 'react-helmet-async';
 import { DevCycleContextProvider } from './contexts/DevCycleContext.tsx';
+import { AuthProvider } from './contexts/AuthContext';
+import StripeProvider from './components/StripeProvider';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
       <HelmetProvider>
-        <CookieConsentProvider>
-          <DevCycleContextProvider>
-            <App />
-          </DevCycleContextProvider>
-        </CookieConsentProvider>
+        <StripeProvider>
+          <AuthProvider>
+            <CookieConsentProvider>
+              <DevCycleContextProvider>
+                <App />
+              </DevCycleContextProvider>
+            </CookieConsentProvider>
+          </AuthProvider>
+        </StripeProvider>
       </HelmetProvider>
     </ErrorBoundary>
   </StrictMode>

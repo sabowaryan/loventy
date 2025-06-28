@@ -1,7 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import StripeProvider from './components/StripeProvider';
 import CookieBanner from './components/CookieBanner';
 import SeoHead from './components/SeoHead';
 
@@ -69,166 +67,162 @@ const AppWithSeo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 function App() {
   return (
-    <StripeProvider>
-      <AuthProvider>
-        <Router>
-          <AppWithSeo>
-            {/* Global connection error banner */}
-            <ConnectionErrorBanner />
-            
-            {/* Cookie Banner */}
-            <CookieBanner />
-            
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={
-                <PublicLayout>
-                  <Home />
-                </PublicLayout>
-              } />
-              
-              <Route path="/templates" element={
-                <PublicLayout>
-                  <Templates />
-                </PublicLayout>
-              } />
-              
-              <Route path="/pricing" element={
-                <PublicLayout>
-                  <Pricing />
-                </PublicLayout>
-              } />
+    <Router>
+      <AppWithSeo>
+        {/* Global connection error banner */}
+        <ConnectionErrorBanner />
+        
+        {/* Cookie Banner */}
+        <CookieBanner />
+        
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={
+            <PublicLayout>
+              <Home />
+            </PublicLayout>
+          } />
+          
+          <Route path="/templates" element={
+            <PublicLayout>
+              <Templates />
+            </PublicLayout>
+          } />
+          
+          <Route path="/pricing" element={
+            <PublicLayout>
+              <Pricing />
+            </PublicLayout>
+          } />
 
-              <Route path="/testimonials" element={
-                <PublicLayout>
-                  <Testimonials />
-                </PublicLayout>
-              } />
+          <Route path="/testimonials" element={
+            <PublicLayout>
+              <Testimonials />
+            </PublicLayout>
+          } />
 
-              <Route path="/contact" element={
-                <PublicLayout>
-                  <Contact />
-                </PublicLayout>
-              } />
+          <Route path="/contact" element={
+            <PublicLayout>
+              <Contact />
+            </PublicLayout>
+          } />
 
-              {/* Legal Pages */}
-              <Route path="/privacy" element={
-                <PublicLayout>
-                  <Privacy />
-                </PublicLayout>
-              } />
-              
-              <Route path="/terms" element={
-                <PublicLayout>
-                  <Terms />
-                </PublicLayout>
-              } />
-              
-              <Route path="/cookies" element={
-                <PublicLayout>
-                  <Cookies />
-                </PublicLayout>
-              } />
+          {/* Legal Pages */}
+          <Route path="/privacy" element={
+            <PublicLayout>
+              <Privacy />
+            </PublicLayout>
+          } />
+          
+          <Route path="/terms" element={
+            <PublicLayout>
+              <Terms />
+            </PublicLayout>
+          } />
+          
+          <Route path="/cookies" element={
+            <PublicLayout>
+              <Cookies />
+            </PublicLayout>
+          } />
 
-              {/* Success Page */}
-              <Route path="/success" element={
-                <ProtectedRoute>
-                  <SuccessPage />
-                </ProtectedRoute>
-              } />
+          {/* Success Page */}
+          <Route path="/success" element={
+            <ProtectedRoute>
+              <SuccessPage />
+            </ProtectedRoute>
+          } />
 
-              {/* Auth Routes */}
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/confirm" element={<EmailConfirmation />} />
-              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
+          {/* Auth Routes */}
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/confirm" element={<EmailConfirmation />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/reset-password" element={<ResetPassword />} />
 
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Dashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
 
-              <Route path="/dashboard/invitations" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Invitations />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+          <Route path="/dashboard/invitations" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Invitations />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
 
-              <Route path="/dashboard/guests" element={
-                <ProtectedRoute requiredPermission="guests.read">
-                  <DashboardLayout>
-                    <Guests />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+          <Route path="/dashboard/guests" element={
+            <ProtectedRoute requiredPermission="guests.read">
+              <DashboardLayout>
+                <Guests />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
 
-              <Route path="/dashboard/settings" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Settings />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/editor/:templateId?" element={
-                <ProtectedRoute requiredPermission="invitations.create">
-                  <Editor />
-                </ProtectedRoute>
-              } />
+          <Route path="/dashboard/settings" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Settings />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/editor/:templateId?" element={
+            <ProtectedRoute requiredPermission="invitations.create">
+              <Editor />
+            </ProtectedRoute>
+          } />
 
-              {/* Events Route */}
-              <Route path="/events" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Events />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+          {/* Events Route */}
+          <Route path="/events" element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Events />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
 
-              {/* Admin Routes */}
-              <Route path="/dashboard/admin" element={
-                <ProtectedRoute requiredRole="admin">
-                  <DashboardLayout>
-                    <div className="p-8">
-                      <h1 className="text-2xl font-bold">Administration</h1>
-                      <p>Panel d'administration réservé aux administrateurs.</p>
-                    </div>
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+          {/* Admin Routes */}
+          <Route path="/dashboard/admin" element={
+            <ProtectedRoute requiredRole="admin">
+              <DashboardLayout>
+                <div className="p-8">
+                  <h1 className="text-2xl font-bold">Administration</h1>
+                  <p>Panel d'administration réservé aux administrateurs.</p>
+                </div>
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
 
-              {/* Premium Routes */}
-              <Route path="/dashboard/premium-features" element={
-                <ProtectedRoute requiredRole="premium">
-                  <DashboardLayout>
-                    <div className="p-8">
-                      <h1 className="text-2xl font-bold">Fonctionnalités Premium</h1>
-                      <p>Contenu exclusif aux utilisateurs premium.</p>
-                    </div>
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
+          {/* Premium Routes */}
+          <Route path="/dashboard/premium-features" element={
+            <ProtectedRoute requiredRole="premium">
+              <DashboardLayout>
+                <div className="p-8">
+                  <h1 className="text-2xl font-bold">Fonctionnalités Premium</h1>
+                  <p>Contenu exclusif aux utilisateurs premium.</p>
+                </div>
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
 
-              {/* Invitation View Routes (Public but with specific access) */}
-              <Route path="/invitation/:invitationId" element={<InvitationView />} />
+          {/* Invitation View Routes (Public but with specific access) */}
+          <Route path="/invitation/:invitationId" element={<InvitationView />} />
 
-              {/* Error Pages */}
-              <Route path="/error" element={<ErrorPage />} />
-              <Route path="/error/connection" element={<ConnectionError />} />
-              <Route path="/500" element={<Error500 />} />
-              <Route path="*" element={<Error404 />} />
-            </Routes>
-          </AppWithSeo>
-        </Router>
-      </AuthProvider>
-    </StripeProvider>
+          {/* Error Pages */}
+          <Route path="/error" element={<ErrorPage />} />
+          <Route path="/error/connection" element={<ConnectionError />} />
+          <Route path="/500" element={<Error500 />} />
+          <Route path="*" element={<Error404 />} />
+        </Routes>
+      </AppWithSeo>
+    </Router>
   );
 }
 

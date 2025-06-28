@@ -4,30 +4,16 @@ import {
   Save, 
   Eye, 
   Send, 
-  Type, 
-  Palette, 
   ArrowLeft,
   Settings,
-  Image as ImageIcon,
   Monitor,
   Smartphone,
   Tablet,
   CheckCircle,
   AlertCircle,
   X,
-  Calendar,
-  Brain,
-  MessageSquare,
-  Users,
-  Layers,
   Loader2,
-  Heart,
-  Music,
-  Share2,
-  FileText,
-  Info,
-  CheckSquare,
-  DollarSign
+  Layers
 } from 'lucide-react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useAuth } from '../contexts/AuthContext';
@@ -35,23 +21,12 @@ import { useInvitationDesign } from '../hooks/useInvitationDesign';
 import { useInvitation } from '../hooks/useInvitation';
 import { defaultDesignSettings } from '../utils/designConstants';
 import { debounce } from '../utils/debounce';
-import DesignControls from '../components/invitation/DesignControls';
 import InvitationPreview from '../components/invitation/InvitationPreview';
-import GeneralInfoEditor from '../components/editor/GeneralInfoEditor';
-import MediaManager from '../components/editor/MediaManager';
-import AdvancedSettings from '../components/editor/AdvancedSettings';
-import EventsEditor from '../components/editor/EventsEditor';
-import QuizEditor from '../components/editor/QuizEditor';
-import SocialWallEditor from '../components/editor/SocialWallEditor';
-import WelcomeMessageEditor from '../components/editor/WelcomeMessageEditor';
-import HoneymoonFundEditor from '../components/editor/HoneymoonFundEditor';
-import MusicEditor from '../components/editor/MusicEditor';
-import InteractiveFeaturesEditor from '../components/editor/InteractiveFeaturesEditor';
-import ContactLinksEditor from '../components/editor/ContactLinksEditor';
-import PoliciesEditor from '../components/editor/PoliciesEditor';
-import AdditionalInfoEditor from '../components/editor/AdditionalInfoEditor';
-import RsvpEditor from '../components/editor/RsvpEditor';
 import { ExtendedInvitationData } from '../types/models';
+
+// Import editor sections
+import EditorSidebar from '../components/editor/EditorSidebar';
+import EditorContent from '../components/editor/EditorContent';
 
 const Editor: React.FC = () => {
   usePageTitle('Éditeur d\'invitation');
@@ -60,6 +35,7 @@ const Editor: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
+  const [activeSection, setActiveSection] = useState('details');
   const [showPreview, setShowPreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -111,24 +87,6 @@ const Editor: React.FC = () => {
     invitationId: templateId || '',
     initialDesignSettings: defaultDesignSettings
   });
-
-  const tabs = [
-    { id: 'general', name: 'Informations générales', icon: Type, description: 'Détails de base' },
-    { id: 'welcome', name: 'Message de bienvenue', icon: Heart, description: 'Message et citation' },
-    { id: 'events', name: 'Programme', icon: Calendar, description: 'Déroulé des événements' },
-    { id: 'honeymoon', name: 'Cagnotte lune de miel', icon: DollarSign, description: 'Cagnotte pour voyage' },
-    { id: 'music', name: 'Musique', icon: Music, description: 'Playlist et suggestions' },
-    { id: 'interactive', name: 'Fonctionnalités', icon: Brain, description: 'Options interactives' },
-    { id: 'contact', name: 'Contact & Liens', icon: Share2, description: 'Coordonnées et liens' },
-    { id: 'policies', name: 'Politiques', icon: FileText, description: 'Enfants et cadeaux' },
-    { id: 'additional', name: 'Infos supplémentaires', icon: Info, description: 'Transport et hébergement' },
-    { id: 'rsvp', name: 'RSVP', icon: CheckSquare, description: 'Confirmation présence' },
-    { id: 'design', name: 'Design', icon: Palette, description: 'Apparence visuelle' },
-    { id: 'media', name: 'Médias', icon: ImageIcon, description: 'Photos et images' },
-    { id: 'quiz', name: 'Quiz', icon: Brain, description: 'Questions interactives' },
-    { id: 'social', name: 'Mur social', icon: Users, description: 'Partage des invités' },
-    { id: 'settings', name: 'Paramètres', icon: Settings, description: 'Options avancées' }
-  ];
 
   // Créer une version debounced de updateInvitation
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -369,174 +327,63 @@ const Editor: React.FC = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Panel d'édition */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Sidebar - Navigation */}
           <div className="xl:col-span-2">
+            <EditorSidebar 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab}
+              activeSection={activeSection}
+              setActiveSection={setActiveSection}
+            />
+          </div>
+
+          {/* Main Content - Editor */}
+          <div className="xl:col-span-7">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* Tabs */}
-              <div className="border-b border-gray-100 overflow-x-auto">
-                <nav className="flex space-x-0 min-w-max">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                        activeTab === tab.id
-                          ? 'border-[#D4A5A5] text-[#D4A5A5] bg-[#D4A5A5]/5'
-                          : 'border-transparent text-gray-500 hover:text-[#131837] hover:bg-gray-50'
-                      }`}
-                    >
-                      <tab.icon className="h-4 w-4" />
-                      <div className="text-left">
-                        <div>{tab.name}</div>
-                        <div className="text-xs opacity-75">{tab.description}</div>
-                      </div>
-                    </button>
-                  ))}
-                </nav>
-              </div>
-              
-              {/* Contenu des tabs */}
               <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {activeTab === 'general' && invitation && (
-                  <GeneralInfoEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'welcome' && invitation && (
-                  <WelcomeMessageEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'events' && (
-                  <EventsEditor 
-                    events={events}
-                    onAddEvent={addEvent}
-                    onUpdateEvent={updateEvent}
-                    onDeleteEvent={deleteEvent}
-                    onReorderEvents={reorderEvents}
-                  />
-                )}
-                
-                {activeTab === 'honeymoon' && invitation && (
-                  <HoneymoonFundEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'music' && invitation && (
-                  <MusicEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'interactive' && invitation && (
-                  <InteractiveFeaturesEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'contact' && invitation && (
-                  <ContactLinksEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'policies' && invitation && (
-                  <PoliciesEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'additional' && invitation && (
-                  <AdditionalInfoEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'rsvp' && invitation && (
-                  <RsvpEditor 
-                    invitationData={invitation} 
-                    onInputChange={handleInputChange} 
-                  />
-                )}
-                
-                {activeTab === 'design' && (
-                  <DesignControls 
-                    designSettings={designSettings}
-                    onDesignChange={updateDesignSettings}
-                    onImageUpload={handleImageUpload}
-                    isUploading={isUploading}
-                  />
-                )}
-                
-                {activeTab === 'media' && (
-                  <MediaManager 
-                    onImageUpload={handleImageUpload}
-                    isUploading={isUploading}
-                    invitationId={invitation?.id || ''}
-                    media={[]}
-                    onRefreshMedia={() => {/* Refresh media */}}
-                  />
-                )}
-                
-                {activeTab === 'quiz' && (
-                  <QuizEditor 
-                    quizzes={quizzes}
-                    questions={questions}
-                    onAddQuiz={addQuiz}
-                    onUpdateQuiz={updateQuiz}
-                    onDeleteQuiz={deleteQuiz}
-                    onAddQuestion={addQuestion}
-                    onUpdateQuestion={updateQuestion}
-                    onDeleteQuestion={deleteQuestion}
-                    onReorderQuestions={reorderQuestions}
-                  />
-                )}
-                
-                {activeTab === 'social' && invitation && (
-                  <SocialWallEditor 
-                    enabled={invitation.socialWallEnabled}
-                    moderationEnabled={invitation.socialWallModerationEnabled}
-                    posts={posts}
-                    comments={comments}
-                    onToggleEnabled={toggleSocialWall}
-                    onToggleModeration={toggleModeration}
-                    onApprovePost={approvePost}
-                    onRejectPost={rejectPost}
-                    onDeletePost={deletePost}
-                    onApproveComment={approveComment}
-                    onRejectComment={rejectComment}
-                    onDeleteComment={deleteComment}
-                  />
-                )}
-                
-                {activeTab === 'settings' && invitation && (
-                  <AdvancedSettings 
-                    invitationData={invitation}
-                    onPublish={handlePublish}
-                    onSendInvitation={handleSendInvitation}
-                    onDuplicate={() => {/* Duplicate invitation */}}
-                    onExportPDF={() => {/* Export to PDF */}}
-                    onDelete={() => {/* Delete invitation */}}
-                  />
-                )}
+                <EditorContent 
+                  activeTab={activeTab}
+                  activeSection={activeSection}
+                  invitation={invitation}
+                  events={events}
+                  quizzes={quizzes}
+                  questions={questions}
+                  posts={posts}
+                  comments={comments}
+                  onInputChange={handleInputChange}
+                  onAddEvent={addEvent}
+                  onUpdateEvent={updateEvent}
+                  onDeleteEvent={deleteEvent}
+                  onReorderEvents={reorderEvents}
+                  onAddQuiz={addQuiz}
+                  onUpdateQuiz={updateQuiz}
+                  onDeleteQuiz={deleteQuiz}
+                  onAddQuestion={addQuestion}
+                  onUpdateQuestion={updateQuestion}
+                  onDeleteQuestion={deleteQuestion}
+                  onReorderQuestions={reorderQuestions}
+                  onToggleSocialWall={toggleSocialWall}
+                  onToggleModeration={toggleModeration}
+                  onApprovePost={approvePost}
+                  onRejectPost={rejectPost}
+                  onDeletePost={deletePost}
+                  onApproveComment={approveComment}
+                  onRejectComment={rejectComment}
+                  onDeleteComment={deleteComment}
+                  designSettings={designSettings}
+                  onDesignChange={updateDesignSettings}
+                  onImageUpload={handleImageUpload}
+                  isUploading={isUploading}
+                  onPublish={handlePublish}
+                  onSendInvitation={handleSendInvitation}
+                />
               </div>
             </div>
           </div>
 
-          {/* Aperçu en direct */}
-          <div className="xl:col-span-1">
+          {/* Preview Panel */}
+          <div className="xl:col-span-3">
             <div className="sticky top-24">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-4">

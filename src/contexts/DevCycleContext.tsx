@@ -4,7 +4,7 @@ import type { User } from '../types/auth';
 // Define the shape of our DevCycle context
 interface DevCycleContextType {
   isEnabled: (featureKey: string) => boolean;
-  getVariableValue: (variableKey: string, defaultValue: any) => any;
+  getVariableValue: <T>(variableKey: string, defaultValue: T) => T;
 }
 
 // Create the context with a default value
@@ -22,7 +22,7 @@ export const useDevCycle = () => {
 };
 
 // Custom hook to check feature flags
-export const useFeatureFlag = (featureKey: string): boolean => {
+export const useFeatureFlag = (featureKey: string, defaultValue: boolean = false): boolean => {
   const { isEnabled } = useDevCycle();
   return isEnabled(featureKey);
 };
@@ -53,7 +53,8 @@ export const DevCycleContextProvider: React.FC<DevCycleContextProviderProps> = (
       'premium-templates': auth.isAuthenticated,
       'advanced-analytics': auth.isAuthenticated,
       'custom-domain': auth.isAuthenticated && auth.user?.firstName === 'Admin',
-      'beta-features': false
+      'beta-features': false,
+      'enable_events': true
     };
     
     const mockVariables = {
@@ -73,7 +74,7 @@ export const DevCycleContextProvider: React.FC<DevCycleContextProviderProps> = (
   };
   
   // Function to get a variable value
-  const getVariableValue = (variableKey: string, defaultValue: any): any => {
+  const getVariableValue = <T,>(variableKey: string, defaultValue: T): T => {
     return variables[variableKey] !== undefined ? variables[variableKey] : defaultValue;
   };
   
@@ -84,3 +85,5 @@ export const DevCycleContextProvider: React.FC<DevCycleContextProviderProps> = (
     </DevCycleContext.Provider>
   );
 };
+
+export default DevCycleContextProvider;

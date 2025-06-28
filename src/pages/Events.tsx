@@ -40,6 +40,17 @@ const Events: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: 'Nouvel événement',
+    description: '',
+    type: 'wedding',
+    location: '',
+    event_date: new Date().toISOString().split('T')[0],
+    rsvp_deadline: '',
+    is_private: true,
+    cover_color: '#D4A5A5'
+  });
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -163,6 +174,38 @@ const Events: React.FC = () => {
     });
   };
 
+  const handleCreateEvent = async () => {
+    if (!canCreateEvent) return;
+    
+    try {
+      const createdEvent = await createEvent(newEvent);
+      if (createdEvent) {
+        setShowCreateModal(false);
+        refreshEvents();
+        // Optionally navigate to the event detail page
+        navigate(`/dashboard/events`);
+      }
+    } catch (error) {
+      console.error('Error creating event:', error);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewEvent(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setNewEvent(prev => ({
+      ...prev,
+      [name]: checked
+    }));
+  };
+
   const EmptyState = () => (
     <div className="text-center py-16">
       <div className="w-24 h-24 bg-[#D4A5A5]/10 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -179,19 +222,7 @@ const Events: React.FC = () => {
       </p>
       {canCreateEvent && (
         <button
-          onClick={() => {
-            // Ouvrir un modal de création d'événement ou rediriger vers une page de création
-            // Pour l'instant, nous allons simplement créer un événement de base
-            createEvent({
-              title: 'Nouvel événement',
-              event_date: new Date().toISOString(),
-              is_private: true
-            }).then(newEvent => {
-              if (newEvent) {
-                navigate(`/event/${newEvent.id}`);
-              }
-            });
-          }}
+          onClick={() => setShowCreateModal(true)}
           className="px-6 py-3 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors"
         >
           <Plus className="h-5 w-5 mr-2 inline-block" />
@@ -250,17 +281,7 @@ const Events: React.FC = () => {
           <div className="mt-4 lg:mt-0">
             {canCreateEvent ? (
               <button
-                onClick={() => {
-                  createEvent({
-                    title: 'Nouvel événement',
-                    event_date: new Date().toISOString(),
-                    is_private: true
-                  }).then(newEvent => {
-                    if (newEvent) {
-                      navigate(`/event/${newEvent.id}`);
-                    }
-                  });
-                }}
+                onClick={() => setShowCreateModal(true)}
                 className="btn-accent w-full sm:w-auto"
               >
                 <Plus className="h-5 w-5 mr-2" />
@@ -652,6 +673,146 @@ const Events: React.FC = () => {
         isConfirming={isDeleting}
         confirmButtonClass="bg-red-600 hover:bg-red-700 text-white"
       />
+
+      {/* Modal de création d'événement */}
+      <Modal
+        show={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Créer un nouvel événement"
+        icon={<Calendar className="h-5 w-5 text-[#D4A5A5]" />}
+        confirmText="Créer l'événement"
+        onConfirm={handleCreateEvent}
+        confirmButtonClass="bg-[#D4A5A5] hover:bg-[#D4A5A5]/90 text-white"
+        isForm
+      >
+        <div className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              Titre de l'événement *
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={newEvent.title}
+              onChange={handleInputChange}
+              className="form-input w-full"
+              placeholder="Mariage de Sarah & Alex"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={newEvent.description}
+              onChange={handleInputChange}
+              rows={3}
+              className="form-input w-full"
+              placeholder="Une description de votre événement..."
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="event_date" className="block text-sm font-medium text-gray-700 mb-1">
+                Date de l'événement *
+              </label>
+              <input
+                type="date"
+                id="event_date"
+                name="event_date"
+                value={newEvent.event_date}
+                onChange={handleInputChange}
+                className="form-input w-full"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+                Type d'événement
+              </label>
+              <select
+                id="type"
+                name="type"
+                value={newEvent.type}
+                onChange={handleInputChange}
+                className="form-input w-full"
+              >
+                <option value="wedding">Mariage</option>
+                <option value="engagement">Fiançailles</option>
+                <option value="anniversary">Anniversaire</option>
+                <option value="birthday">Fête d'anniversaire</option>
+                <option value="other">Autre</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+              Lieu
+            </label>
+            <input
+              type="text"
+              id="location"
+              name="location"
+              value={newEvent.location}
+              onChange={handleInputChange}
+              className="form-input w-full"
+              placeholder="Domaine des Roses, Paris"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="rsvp_deadline" className="block text-sm font-medium text-gray-700 mb-1">
+                Date limite RSVP
+              </label>
+              <input
+                type="date"
+                id="rsvp_deadline"
+                name="rsvp_deadline"
+                value={newEvent.rsvp_deadline}
+                onChange={handleInputChange}
+                className="form-input w-full"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="cover_color" className="block text-sm font-medium text-gray-700 mb-1">
+                Couleur de couverture
+              </label>
+              <input
+                type="color"
+                id="cover_color"
+                name="cover_color"
+                value={newEvent.cover_color}
+                onChange={handleInputChange}
+                className="form-input w-full h-10"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id="is_private"
+              name="is_private"
+              checked={newEvent.is_private}
+              onChange={handleCheckboxChange}
+              className="h-4 w-4 text-[#D4A5A5] focus:ring-[#D4A5A5] border-gray-300 rounded"
+            />
+            <label htmlFor="is_private" className="ml-2 block text-sm text-gray-700">
+              Événement privé
+            </label>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

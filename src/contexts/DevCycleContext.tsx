@@ -1,93 +1,80 @@
-import React, { createContext, useContext, ReactNode } from 'react';
-import { DevCycleProvider, useDevCycleClient, useVariableValue } from '@devcycle/react-client-sdk';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type { User } from '../types/auth';
 
-// Créer un contexte pour les fonctionnalités DevCycle
+// Define the shape of our DevCycle context
 interface DevCycleContextType {
-  isFeatureEnabled: (featureKey: string) => boolean;
-  getVariableValue: <T>(key: string, defaultValue: T) => T;
+  isEnabled: (featureKey: string) => boolean;
+  getVariableValue: (variableKey: string, defaultValue: any) => any;
 }
 
+// Create the context with a default value
 const DevCycleContext = createContext<DevCycleContextType | undefined>(undefined);
 
-// Hook personnalisé pour utiliser le contexte DevCycle
+// Custom hook to use the DevCycle context
 export const useDevCycle = () => {
-  }
   const context = useContext(DevCycleContext);
+  
   if (context === undefined) {
     throw new Error('useDevCycle must be used within a DevCycleContextProvider');
   }
+  
   return context;
 };
 
-// Composant interne qui fournit les fonctionnalités DevCycle
-const DevCycleFeatures: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
-  const devCycleClient = useDevCycleClient();
-
-  // Fonction pour vérifier si une fonctionnalité est activée
-  const isFeatureEnabled = (featureKey: string): boolean => {
-    // Utiliser la méthode variableValue du client DevCycle
-    const variable = devCycleClient.variableValue(featureKey, false);
-    return !!variable;
+// Props for the DevCycleContextProvider
+interface DevCycleContextProviderProps {
+  children: ReactNode;
+  auth: {
+    user: User | null;
+    isAuthenticated: boolean;
   };
+}
 
-  // Fonction pour obtenir la valeur d'une variable
-  const getVariableValue = <T,>(key: string, defaultValue: T): T => {
-    return devCycleClient.variableValue(key, defaultValue);
+// Component that provides the DevCycle functionality
+export const DevCycleContextProvider: React.FC<DevCycleContextProviderProps> = ({ 
+  children,
+  auth
+}) => {
+  const [features, setFeatures] = useState<Record<string, boolean>>({});
+  const [variables, setVariables] = useState<Record<string, any>>({});
+  
+  // Initialize DevCycle client when the component mounts
+  useEffect(() => {
+    // Here you would normally initialize the DevCycle client
+    // For now, we'll just set some mock features and variables
+    
+    const mockFeatures = {
+      'premium-templates': auth.isAuthenticated,
+      'advanced-analytics': auth.isAuthenticated,
+      'custom-domain': auth.isAuthenticated && auth.user?.firstName === 'Admin',
+      'beta-features': false
+    };
+    
+    const mockVariables = {
+      'max-invitations': auth.isAuthenticated ? 25 : 3,
+      'max-guests': auth.isAuthenticated ? 300 : 50,
+      'theme-color': '#D4A5A5',
+      'welcome-message': `Bienvenue ${auth.user?.firstName || 'sur Loventy'}`
+    };
+    
+    setFeatures(mockFeatures);
+    setVariables(mockVariables);
+  }, [auth.isAuthenticated, auth.user]);
+  
+  // Function to check if a feature is enabled
+  const isEnabled = (featureKey: string): boolean => {
+    return features[featureKey] || false;
   };
-
-  // Fournir les fonctionnalités via le contexte
+  
+  // Function to get a variable value
+  const getVariableValue = (variableKey: string, defaultValue: any): any => {
+    return variables[variableKey] !== undefined ? variables[variableKey] : defaultValue;
+  };
+  
+  // Provide the DevCycle context to children
   return (
-    <DevCycleContext.Provider value={{ isFeatureEnabled, getVariableValue }}>
+    <DevCycleContext.Provider value={{ isEnabled, getVariableValue }}>
       {children}
     </DevCycleContext.Provider>
   );
-};
-
-// Composant principal qui initialise DevCycle
-interface DevCycleContextProviderProps {
-  }
-  children: ReactNode;
-}
-
-export const DevCycleContextProvider: React.FC<DevCycleContextProviderProps> = ({ children }) => {
-  const { user } = useAuth();
-  
-  // Clé d'API DevCycle
-  const devCycleClientKey = import.meta.env.VITE_DEVCYCLE_CLIENT_KEY || 'dvc_client_YOUR_KEY_HERE';
-  
-  // Configurer l'utilisateur pour DevCycle
-  const devCycleUser = {
-    user_id: user?.id || 'anonymous',
-    email: user?.email,
-    name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : undefined,
-    customData: {
-      isPremium: user ? true : false,
-      createdAt: user?.createdAt,
-    }
-  };
-
-  // Options de configuration pour DevCycle
-  const options = {
-    logLevel: import.meta.env.DEV ? 'debug' : 'error',
-    enableEdgeDB: true,
-  };
-
-  return (
-    <DevCycleProvider
-      clientKey={devCycleClientKey}
-      user={devCycleUser}
-      options={options}
-    >
-      <DevCycleFeatures>
-        {children}
-      </DevCycleFeatures>
-    </DevCycleProvider>
-  );
-};
-
-// Hook personnalisé pour vérifier si une fonctionnalité est activée
-export const useFeatureFlag = (featureKey: string, defaultValue: boolean = false): boolean => {
-  return useVariableValue(featureKey, defaultValue);
 };

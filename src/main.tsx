@@ -5,9 +5,9 @@ import './index.css';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import CookieConsentProvider from './components/CookieConsentManager.tsx';
 import { HelmetProvider } from 'react-helmet-async';
-import { DevCycleContextProvider } from './contexts/DevCycleContext.tsx';
 import { AuthProvider } from './contexts/AuthContext';
 import StripeProvider from './components/StripeProvider';
+import DevCycleAuthWrapper from './components/DevCycleAuthWrapper';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,9 +16,9 @@ createRoot(document.getElementById('root')!).render(
         <StripeProvider>
           <AuthProvider>
             <CookieConsentProvider>
-              <DevCycleContextProvider>
+              <DevCycleAuthWrapper>
                 <App />
-              </DevCycleContextProvider>
+              </DevCycleAuthWrapper>
             </CookieConsentProvider>
           </AuthProvider>
         </StripeProvider>

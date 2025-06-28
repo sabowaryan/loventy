@@ -84,8 +84,8 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-[#131837]">
               {showCreateForm ? 'Créer un nouvel événement' : 'Sélectionner un événement'}
@@ -99,7 +99,7 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
           </div>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+        <div className="p-6 overflow-y-auto flex-grow">
           {isCheckingLimit ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-[#D4A5A5]" />
@@ -223,7 +223,7 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
                       </div>
                     </div>
                   ) : (
-                    <form onSubmit={handleCreateEvent} className="space-y-6">
+                    <form onSubmit={handleCreateEvent} className="space-y-4 overflow-y-auto">
                       <div>
                         <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                           Titre de l'événement *
@@ -249,13 +249,13 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
                           name="description"
                           value={newEvent.description || ''}
                           onChange={handleInputChange}
-                          rows={3}
+                          rows={2}
                           className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5]/20 focus:border-[#D4A5A5] transition-colors"
                           placeholder="Une description de votre événement..."
                         />
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label htmlFor="event_date" className="block text-sm font-medium text-gray-700 mb-2">
                             Date de l'événement *
@@ -307,7 +307,7 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
                         />
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label htmlFor="rsvp_deadline" className="block text-sm font-medium text-gray-700 mb-2">
                             Date limite RSVP
@@ -350,23 +350,6 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
                           Événement privé
                         </label>
                       </div>
-                      
-                      <div className="flex justify-end space-x-3 pt-4">
-                        <button
-                          type="button"
-                          onClick={() => setShowCreateForm(false)}
-                          className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          Annuler
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors flex items-center"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Créer l'événement
-                        </button>
-                      </div>
                     </form>
                   )}
                 </>
@@ -374,6 +357,27 @@ const EventCreatorModal: React.FC<EventCreatorModalProps> = ({ onClose, onEventS
             </>
           )}
         </div>
+        
+        {/* Footer with action buttons - always visible */}
+        {showCreateForm && canCreate && (
+          <div className="p-6 border-t border-gray-200 flex justify-end space-x-3 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(false)}
+              className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateEvent}
+              className="px-4 py-2 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Créer l'événement
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

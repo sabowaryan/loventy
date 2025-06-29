@@ -366,14 +366,20 @@ export interface SectionDesign {
   style: 'classic' | 'modern' | 'rustic' | 'romantic';
   backgroundColor: string | null;
   backgroundImageUrl: string | null;
+  backgroundImageWidth?: number | null; // New
+  backgroundImageHeight?: number | null; // New
   backgroundPattern: string | null;
   backgroundOpacity: number;
-  backgroundFit?: 'cover' | 'contain'; // Nouvelle propriété
+  backgroundFit?: 'cover' | 'contain';
   coupleImageUrl?: string | null;
+  coupleImageWidth?: number | null; // New
+  coupleImageHeight?: number | null; // New
   coupleImageShape?: 'original' | 'rounded' | 'circle' | 'heart';
-  coupleImageFit?: 'cover' | 'contain'; // Nouvelle propriété
+  coupleImageFit?: 'cover' | 'contain';
   visible?: boolean;
   decorativeElementUrl?: string | null;
+  decorativeElementWidth?: number | null; // New
+  decorativeElementHeight?: number | null; // New
 }
 
 export interface ExtendedInvitationData {

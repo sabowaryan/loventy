@@ -16,7 +16,7 @@ import {
   Layers
 } from 'lucide-react';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/Auth/AuthContext';
 import { useInvitationDesign } from '../hooks/useInvitationDesign';
 import { useInvitation } from '../hooks/useInvitation';
 import { defaultDesignSettings } from '../utils/designConstants';
@@ -128,10 +128,19 @@ const Editor: React.FC = () => {
   const handleInputChange = (field: keyof ExtendedInvitationData, value: any) => {
     if (!localInvitationData) return;
 
+    let processedValue = value;
+
+    // Convert empty strings to null for date and time fields
+    if (['eventDate', 'eventTime', 'rsvpDate'].includes(field as string)) {
+      if (value === '') {
+        processedValue = null;
+      }
+    }
+
     // Mettre à jour l'état local immédiatement pour une UI réactive
     const updatedData = {
       ...localInvitationData,
-      [field]: value
+      [field]: processedValue
     };
     setLocalInvitationData(updatedData);
     latestLocalInvitationData.current = updatedData; // Mettre à jour la ref
@@ -147,7 +156,7 @@ const Editor: React.FC = () => {
     const autoSaveTimer = setTimeout(() => {
       // Déclencher la sauvegarde debounced pour l'auto-save
       triggerDebouncedSave(latestLocalInvitationData.current!);
-    }, 180000); // Auto-save every 30 seconds
+    }, 180000); // Auto-save every 3 minutes
 
     return () => clearTimeout(autoSaveTimer);
   }, [localInvitationData, designSettings, triggerDebouncedSave]); // Dépend de localInvitationData et designSettings

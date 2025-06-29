@@ -348,7 +348,7 @@ const Editor: React.FC = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh - 112px)]">
           {/* Sidebar - Navigation (hidden on large screens) */}
           <div className="lg:hidden lg:col-span-2">
             <EditorSidebar
@@ -360,9 +360,9 @@ const Editor: React.FC = () => {
           </div>
 
           {/* Main Content - Editor */}
-          <div className="lg:col-span-7">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+          <div className="lg:col-span-7 lg:flex lg:flex-col h-full">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-grow h-full">
+              <div className="p-6 h-full overflow-y-auto">
                 <EditorContent
                   activeTab={activeTab}
                   activeSection={activeSection}
@@ -404,9 +404,9 @@ const Editor: React.FC = () => {
           </div>
 
           {/* Preview Panel */}
-          <div className="lg:col-span-3">
-            <div className="sticky top-24">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="lg:col-span-3 h-full">
+            <div className="sticky top-24 h-full">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-[#131837] flex items-center">
                     <Eye className="h-5 w-5 mr-2 text-[#D4A5A5]" />
@@ -434,7 +434,7 @@ const Editor: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg">
+                <div className="overflow-hidden rounded-lg flex-grow">
                   {invitation && (
                     <InvitationPreview
                       invitationData={invitation}

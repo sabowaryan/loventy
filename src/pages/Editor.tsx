@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Save,
   Eye,
@@ -40,7 +39,7 @@ const Editor: React.FC = () => {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // New state for error message
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Utiliser le hook useInvitation pour charger et gérer les données
   const {
@@ -89,43 +88,78 @@ const Editor: React.FC = () => {
     initialDesignSettings: defaultDesignSettings
   });
 
-  // Créer une version debounced de updateInvitation
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedUpdateInvitation = useCallback(
-    debounce((updates: Partial<ExtendedInvitationData>) => {
-      updateInvitation(updates);
+  // État local pour les modifications de l'invitation (pour une réactivité immédiate de l'UI)
+  const [localInvitationData, setLocalInvitationData] = useState<ExtendedInvitationData | null>(null);
+  // Ref pour stocker la dernière version de localInvitationData pour le debounce
+  const latestLocalInvitationData = useRef<ExtendedInvitationData | null>(null);
+
+  // Synchroniser localInvitationData avec l'invitation chargée
+  useEffect(() => {
+    if (invitation) {
+      setLocalInvitationData(invitation);
+      latestLocalInvitationData.current = invitation;
+    }
+  }, [invitation]);
+
+  // Fonction de sauvegarde debounced
+  const triggerDebouncedSave = useCallback(
+    debounce(async (dataToSave: ExtendedInvitationData) => {
+      if (!dataToSave) return;
+      try {
+        await updateInvitation(dataToSave);
+        setLastSaved(new Date());
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+      } catch (error: any) {
+        console.error('Erreur lors de la sauvegarde debounced:', error);
+        let userFriendlyMessage = 'Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.';
+        if (error.message) {
+          userFriendlyMessage = `Erreur: ${error.message}`;
+        }
+        setErrorMessage(userFriendlyMessage);
+        setTimeout(() => setErrorMessage(null), 5000);
+      }
     }, 1000), // Délai de 1 seconde
     [updateInvitation]
   );
 
-  // Auto-save functionality
-  useEffect(() => {
-    if (!invitation) return;
-
-    const autoSave = setTimeout(() => {
-      handleSave(false);
-    }, 30000); // Auto-save every 30 seconds
-
-    return () => clearTimeout(autoSave);
-  }, [invitation, designSettings]);
-
+  // Gérer les changements d'input
   const handleInputChange = (field: keyof ExtendedInvitationData, value: any) => {
-    if (!invitation) return;
+    if (!localInvitationData) return;
 
     // Mettre à jour l'état local immédiatement pour une UI réactive
-    // mais utiliser la version debounced pour l'API
-    debouncedUpdateInvitation({
+    const updatedData = {
+      ...localInvitationData,
       [field]: value
-    });
+    };
+    setLocalInvitationData(updatedData);
+    latestLocalInvitationData.current = updatedData; // Mettre à jour la ref
+
+    // Déclencher la sauvegarde debounced avec la dernière version
+    triggerDebouncedSave(updatedData);
   };
 
+  // Auto-save functionality
+  useEffect(() => {
+    if (!localInvitationData) return;
+
+    const autoSaveTimer = setTimeout(() => {
+      // Déclencher la sauvegarde debounced pour l'auto-save
+      triggerDebouncedSave(latestLocalInvitationData.current!);
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [localInvitationData, designSettings, triggerDebouncedSave]); // Dépend de localInvitationData et designSettings
+
   const handleSave = async (showNotification = true) => {
-    if (!invitation) return;
+    if (!localInvitationData) return;
 
     setErrorMessage(null); // Clear previous errors
     try {
       // Sauvegarder les paramètres de design
       await saveDesignSettings();
+      // Sauvegarder les données de l'invitation immédiatement (pas debounced)
+      await updateInvitation(localInvitationData);
 
       setLastSaved(new Date());
 
@@ -133,22 +167,19 @@ const Editor: React.FC = () => {
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
       }
-    } catch (error: any) { // Explicitly type error as 'any' for message property
+    } catch (error: any) {
       console.error('Erreur lors de la sauvegarde:', error);
       let userFriendlyMessage = 'Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.';
-
-      if (error.message && (error.message.includes('NetworkError') || error.message.includes('Failed to fetch') || error.message.includes('timeout'))) {
-        userFriendlyMessage = 'Problème de connexion réseau. Veuillez vérifier votre internet et réessayer.';
-      } else if (error.message) {
+      if (error.message) {
         userFriendlyMessage = `Erreur: ${error.message}`;
       }
       setErrorMessage(userFriendlyMessage);
-      setTimeout(() => setErrorMessage(null), 5000); // Clear error message after 5 seconds
+      setTimeout(() => setErrorMessage(null), 5000);
     }
   };
 
   const handlePublish = async () => {
-    if (!invitation) return;
+    if (!localInvitationData) return;
 
     await handleSave();
     await updateInvitation({ status: 'published' });
@@ -156,13 +187,13 @@ const Editor: React.FC = () => {
   };
 
   const handleSendInvitation = async () => {
-    if (!invitation) return;
+    if (!localInvitationData) return;
 
     await handleSave();
-    navigate(`/dashboard/guests?invitation=${invitation.id}&action=send`);
+    navigate(`/dashboard/guests?invitation=${localInvitationData.id}&action=send`);
   };
 
-  const handleImageUpload = async (sectionId: string, imageType: 'background' | 'couple', file: File) => {
+  const handleImageUpload = async (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File) => {
     try {
       const imageUrl = await uploadImage(sectionId, imageType, file);
       return imageUrl;
@@ -173,7 +204,7 @@ const Editor: React.FC = () => {
   };
 
   // Afficher un état de chargement pendant que les données sont récupérées
-  if (isInvitationLoading) {
+  if (isInvitationLoading || !localInvitationData) {
     return (
       <div className="min-h-screen bg-[#FAF9F7] flex items-center justify-center">
         <div className="text-center">
@@ -185,7 +216,7 @@ const Editor: React.FC = () => {
   }
 
   // Afficher un message d'erreur si le chargement a échoué
-  if (invitationError && !invitation) {
+  if (invitationError) {
     return (
       <div className="min-h-screen bg-[#FAF9F7] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
@@ -231,7 +262,7 @@ const Editor: React.FC = () => {
 
               <div className="border-l border-gray-200 pl-4">
                 <h1 className="text-lg font-semibold text-[#131837] truncate max-w-xs">
-                  {invitation?.title || 'Nouvelle invitation'}
+                  {localInvitationData.title || 'Nouvelle invitation'}
                 </h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <span>
@@ -287,7 +318,7 @@ const Editor: React.FC = () => {
                 <span className="hidden sm:inline">Sauvegarder</span>
               </button>
 
-              {invitation?.status === 'draft' ? (
+              {localInvitationData.status === 'draft' ? (
                 <button
                   onClick={handlePublish}
                   className="flex items-center space-x-2 px-4 py-2 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors"
@@ -368,7 +399,7 @@ const Editor: React.FC = () => {
                 <EditorContent
                   activeTab={activeTab}
                   activeSection={activeSection}
-                  invitation={invitation}
+                  invitation={localInvitationData} // Pass localInvitationData
                   events={events}
                   quizzes={quizzes}
                   questions={questions}
@@ -437,9 +468,9 @@ const Editor: React.FC = () => {
                 </div>
 
                 <div className="overflow-hidden rounded-lg flex-grow">
-                  {invitation && (
+                  {localInvitationData && (
                     <InvitationPreview
-                      invitationData={invitation}
+                      invitationData={localInvitationData} // Pass localInvitationData
                       designSettings={designSettings}
                       previewDevice={previewDevice}
                       events={events}
@@ -453,7 +484,7 @@ const Editor: React.FC = () => {
       </div>
 
       {/* Modal d'aperçu plein écran */}
-      {showPreview && invitation && (
+      {showPreview && localInvitationData && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
           <div className="relative w-full h-full max-w-6xl">
             <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
@@ -487,7 +518,7 @@ const Editor: React.FC = () => {
             </div>
 
             <InvitationPreview
-              invitationData={invitation}
+              invitationData={localInvitationData} // Pass localInvitationData
               designSettings={designSettings}
               isFullscreen
               previewDevice={previewDevice}
@@ -501,4 +532,3 @@ const Editor: React.FC = () => {
 };
 
 export default Editor;
-

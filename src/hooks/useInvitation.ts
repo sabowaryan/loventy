@@ -1,3 +1,4 @@
+// src/hooks/useInvitation.ts
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -106,65 +107,65 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
         id: invitationData.id,
         title: invitationData.title,
         templateId: invitationData.template_id,
-        brideName: invitationData.bride_name || '',
-        groomName: invitationData.groom_name || '',
-        eventDate: invitationData.event_date || '',
-        eventTime: invitationData.event_time || '',
-        venue: invitationData.venue || '',
-        address: invitationData.address || '',
-        message: invitationData.message || '',
-        dressCode: invitationData.dress_code || '',
-        rsvpDate: invitationData.rsvp_deadline || '',
+        brideName: invitationData.bride_name,
+        groomName: invitationData.groom_name,
+        eventDate: invitationData.event_date, // Removed || ''
+        eventTime: invitationData.event_time, // Removed || ''
+        venue: invitationData.venue,
+        address: invitationData.address,
+        message: invitationData.message,
+        dressCode: invitationData.dress_code,
+        rsvpDate: invitationData.rsvp_deadline, // Removed || ''
         status: invitationData.status as 'draft' | 'published' | 'sent' | 'archived',
 
         // Informations de contact
-        phoneContact: invitationData.contact_phone || '',
-        emailContact: invitationData.contact_email || '',
-        weddingWebsite: invitationData.wedding_website || '',
-        registryLink: invitationData.registry_link || '',
-        additionalInfo: invitationData.additional_info || '',
+        phoneContact: invitationData.contact_phone,
+        emailContact: invitationData.contact_email,
+        weddingWebsite: invitationData.wedding_website,
+        registryLink: invitationData.registry_link,
+        additionalInfo: invitationData.additional_info,
 
         // Nouveaux champs
-        announcementTitle: invitationData.announcement_title || '',
-        formalMessageIntro: invitationData.formal_message_intro || '',
-        hostName: invitationData.host_name || '',
-        contactPersonName: invitationData.contact_person_name || '',
+        announcementTitle: invitationData.announcement_title,
+        formalMessageIntro: invitationData.formal_message_intro,
+        hostName: invitationData.host_name,
+        contactPersonName: invitationData.contact_person_name,
 
         // Informations de transport
-        parkingInfo: invitationData.parking_info || '',
-        publicTransportInfo: invitationData.public_transport_info || '',
-        shuttleInfo: invitationData.shuttle_info || '',
+        parkingInfo: invitationData.parking_info,
+        publicTransportInfo: invitationData.public_transport_info,
+        shuttleInfo: invitationData.shuttle_info,
 
         // Hébergement
-        accommodationSuggestions: invitationData.accommodation_suggestions || [],
-        preferredHotelName: invitationData.preferred_hotel_name || '',
-        preferredHotelCode: invitationData.preferred_hotel_code || '',
+        accommodationSuggestions: invitationData.accommodation_suggestions,
+        preferredHotelName: invitationData.preferred_hotel_name,
+        preferredHotelCode: invitationData.preferred_hotel_code,
 
         // Politiques
         childrenPolicy: invitationData.children_policy as 'welcome' | 'not_admitted' | 'limited',
-        giftPolicy: invitationData.gift_policy || '',
+        giftPolicy: invitationData.gift_policy,
 
         // Cagnotte lune de miel
-        honeymoonFundEnabled: invitationData.honeymoon_fund_enabled || false,
-        honeymoonFundMessage: invitationData.honeymoon_fund_message || '',
-        honeymoonFundTargetAmount: invitationData.honeymoon_fund_target_amount || 0,
+        honeymoonFundEnabled: invitationData.honeymoon_fund_enabled,
+        honeymoonFundMessage: invitationData.honeymoon_fund_message,
+        honeymoonFundTargetAmount: invitationData.honeymoon_fund_target_amount,
 
         // Message du couple
-        coupleMessageType: invitationData.couple_message_type as 'video' | 'audio' | 'text' || 'text',
-        coupleMessageContent: invitationData.couple_message_content || '',
-        coupleValuesStatement: invitationData.couple_values_statement || '',
-        coupleQuote: invitationData.couple_quote || '',
+        coupleMessageType: invitationData.couple_message_type as 'video' | 'audio' | 'text',
+        coupleMessageContent: invitationData.couple_message_content,
+        coupleValuesStatement: invitationData.couple_values_statement,
+        coupleQuote: invitationData.couple_quote,
 
         // Musique et divertissement
-        playlistUrl: invitationData.playlist_url || '',
-        allowSongSuggestions: invitationData.allow_song_suggestions || false,
+        playlistUrl: invitationData.playlist_url,
+        allowSongSuggestions: invitationData.allow_song_suggestions,
 
         // Fonctionnalités interactives
-        countdownEnabled: invitationData.countdown_enabled !== false, // default true
-        quizEnabled: invitationData.quiz_enabled || false,
-        socialWallEnabled: invitationData.social_wall_enabled || false,
-        socialWallModerationEnabled: invitationData.social_wall_moderation_enabled !== false, // default true
-        virtualKeepsakeEnabled: invitationData.virtual_keepsake_enabled || false
+        countdownEnabled: invitationData.countdown_enabled,
+        quizEnabled: invitationData.quiz_enabled,
+        socialWallEnabled: invitationData.social_wall_enabled,
+        socialWallModerationEnabled: invitationData.social_wall_moderation_enabled,
+        virtualKeepsakeEnabled: invitationData.virtual_keepsake_enabled
       };
 
       // Mettre à jour l'état
@@ -198,17 +199,20 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       // Convertir les données du format ExtendedInvitationData au format de la base de données
       const dbUpdates: any = {};
 
+      // Helper to convert empty strings to null for date/time fields
+      const toNullIfEmpty = (value: any) => (value === '' ? null : value);
+
       // Mapper les champs
       if (updates.title !== undefined) dbUpdates.title = updates.title;
       if (updates.brideName !== undefined) dbUpdates.bride_name = updates.brideName;
       if (updates.groomName !== undefined) dbUpdates.groom_name = updates.groomName;
-      if (updates.eventDate !== undefined) dbUpdates.event_date = updates.eventDate;
-      if (updates.eventTime !== undefined) dbUpdates.event_time = updates.eventTime;
+      if (updates.eventDate !== undefined) dbUpdates.event_date = toNullIfEmpty(updates.eventDate);
+      if (updates.eventTime !== undefined) dbUpdates.event_time = toNullIfEmpty(updates.eventTime);
       if (updates.venue !== undefined) dbUpdates.venue = updates.venue;
       if (updates.address !== undefined) dbUpdates.address = updates.address;
       if (updates.message !== undefined) dbUpdates.message = updates.message;
       if (updates.dressCode !== undefined) dbUpdates.dress_code = updates.dressCode;
-      if (updates.rsvpDate !== undefined) dbUpdates.rsvp_deadline = updates.rsvpDate;
+      if (updates.rsvpDate !== undefined) dbUpdates.rsvp_deadline = toNullIfEmpty(updates.rsvpDate);
       if (updates.status !== undefined) dbUpdates.status = updates.status;
 
       // Informations de contact

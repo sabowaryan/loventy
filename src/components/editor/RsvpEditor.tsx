@@ -405,7 +405,7 @@ const RsvpEditor: React.FC<RsvpEditorProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Options</label>
                 <div className="space-y-2">
-                  {newQuestion.options.choices.map((choice, index) => (
+                  {newQuestion.options.choices.map((choice: string, index: number) => (
                     <div key={index} className="flex items-center space-x-2">
                       <input
                         type="text"

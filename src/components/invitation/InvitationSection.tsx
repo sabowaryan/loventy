@@ -49,7 +49,7 @@ const InvitationSection: React.FC<InvitationSectionProps> = ({
     // If design.backgroundOpacity is 0.1, overlay is almost opaque black (image almost hidden by black)
     const overlayOpacity = 1 - design.backgroundOpacity;
     backgroundLayers.push(`linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), url(${design.backgroundImageUrl})`);
-    backgroundSizes.push('cover');
+    backgroundSizes.push(design.backgroundFit || 'cover'); // Use backgroundFit, default to 'cover'
     backgroundPositions.push('center');
     backgroundRepeats.push('no-repeat');
   }
@@ -97,3 +97,4 @@ const InvitationSection: React.FC<InvitationSectionProps> = ({
 };
 
 export default InvitationSection;
+

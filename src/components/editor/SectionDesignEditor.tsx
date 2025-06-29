@@ -234,6 +234,21 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
                 <span>Opaque</span>
               </div>
             </div>
+
+            {/* Mode d'ajustement de l'image de fond */}
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-[#131837] mb-2">
+                Mode d'ajustement
+              </label>
+              <select
+                value={designSettings.sections[activeSection].backgroundFit || 'cover'}
+                onChange={(e) => updateSectionDesign(activeSection, 'backgroundFit', e.target.value as 'cover' | 'contain')}
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
+              >
+                <option value="cover">Couvrir</option>
+                <option value="contain">Contenir</option>
+              </select>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -372,6 +387,21 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
                   </button>
                 </div>
               </div>
+
+              {/* Mode d'ajustement de l'image du couple */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-[#131837] mb-2">
+                  Mode d'ajustement
+                </label>
+                <select
+                  value={designSettings.sections[activeSection].coupleImageFit || 'cover'}
+                  onChange={(e) => updateSectionDesign(activeSection, 'coupleImageFit', e.target.value as 'cover' | 'contain')}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
+                >
+                  <option value="cover">Couvrir</option>
+                  <option value="contain">Contenir</option>
+                </select>
+              </div>
             </div>
           ) : (
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#D4A5A5] transition-colors">
@@ -465,3 +495,4 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
 };
 
 export default SectionDesignEditor;
+

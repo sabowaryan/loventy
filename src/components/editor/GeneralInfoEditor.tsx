@@ -82,7 +82,7 @@ const GeneralInfoEditor: React.FC<GeneralInfoEditorProps> = ({ invitationData, o
             <input
               type="date"
               value={invitationData.eventDate}
-              onChange={(e) => onInputChange('eventDate', e.target.value)}
+              onChange={(e) => onInputChange('eventDate', e.target.value === '' ? null : e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
             />
           </div>
@@ -132,7 +132,7 @@ const GeneralInfoEditor: React.FC<GeneralInfoEditorProps> = ({ invitationData, o
             <input
               type="date"
               value={invitationData.rsvpDate}
-              onChange={(e) => onInputChange('rsvpDate', e.target.value)}
+              onChange={(e) => onInputChange('rsvpDate', e.target.value === '' ? null : e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
             />
           </div>

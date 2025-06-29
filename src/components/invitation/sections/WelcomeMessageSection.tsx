@@ -67,6 +67,19 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
           </div>
         )}
 
+        {/* Formal message intro if available */}
+        {invitationData.formalMessageIntro && (
+          <p
+            className="text-lg"
+            style={{
+              fontFamily: fontFamily.body,
+              color: colorPalette.textColor
+            }}
+          >
+            {invitationData.formalMessageIntro}
+          </p>
+        )}
+
         {/* Welcome Message */}
         <div>
           <h2
@@ -147,3 +160,4 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
 };
 
 export default WelcomeMessageSection;
+

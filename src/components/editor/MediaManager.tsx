@@ -1,3 +1,4 @@
+// src/components/editor/MediaManager.tsx
 import React, { useState, useMemo } from 'react';
 import { 
   Upload, 
@@ -21,6 +22,8 @@ interface MediaManagerProps {
   media: MediaDetails[]; // Now receives actual media data
   onRefreshMedia: () => void;
   onDeleteMedia: (mediaId: string, filePath: string) => Promise<boolean>; // New prop for deleting media
+  designSettings: any; // Add designSettings prop
+  onDesignChange: (newSettings: any) => void; // Add onDesignChange prop
 }
 
 const MediaManager: React.FC<MediaManagerProps> = ({ 
@@ -29,7 +32,9 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   invitationId,
   media = [],
   onRefreshMedia,
-  onDeleteMedia
+  onDeleteMedia,
+  designSettings, // Destructure designSettings
+  onDesignChange // Destructure onDesignChange
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadType, setUploadType] = useState<'gallery' | 'background' | 'couple' | 'decorative'>('gallery');
@@ -114,6 +119,18 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   const closeImageModal = () => {
     setSelectedImage(null);
     setShowImageModal(false);
+  };
+
+  // Handle predefined image selection
+  const handlePredefinedImageSelect = (imageUrl: string, imageType: 'background' | 'couple') => {
+    const newDesignSettings = { ...designSettings };
+    if (imageType === 'background') {
+      newDesignSettings.sections.hero.backgroundImageUrl = imageUrl;
+      newDesignSettings.sections.hero.backgroundPattern = null; // Remove pattern if image is selected
+    } else if (imageType === 'couple') {
+      newDesignSettings.sections.hero.coupleImageUrl = imageUrl;
+    }
+    onDesignChange(newDesignSettings);
   };
 
   return (
@@ -330,6 +347,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
           ].map((image, index) => (
             <button
               key={index}
+              onClick={() => handlePredefinedImageSelect(image.url, 'background')} // Use as background image
               className="relative group overflow-hidden rounded-lg border-2 border-gray-200 hover:border-[#D4A5A5] transition-colors"
             >
               <img
@@ -337,7 +355,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                 alt={image.name}
                 className="w-full h-24 object-cover group-hover:scale-110 transition-transform duration-200"
               />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity duration-200 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity duration-200 flex items-center justify-center">
                 <span className="text-white text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   {image.name}
                 </span>

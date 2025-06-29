@@ -1,3 +1,4 @@
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -152,16 +153,11 @@
   }
 
   /* Amélioration des focus states avec la nouvelle palette */
-  .focus-visible:focus {
-    outline: 2px solid #E16939;
-    outline-offset: 2px;
-  }
-
-  /* Transitions fluides pour les inputs */
   input:focus, textarea:focus, select:focus {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(225, 105, 57, 0.15);
-    border-color: #E16939;
+    box-shadow: 0 6px 16px rgba(225, 105, 57, 0.3); /* More pronounced shadow */
+    border-color: var(--secondary); /* Use CSS variable for consistency */
+    border-width: 2px; /* Thicker border */
   }
 
   /* Amélioration des boutons */

@@ -150,7 +150,7 @@ const GeneralInfoEditor: React.FC<GeneralInfoEditorProps> = ({ invitationData, o
             </label>
             <input
               type="text"
-              value={invitationData.dressCode}
+              value={invitationData.dressCode || ''}
               onChange={(e) => onInputChange('dressCode', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
               placeholder="Tenue de soirée souhaitée"

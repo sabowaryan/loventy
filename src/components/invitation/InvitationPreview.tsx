@@ -66,6 +66,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
         invitationData={invitationData} 
         designSettings={designSettings} 
         guestName={guestDetails?.name}
+        design={designSettings.sections.hero} // Pass section-specific design
       />
     },
     {
@@ -75,6 +76,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
         designSettings={designSettings} 
         guestName={guestDetails?.name}
         guestTable={guestDetails?.table_name}
+        design={designSettings.sections.welcome} // Pass section-specific design
       />
     },
     {
@@ -83,6 +85,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
         invitationData={invitationData} 
         designSettings={designSettings}
         events={events}
+        design={designSettings.sections.program} // Pass section-specific design
       />
     },
     {
@@ -90,6 +93,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       component: <HoneymoonFundSection 
         invitationData={invitationData} 
         designSettings={designSettings}
+        design={designSettings.sections.honeymoon} // Pass section-specific design
       />
     },
     {
@@ -97,6 +101,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       component: <MusicSection 
         invitationData={invitationData} 
         designSettings={designSettings}
+        design={designSettings.sections.music} // Pass section-specific design
       />
     },
     {
@@ -104,6 +109,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       component: <InteractiveFeaturesSection 
         invitationData={invitationData} 
         designSettings={designSettings}
+        design={designSettings.sections.interactive} // Pass section-specific design
       />
     },
     {
@@ -111,6 +117,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       component: <ContactLinksSection 
         invitationData={invitationData} 
         designSettings={designSettings}
+        design={designSettings.sections.contact} // Pass section-specific design
       />
     },
     {
@@ -118,6 +125,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       component: <PoliciesSection 
         invitationData={invitationData} 
         designSettings={designSettings}
+        design={designSettings.sections.policies} // Pass section-specific design
       />
     },
     {
@@ -125,6 +133,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       component: <AdditionalInfoSection 
         invitationData={invitationData} 
         designSettings={designSettings}
+        design={designSettings.sections.additional} // Pass section-specific design
       />
     },
     {
@@ -134,6 +143,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
         designSettings={designSettings}
         guestDetails={guestDetails}
         onRsvpSubmit={onRsvpSubmit}
+        design={designSettings.sections.rsvp} // Pass section-specific design
       />
     }
   ];

@@ -427,7 +427,8 @@ export const defaultDesignSettings = {
       backgroundOpacity: 0.5,
       coupleImageUrl: null,
       coupleImageShape: 'original',
-      visible: true
+      visible: true,
+       decorativeElementUrl: null // Nouvelle valeur par défaut
     },
     details: {
       style: 'classic',

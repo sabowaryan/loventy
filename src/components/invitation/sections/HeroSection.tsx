@@ -62,12 +62,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         )}
 
-        {/* Heart Icon */}
+        {/* Decorative Element (Heart Icon or Custom Image) */}
         <div className="flex justify-center">
-          <Heart
-            className="h-10 w-10 fill-current animate-pulse"
-            style={{ color: colorPalette.primary }}
-          />
+          {design.decorativeElementUrl ? (
+            <img
+              src={design.decorativeElementUrl}
+              alt="Decorative Element"
+              className="h-10 w-10 animate-pulse"
+              style={{ color: colorPalette.primary }} // Apply color if it's an SVG that can be tinted
+            />
+          ) : (
+            <Heart
+              className="h-10 w-10 fill-current animate-pulse"
+              style={{ color: colorPalette.primary }}
+            />
+          )}
         </div>
 
         {/* Names */}
@@ -130,4 +139,3 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
-

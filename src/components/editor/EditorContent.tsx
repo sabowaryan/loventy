@@ -218,12 +218,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
               comments={comments}
               onToggleEnabled={onToggleSocialWall}
               onToggleModeration={onToggleModeration}
-              onApprovePost={onApprovePost} // FIX: Use the prop received by EditorContent
-              onRejectPost={onRejectPost}   // FIX: Use the prop received by EditorContent
-              onDeletePost={onDeletePost}   // FIX: Use the prop received by EditorContent
-              onApproveComment={onApproveComment} // FIX: Use the prop received by EditorContent
-              onRejectComment={onRejectComment}   // FIX: Use the prop received by EditorContent
-              onDeleteComment={onDeleteComment}   // FIX: Use the prop received by EditorContent
+              onApprovePost={approvePost} // FIX: Use the prop received by EditorContent
+              onRejectPost={rejectPost}   // FIX: Use the prop received by EditorContent
+              onDeletePost={deletePost}   // FIX: Use the prop received by EditorContent
+              onApproveComment={approveComment} // FIX: Use the prop received by EditorContent
+              onRejectComment={rejectComment}   // FIX: Use the prop received by EditorContent
+              onDeleteComment={deleteComment}   // FIX: Use the prop received by EditorContent
             />
           );
         default:
@@ -251,13 +251,6 @@ const EditorContent: React.FC<EditorContentProps> = ({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-[#131837] mb-6">
-        {activeTab === 'content' && 'Contenu de l\'invitation'}
-        {activeTab === 'design' && 'Design et apparence'}
-        {activeTab === 'interactive' && 'Fonctionnalités interactives'}
-        {activeTab === 'settings' && 'Paramètres avancés'}
-      </h2>
-
       {renderContent()}
     </div>
   );

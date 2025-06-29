@@ -22,7 +22,7 @@ import MusicEditor from './MusicEditor';
 import QuizEditor from './QuizEditor';
 import SocialWallEditor from './SocialWallEditor';
 import MediaManager from './MediaManager';
-import DesignControls from '../SectionDesignEditor'; /
+import SectionDesignEditor from '../SectionDesignEditor'; /
 import AdvancedSettings from './AdvancedSettings';
 import ThemeEditor from './ThemeEditor';
 import LayoutEditor from './LayoutEditor';
@@ -165,7 +165,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
           );
         case 'section-design': // New section for detailed section design
           return (
-            <DesignControls
+            <SectionDesignEditor
               designSettings={designSettings}
               onDesignChange={onDesignChange}
               onImageUpload={onImageUpload}

@@ -62,6 +62,8 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
                 src={design.coupleImageUrl}
                 alt="Couple"
                 className="w-full h-full object-cover"
+                width={design.coupleImageWidth || undefined} // Apply width
+                height={design.coupleImageHeight || undefined} // Apply height
               />
             </div>
           </div>
@@ -160,4 +162,3 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
 };
 
 export default WelcomeMessageSection;
-

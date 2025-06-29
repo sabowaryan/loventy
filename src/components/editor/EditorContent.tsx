@@ -6,7 +6,8 @@ import {
   InvitationQuiz,
   QuizQuestion,
   SocialWallPost,
-  SocialWallComment
+  SocialWallComment,
+  MediaDetails
 } from '../../types/models';
 
 // Import all editor components
@@ -22,7 +23,7 @@ import MusicEditor from './MusicEditor';
 import QuizEditor from './QuizEditor';
 import SocialWallEditor from './SocialWallEditor';
 import MediaManager from './MediaManager';
-import SectionDesignEditor from './SectionDesignEditor'; // Import the new component
+import SectionDesignEditor from './SectionDesignEditor';
 import AdvancedSettings from './AdvancedSettings';
 import ThemeEditor from './ThemeEditor';
 import LayoutEditor from './LayoutEditor';
@@ -36,6 +37,7 @@ interface EditorContentProps {
   questions: QuizQuestion[];
   posts: SocialWallPost[];
   comments: SocialWallComment[];
+  media: MediaDetails[]; // New prop for media
   onInputChange: (field: keyof ExtendedInvitationData, value: any) => void;
   onAddEvent: (event: Partial<InvitationEvent>) => void;
   onUpdateEvent: (id: string, event: Partial<InvitationEvent>) => void;
@@ -56,6 +58,7 @@ interface EditorContentProps {
   onApproveComment: (id: string) => void;
   onRejectComment: (id: string) => void;
   onDeleteComment: (id: string) => void;
+  onDeleteMedia: (mediaId: string, filePath: string) => Promise<boolean>; // New prop for deleting media
   designSettings: InvitationDesignSettings;
   onDesignChange: (newSettings: InvitationDesignSettings) => void;
   onImageUpload: (sectionId: string, imageType: 'background' | 'couple', file: File) => Promise<string>;
@@ -73,6 +76,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
   questions,
   posts,
   comments,
+  media, // Destructure media
   onInputChange,
   onAddEvent,
   onUpdateEvent,
@@ -93,6 +97,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
   onApproveComment,
   onRejectComment,
   onDeleteComment,
+  onDeleteMedia, // Destructure onDeleteMedia
   designSettings,
   onDesignChange,
   onImageUpload,
@@ -159,8 +164,9 @@ const EditorContent: React.FC<EditorContentProps> = ({
               onImageUpload={onImageUpload}
               isUploading={isUploading}
               invitationId={invitation.id}
-              media={[]} // You might want to pass actual media data here if available
-              onRefreshMedia={() => {/* Refresh media */}}
+              media={media} // Pass media data
+              onDeleteMedia={onDeleteMedia} // Pass deleteMedia function
+              onRefreshMedia={() => {/* Refresh media - handled by useInvitation hook */}}
             />
           );
         case 'section-design': // New section for detailed section design

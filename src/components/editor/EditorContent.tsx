@@ -159,6 +159,15 @@ const EditorContent: React.FC<EditorContentProps> = ({
               onDesignChange={onDesignChange}
             />
           );
+        case 'section-design': // New section for detailed section design
+          return (
+            <SectionDesignEditor
+              designSettings={designSettings}
+              onDesignChange={onDesignChange}
+              onImageUpload={onImageUpload}
+              isUploading={isUploading}
+            />
+          );
         case 'media':
           return (
             <MediaManager
@@ -168,15 +177,6 @@ const EditorContent: React.FC<EditorContentProps> = ({
               media={media} // Pass media data
               onDeleteMedia={onDeleteMedia} // Pass deleteMedia function
               onRefreshMedia={() => {/* Refresh media - handled by useInvitation hook */}}
-            />
-          );
-        case 'section-design': // New section for detailed section design
-          return (
-            <SectionDesignEditor
-              designSettings={designSettings}
-              onDesignChange={onDesignChange}
-              onImageUpload={onImageUpload}
-              isUploading={isUploading}
             />
           );
         default:
@@ -203,10 +203,10 @@ const EditorContent: React.FC<EditorContentProps> = ({
               onAddQuiz={onAddQuiz}
               onUpdateQuiz={onUpdateQuiz}
               onDeleteQuiz={onDeleteQuiz}
-              onAddQuestion={addQuestion}
-              onUpdateQuestion={updateQuestion}
-              onDeleteQuestion={deleteQuestion}
-              onReorderQuestions={reorderQuestions}
+              onAddQuestion={onAddQuestion}
+              onUpdateQuestion={onUpdateQuestion}
+              onDeleteQuestion={onDeleteQuestion}
+              onReorderQuestions={onReorderQuestions}
             />
           );
         case 'social':
@@ -257,4 +257,3 @@ const EditorContent: React.FC<EditorContentProps> = ({
 };
 
 export default EditorContent;
-

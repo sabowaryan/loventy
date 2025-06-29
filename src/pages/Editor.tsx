@@ -338,9 +338,19 @@ const Editor: React.FC = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Sidebar - Navigation */}
-          <div className="xl:col-span-2">
+        {/* Horizontal Sidebar for large screens */}
+        <div className="hidden lg:block mb-6">
+          <EditorSidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Sidebar - Navigation (hidden on large screens) */}
+          <div className="lg:hidden lg:col-span-2">
             <EditorSidebar
               activeTab={activeTab}
               setActiveTab={setActiveTab}
@@ -350,7 +360,7 @@ const Editor: React.FC = () => {
           </div>
 
           {/* Main Content - Editor */}
-          <div className="xl:col-span-7">
+          <div className="lg:col-span-7">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                 <EditorContent
@@ -394,7 +404,7 @@ const Editor: React.FC = () => {
           </div>
 
           {/* Preview Panel */}
-          <div className="xl:col-span-3">
+          <div className="lg:col-span-3">
             <div className="sticky top-24">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-4">

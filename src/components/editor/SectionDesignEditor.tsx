@@ -297,6 +297,8 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
               key={section.id}
               onClick={() => setActiveSection(section.id as typeof activeSection)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                designSettings.sections[section.id as keyof InvitationDesignSettings['sections']].visible === false ? 'opacity-50' : ''
+              } ${
                 activeSection === section.id
                   ? 'bg-[#D4A5A5] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -530,6 +532,8 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
                     designSettings.sections[activeSection].coupleImageShape === 'heart' ? 'heart-shape' : ''
                   }`}
                   style={{ objectFit: designSettings.sections[activeSection].coupleImageFit || 'cover' }}
+                  width={designSettings.sections[activeSection].coupleImageWidth || undefined}
+                  height={designSettings.sections[activeSection].coupleImageHeight || undefined}
                 />
                 <button
                   onClick={() => handleRemoveImage(activeSection, 'couple')}
@@ -681,6 +685,8 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
                   src={designSettings.sections[activeSection].decorativeElementUrl}
                   alt="Decorative Element"
                   className="h-24 w-24 object-contain"
+                  width={designSettings.sections[activeSection].decorativeElementWidth || undefined}
+                  height={designSettings.sections[activeSection].decorativeElementHeight || undefined}
                 />
                 <button
                   onClick={() => handleRemoveImage(activeSection, 'decorative')}

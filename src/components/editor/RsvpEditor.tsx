@@ -146,7 +146,7 @@ const RsvpEditor: React.FC<RsvpEditorProps> = ({
             <input
               type="date"
               value={invitationData.rsvpDate}
-              onChange={(e) => onInputChange('rsvpDate', e.target.value)}
+              onChange={(e) => onInputChange('rsvpDate', e.target.value === '' ? null : e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
             />
           </div>

@@ -1,4 +1,3 @@
-// src/components/invitation/sections/HeroSection.tsx
 import React from 'react';
 import { Heart, Calendar } from 'lucide-react';
 import { ExtendedInvitationData, InvitationDesignSettings, SectionDesign } from '../../../types/models';
@@ -49,6 +48,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 alt="Couple"
                 className="w-full h-full" // Removed object-cover here
                 style={{ objectFit: design.coupleImageFit || 'cover' }} // Apply objectFit here
+                width={design.coupleImageWidth || undefined} // Apply width
+                height={design.coupleImageHeight || undefined} // Apply height
               />
             </div>
           </div>
@@ -72,6 +73,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               alt="Decorative Element"
               className="h-10 w-10 animate-pulse"
               style={{ color: colorPalette.primary }} // Apply color if it's an SVG that can be tinted
+              width={design.decorativeElementWidth || undefined} // Apply width
+              height={design.decorativeElementHeight || undefined} // Apply height
             />
           ) : (
             <Heart
@@ -141,4 +144,3 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
-

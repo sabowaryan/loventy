@@ -1,7 +1,7 @@
 import React from 'react';
-import { 
-  ExtendedInvitationData, 
-  InvitationDesignSettings, 
+import {
+  ExtendedInvitationData,
+  InvitationDesignSettings,
   InvitationEvent,
   InvitationQuiz,
   QuizQuestion,
@@ -22,7 +22,7 @@ import MusicEditor from './MusicEditor';
 import QuizEditor from './QuizEditor';
 import SocialWallEditor from './SocialWallEditor';
 import MediaManager from './MediaManager';
-import DesignControls from '../invitation/DesignControls';
+import DesignControls from '../invitation/DesignControls'; // This is the old component, will be removed from default
 import AdvancedSettings from './AdvancedSettings';
 import ThemeEditor from './ThemeEditor';
 import LayoutEditor from './LayoutEditor';
@@ -113,7 +113,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
           return <WelcomeMessageEditor invitationData={invitation} onInputChange={onInputChange} />;
         case 'events':
           return (
-            <EventsEditor 
+            <EventsEditor
               events={events}
               onAddEvent={onAddEvent}
               onUpdateEvent={onUpdateEvent}
@@ -135,46 +135,54 @@ const EditorContent: React.FC<EditorContentProps> = ({
           return <GeneralInfoEditor invitationData={invitation} onInputChange={onInputChange} />;
       }
     }
-    
+
     // Design tab
     if (activeTab === 'design') {
       switch (activeSection) {
         case 'theme':
           return (
-            <ThemeEditor 
+            <ThemeEditor
               designSettings={designSettings}
               onDesignChange={onDesignChange}
             />
           );
         case 'layout':
           return (
-            <LayoutEditor 
+            <LayoutEditor
               designSettings={designSettings}
               onDesignChange={onDesignChange}
             />
           );
         case 'media':
           return (
-            <MediaManager 
+            <MediaManager
               onImageUpload={onImageUpload}
               isUploading={isUploading}
               invitationId={invitation.id}
-              media={[]}
+              media={[]} // You might want to pass actual media data here if available
               onRefreshMedia={() => {/* Refresh media */}}
             />
           );
-        default:
+        case 'section-design': // New section for detailed section design
           return (
-            <DesignControls 
+            <DesignControls
               designSettings={designSettings}
               onDesignChange={onDesignChange}
               onImageUpload={onImageUpload}
               isUploading={isUploading}
             />
           );
+        default:
+          // Fallback to theme editor if no specific section is selected for design
+          return (
+            <ThemeEditor
+              designSettings={designSettings}
+              onDesignChange={onDesignChange}
+            />
+          );
       }
     }
-    
+
     // Interactive tab
     if (activeTab === 'interactive') {
       switch (activeSection) {
@@ -182,7 +190,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
           return <MusicEditor invitationData={invitation} onInputChange={onInputChange} />;
         case 'quiz':
           return (
-            <QuizEditor 
+            <QuizEditor
               quizzes={quizzes}
               questions={questions}
               onAddQuiz={onAddQuiz}
@@ -196,30 +204,30 @@ const EditorContent: React.FC<EditorContentProps> = ({
           );
         case 'social':
           return (
-            <SocialWallEditor 
+            <SocialWallEditor
               enabled={invitation.socialWallEnabled}
               moderationEnabled={invitation.socialWallModerationEnabled}
               posts={posts}
               comments={comments}
               onToggleEnabled={onToggleSocialWall}
               onToggleModeration={onToggleModeration}
-              onApprovePost={onApprovePost}
-              onRejectPost={onRejectPost}
-              onDeletePost={onDeletePost}
-              onApproveComment={onApproveComment}
-              onRejectComment={onRejectComment}
-              onDeleteComment={onDeleteComment}
+              onApprovePost={approvePost}
+              onRejectPost={rejectPost}
+              onDeletePost={deletePost}
+              onApproveComment={approveComment}
+              onRejectComment={rejectComment}
+              onDeleteComment={deleteComment}
             />
           );
         default:
           return <MusicEditor invitationData={invitation} onInputChange={onInputChange} />;
       }
     }
-    
+
     // Settings tab
     if (activeTab === 'settings') {
       return (
-        <AdvancedSettings 
+        <AdvancedSettings
           invitationData={invitation}
           onPublish={onPublish}
           onSendInvitation={onSendInvitation}
@@ -229,7 +237,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
         />
       );
     }
-    
+
     // Default fallback
     return <GeneralInfoEditor invitationData={invitation} onInputChange={onInputChange} />;
   };
@@ -242,7 +250,7 @@ const EditorContent: React.FC<EditorContentProps> = ({
         {activeTab === 'interactive' && 'Fonctionnalités interactives'}
         {activeTab === 'settings' && 'Paramètres avancés'}
       </h2>
-      
+
       {renderContent()}
     </div>
   );

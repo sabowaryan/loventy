@@ -371,24 +371,7 @@ const Editor: React.FC = () => {
                   </h3>
 
                   {/* Mobile Device Selector */}
-                  <div className="lg:hidden flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-                    {[
-                      { id: 'desktop', icon: Monitor },
-                      { id: 'mobile', icon: Smartphone }
-                    ].map(({ id, icon: Icon }) => (
-                      <button
-                        key={id}
-                        onClick={() => setPreviewDevice(id as any)}
-                        className={`p-1 rounded transition-colors ${
-                          previewDevice === id
-                            ? 'bg-white text-[#D4A5A5] shadow-sm'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        <Icon className="h-3 w-3" />
-                      </button>
-                    ))}
-                  </div>
+                  {/* Removed device selector buttons from here */}
                 </div>
 
                 <div className="overflow-hidden rounded-lg flex-grow">
@@ -456,4 +439,3 @@ const Editor: React.FC = () => {
 };
 
 export default Editor;
-

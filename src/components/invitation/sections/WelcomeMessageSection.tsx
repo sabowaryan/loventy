@@ -1,32 +1,31 @@
 import React from 'react';
 import { MessageSquare, User } from 'lucide-react';
-import { ExtendedInvitationData, InvitationDesignSettings } from '../../../types/models';
+import { ExtendedInvitationData, InvitationDesignSettings, SectionDesign } from '../../../types/models';
 import InvitationSection from '../InvitationSection';
 import { colorPalettes, fontFamilies } from '../../../utils/designConstants';
 
 interface WelcomeMessageSectionProps {
   invitationData: ExtendedInvitationData;
-  designSettings: InvitationDesignSettings;
+  designSettings: InvitationDesignSettings; // Keep for global design settings
   guestName?: string;
   guestTable?: string;
+  design: SectionDesign; // New prop for section-specific design
 }
 
-const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({ 
-  invitationData, 
-  designSettings,
+const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
+  invitationData,
+  designSettings, // Keep for global design settings like color palette and font
   guestName,
-  guestTable
+  guestTable,
+  design // Use this for section-specific design properties
 }) => {
   // Récupérer la palette de couleurs et la famille de polices
   const colorPalette = colorPalettes.find(p => p.id === designSettings.colorPaletteId) || colorPalettes[0];
   const fontFamily = fontFamilies.find(f => f.id === designSettings.fontFamilyId) || fontFamilies[0];
-  
-  // Récupérer les paramètres de design spécifiques à cette section
-  const sectionDesign = designSettings.sections.welcome;
 
   return (
-    <InvitationSection 
-      design={sectionDesign} 
+    <InvitationSection
+      design={design} // Pass the section-specific design
       colorPaletteId={designSettings.colorPaletteId}
       id="welcome-section"
       className="min-h-[50vh] flex items-center justify-center"
@@ -34,9 +33,9 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
       <div className="text-center space-y-6">
         {/* Host Name if available */}
         {invitationData.hostName && (
-          <div 
+          <div
             className="text-lg font-medium"
-            style={{ 
+            style={{
               fontFamily: fontFamily.heading,
               color: colorPalette.accent
             }}
@@ -44,47 +43,47 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
             {invitationData.hostName}
           </div>
         )}
-        
+
         {/* Couple Image */}
-        {sectionDesign.coupleImageUrl && (
+        {design.coupleImageUrl && (
           <div className="flex justify-center mb-6">
-            <div 
+            <div
               className={`${
-                sectionDesign.coupleImageShape === 'rounded' ? 'rounded-xl' :
-                sectionDesign.coupleImageShape === 'circle' ? 'rounded-full' :
-                sectionDesign.coupleImageShape === 'heart' ? 'heart-shape' : ''
+                design.coupleImageShape === 'rounded' ? 'rounded-xl' :
+                design.coupleImageShape === 'circle' ? 'rounded-full' :
+                design.coupleImageShape === 'heart' ? 'heart-shape' : ''
               } overflow-hidden w-32 h-32 md:w-40 md:h-40 border-4`}
-              style={{ 
+              style={{
                 borderColor: colorPalette.primary,
                 boxShadow: `0 10px 25px -5px ${colorPalette.primary}40`
               }}
             >
-              <img 
-                src={sectionDesign.coupleImageUrl} 
-                alt="Couple" 
+              <img
+                src={design.coupleImageUrl}
+                alt="Couple"
                 className="w-full h-full object-cover"
               />
             </div>
           </div>
         )}
-        
+
         {/* Welcome Message */}
         <div>
-          <h2 
+          <h2
             className="text-2xl md:text-3xl font-bold mb-4"
-            style={{ 
+            style={{
               fontFamily: fontFamily.heading,
               color: colorPalette.primary
             }}
           >
             Bienvenue
           </h2>
-          
+
           {/* Guest-specific welcome if available */}
           {guestName && (
-            <div 
+            <div
               className="mb-4 p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}20`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
@@ -100,12 +99,12 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
               )}
             </div>
           )}
-          
+
           {/* Main message */}
           {invitationData.message && (
-            <div 
+            <div
               className="text-lg leading-relaxed"
-              style={{ 
+              style={{
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
@@ -114,12 +113,12 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Couple Quote if available */}
         {invitationData.coupleQuote && (
-          <blockquote 
+          <blockquote
             className="italic px-6 py-4 rounded-lg mx-auto max-w-md"
-            style={{ 
+            style={{
               backgroundColor: `${colorPalette.secondary}15`,
               fontFamily: fontFamily.body,
               color: colorPalette.textColor,
@@ -129,12 +128,12 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
             "{invitationData.coupleQuote}"
           </blockquote>
         )}
-        
+
         {/* Couple Values Statement if available */}
         {invitationData.coupleValuesStatement && (
-          <p 
+          <p
             className="text-sm"
-            style={{ 
+            style={{
               fontFamily: fontFamily.body,
               color: colorPalette.textColor
             }}

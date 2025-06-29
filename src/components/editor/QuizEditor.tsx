@@ -352,7 +352,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({
                                 <div>
                                   <label className="block text-sm font-medium text-gray-700 mb-1">Options</label>
                                   <div className="space-y-2">
-                                    {question.options.choices.map((choice, choiceIndex) => (
+                                    {question.options.choices.map((choice: string, choiceIndex: number) => (
                                       <div key={choiceIndex} className="flex items-center space-x-2">
                                         <input
                                           type="text"
@@ -423,7 +423,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
                                   >
                                     <option value="">Sélectionner la bonne réponse</option>
-                                    {question.options && question.options.choices && question.options.choices.map((choice, i) => (
+                                    {question.options && question.options.choices && question.options.choices.map((choice: string, i: number) => (
                                       <option key={i} value={choice}>{choice || `Option ${i+1}`}</option>
                                     ))}
                                   </select>
@@ -460,7 +460,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({
                                 
                                 {question.question_type === 'multiple_choice' && question.options && question.options.choices && (
                                   <div className="mt-2 space-y-1">
-                                    {question.options.choices.map((choice, i) => (
+                                    {question.options.choices.map((choice: string, i: number) => (
                                       <div key={i} className="flex items-center space-x-2">
                                         <div className={`w-3 h-3 rounded-full ${
                                           question.correct_answer === choice ? 'bg-green-500' : 'bg-gray-300'
@@ -627,7 +627,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Options</label>
                 <div className="space-y-2">
-                  {newQuestion.options && newQuestion.options.choices && newQuestion.options.choices.map((choice, index) => (
+                  {newQuestion.options && newQuestion.options.choices && newQuestion.options.choices.map((choice: string, index: number) => (
                     <div key={index} className="flex items-center space-x-2">
                       <input
                         type="text"
@@ -680,7 +680,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
                 >
                   <option value="">Sélectionner la bonne réponse</option>
-                  {newQuestion.options && newQuestion.options.choices && newQuestion.options.choices.map((choice, i) => (
+                  {newQuestion.options && newQuestion.options.choices && newQuestion.options.choices.map((choice: string, i: number) => (
                     <option key={i} value={choice}>{choice || `Option ${i+1}`}</option>
                   ))}
                 </select>

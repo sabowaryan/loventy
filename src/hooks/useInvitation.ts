@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  ExtendedInvitationData, 
-  InvitationEvent, 
-  InvitationQuiz, 
+import {
+  ExtendedInvitationData,
+  InvitationEvent,
+  InvitationQuiz,
   QuizQuestion,
   SocialWallPost,
   SocialWallComment
@@ -116,49 +116,49 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
         dressCode: invitationData.dress_code || '',
         rsvpDate: invitationData.rsvp_deadline || '',
         status: invitationData.status as 'draft' | 'published' | 'sent' | 'archived',
-        
+
         // Informations de contact
         phoneContact: invitationData.contact_phone || '',
         emailContact: invitationData.contact_email || '',
         weddingWebsite: invitationData.wedding_website || '',
         registryLink: invitationData.registry_link || '',
         additionalInfo: invitationData.additional_info || '',
-        
+
         // Nouveaux champs
         announcementTitle: invitationData.announcement_title || '',
         formalMessageIntro: invitationData.formal_message_intro || '',
         hostName: invitationData.host_name || '',
         contactPersonName: invitationData.contact_person_name || '',
-        
+
         // Informations de transport
         parkingInfo: invitationData.parking_info || '',
         publicTransportInfo: invitationData.public_transport_info || '',
         shuttleInfo: invitationData.shuttle_info || '',
-        
+
         // Hébergement
         accommodationSuggestions: invitationData.accommodation_suggestions || [],
         preferredHotelName: invitationData.preferred_hotel_name || '',
         preferredHotelCode: invitationData.preferred_hotel_code || '',
-        
+
         // Politiques
         childrenPolicy: invitationData.children_policy as 'welcome' | 'not_admitted' | 'limited',
         giftPolicy: invitationData.gift_policy || '',
-        
+
         // Cagnotte lune de miel
         honeymoonFundEnabled: invitationData.honeymoon_fund_enabled || false,
         honeymoonFundMessage: invitationData.honeymoon_fund_message || '',
         honeymoonFundTargetAmount: invitationData.honeymoon_fund_target_amount || 0,
-        
+
         // Message du couple
         coupleMessageType: invitationData.couple_message_type as 'video' | 'audio' | 'text' || 'text',
         coupleMessageContent: invitationData.couple_message_content || '',
         coupleValuesStatement: invitationData.couple_values_statement || '',
         coupleQuote: invitationData.couple_quote || '',
-        
+
         // Musique et divertissement
         playlistUrl: invitationData.playlist_url || '',
         allowSongSuggestions: invitationData.allow_song_suggestions || false,
-        
+
         // Fonctionnalités interactives
         countdownEnabled: invitationData.countdown_enabled !== false, // default true
         quizEnabled: invitationData.quiz_enabled || false,
@@ -210,49 +210,49 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       if (updates.dressCode !== undefined) dbUpdates.dress_code = updates.dressCode;
       if (updates.rsvpDate !== undefined) dbUpdates.rsvp_deadline = updates.rsvpDate;
       if (updates.status !== undefined) dbUpdates.status = updates.status;
-      
+
       // Informations de contact
       if (updates.phoneContact !== undefined) dbUpdates.contact_phone = updates.phoneContact;
       if (updates.emailContact !== undefined) dbUpdates.contact_email = updates.emailContact;
       if (updates.weddingWebsite !== undefined) dbUpdates.wedding_website = updates.weddingWebsite;
       if (updates.registryLink !== undefined) dbUpdates.registry_link = updates.registryLink;
       if (updates.additionalInfo !== undefined) dbUpdates.additional_info = updates.additionalInfo;
-      
+
       // Nouveaux champs
       if (updates.announcementTitle !== undefined) dbUpdates.announcement_title = updates.announcementTitle;
       if (updates.formalMessageIntro !== undefined) dbUpdates.formal_message_intro = updates.formalMessageIntro;
       if (updates.hostName !== undefined) dbUpdates.host_name = updates.hostName;
       if (updates.contactPersonName !== undefined) dbUpdates.contact_person_name = updates.contactPersonName;
-      
+
       // Informations de transport
       if (updates.parkingInfo !== undefined) dbUpdates.parking_info = updates.parkingInfo;
       if (updates.publicTransportInfo !== undefined) dbUpdates.public_transport_info = updates.publicTransportInfo;
       if (updates.shuttleInfo !== undefined) dbUpdates.shuttle_info = updates.shuttleInfo;
-      
+
       // Hébergement
       if (updates.accommodationSuggestions !== undefined) dbUpdates.accommodation_suggestions = updates.accommodationSuggestions;
       if (updates.preferredHotelName !== undefined) dbUpdates.preferred_hotel_name = updates.preferredHotelName;
       if (updates.preferredHotelCode !== undefined) dbUpdates.preferred_hotel_code = updates.preferredHotelCode;
-      
+
       // Politiques
       if (updates.childrenPolicy !== undefined) dbUpdates.children_policy = updates.childrenPolicy;
       if (updates.giftPolicy !== undefined) dbUpdates.gift_policy = updates.giftPolicy;
-      
+
       // Cagnotte lune de miel
       if (updates.honeymoonFundEnabled !== undefined) dbUpdates.honeymoon_fund_enabled = updates.honeymoonFundEnabled;
       if (updates.honeymoonFundMessage !== undefined) dbUpdates.honeymoon_fund_message = updates.honeymoonFundMessage;
       if (updates.honeymoonFundTargetAmount !== undefined) dbUpdates.honeymoon_fund_target_amount = updates.honeymoonFundTargetAmount;
-      
+
       // Message du couple
       if (updates.coupleMessageType !== undefined) dbUpdates.couple_message_type = updates.coupleMessageType;
       if (updates.coupleMessageContent !== undefined) dbUpdates.couple_message_content = updates.coupleMessageContent;
       if (updates.coupleValuesStatement !== undefined) dbUpdates.couple_values_statement = updates.coupleValuesStatement;
       if (updates.coupleQuote !== undefined) dbUpdates.couple_quote = updates.coupleQuote;
-      
+
       // Musique et divertissement
       if (updates.playlistUrl !== undefined) dbUpdates.playlist_url = updates.playlistUrl;
       if (updates.allowSongSuggestions !== undefined) dbUpdates.allow_song_suggestions = updates.allowSongSuggestions;
-      
+
       // Fonctionnalités interactives
       if (updates.countdownEnabled !== undefined) dbUpdates.countdown_enabled = updates.countdownEnabled;
       if (updates.quizEnabled !== undefined) dbUpdates.quiz_enabled = updates.quizEnabled;
@@ -343,7 +343,7 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       if (updateError) throw updateError;
 
       // Mettre à jour l'état local
-      setEvents(prev => prev.map(event => 
+      setEvents(prev => prev.map(event =>
         event.id === eventId ? { ...event, ...updates } : event
       ));
       return true;
@@ -494,7 +494,7 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       if (updateError) throw updateError;
 
       // Mettre à jour l'état local
-      setQuizzes(prev => prev.map(quiz => 
+      setQuizzes(prev => prev.map(quiz =>
         quiz.id === quizId ? { ...quiz, ...updates } : quiz
       ));
       return true;
@@ -593,7 +593,7 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       if (updateError) throw updateError;
 
       // Mettre à jour l'état local
-      setQuestions(prev => prev.map(question => 
+      setQuestions(prev => prev.map(question =>
         question.id === questionId ? { ...question, ...updates } : question
       ));
       return true;
@@ -730,7 +730,7 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       if (updateError) throw updateError;
 
       // Mettre à jour l'état local
-      setPosts(prev => prev.map(post => 
+      setPosts(prev => prev.map(post =>
         post.id === postId ? { ...post, is_approved: true } : post
       ));
       return true;
@@ -820,7 +820,7 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
       if (updateError) throw updateError;
 
       // Mettre à jour l'état local
-      setComments(prev => prev.map(comment => 
+      setComments(prev => prev.map(comment =>
         comment.id === commentId ? { ...comment, is_approved: true } : comment
       ));
       return true;
@@ -899,28 +899,28 @@ export const useInvitation = ({ invitationId }: UseInvitationProps) => {
     isLoading,
     error,
     isSaving,
-    
+
     // Méthodes pour l'invitation
     loadInvitation,
     updateInvitation,
-    
+
     // Méthodes pour les événements
     addEvent,
     updateEvent,
     deleteEvent,
     reorderEvents,
-    
+
     // Méthodes pour les quiz
     addQuiz,
     updateQuiz,
     deleteQuiz,
-    
+
     // Méthodes pour les questions
     addQuestion,
     updateQuestion,
     deleteQuestion,
     reorderQuestions,
-    
+
     // Méthodes pour le mur social
     toggleSocialWall,
     toggleModeration,

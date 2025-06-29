@@ -1,23 +1,25 @@
 import React from 'react';
 import { Info, Car, Bus, Hotel } from 'lucide-react';
-import { ExtendedInvitationData, InvitationDesignSettings } from '../../../types/models';
+import { ExtendedInvitationData, InvitationDesignSettings, SectionDesign } from '../../../types/models';
 import InvitationSection from '../InvitationSection';
 import { colorPalettes, fontFamilies } from '../../../utils/designConstants';
 
 interface AdditionalInfoSectionProps {
   invitationData: ExtendedInvitationData;
   designSettings: InvitationDesignSettings;
+  design: SectionDesign; // New prop for section-specific design
 }
 
-const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({ 
-  invitationData, 
-  designSettings
+const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
+  invitationData,
+  designSettings,
+  design // Use this for section-specific design properties
 }) => {
   // Si aucune information supplémentaire n'est disponible, ne pas afficher la section
-  if (!invitationData.additionalInfo && 
-      !invitationData.parkingInfo && 
-      !invitationData.publicTransportInfo && 
-      !invitationData.shuttleInfo && 
+  if (!invitationData.additionalInfo &&
+      !invitationData.parkingInfo &&
+      !invitationData.publicTransportInfo &&
+      !invitationData.shuttleInfo &&
       !invitationData.preferredHotelName) {
     return null;
   }
@@ -25,76 +27,73 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
   // Récupérer la palette de couleurs et la famille de polices
   const colorPalette = colorPalettes.find(p => p.id === designSettings.colorPaletteId) || colorPalettes[0];
   const fontFamily = fontFamilies.find(f => f.id === designSettings.fontFamilyId) || fontFamilies[0];
-  
-  // Récupérer les paramètres de design spécifiques à cette section
-  const sectionDesign = designSettings.sections.additional;
 
   return (
-    <InvitationSection 
-      design={sectionDesign} 
+    <InvitationSection
+      design={design} // Pass the section-specific design
       colorPaletteId={designSettings.colorPaletteId}
       id="additional-info-section"
       className="min-h-[30vh]"
     >
       <div className="text-center space-y-6">
-        <h2 
+        <h2
           className="text-2xl md:text-3xl font-bold"
-          style={{ 
+          style={{
             fontFamily: fontFamily.heading,
             color: colorPalette.primary
           }}
         >
           Informations supplémentaires
         </h2>
-        
+
         <div className="max-w-md mx-auto space-y-6">
           {/* Additional Info */}
           {invitationData.additionalInfo && (
-            <div 
+            <div
               className="p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}15`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
             >
               <div className="flex justify-center mb-3">
-                <Info 
-                  className="h-6 w-6" 
+                <Info
+                  className="h-6 w-6"
                   style={{ color: colorPalette.primary }}
                 />
               </div>
-              
+
               <p>{invitationData.additionalInfo}</p>
             </div>
           )}
-          
+
           {/* Transport Information */}
           {(invitationData.parkingInfo || invitationData.publicTransportInfo || invitationData.shuttleInfo) && (
-            <div 
+            <div
               className="p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}15`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
             >
-              <h3 
+              <h3
                 className="text-lg font-semibold mb-4"
-                style={{ 
+                style={{
                   fontFamily: fontFamily.heading,
                   color: colorPalette.primary
                 }}
               >
                 Transport
               </h3>
-              
+
               <div className="space-y-4">
                 {invitationData.parkingInfo && (
                   <div className="flex items-start space-x-3">
                     <Car className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: colorPalette.accent }} />
                     <div className="text-left">
-                      <h4 
+                      <h4
                         className="font-medium mb-1"
                         style={{ color: colorPalette.accent }}
                       >
@@ -104,12 +103,12 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                     </div>
                   </div>
                 )}
-                
+
                 {invitationData.publicTransportInfo && (
                   <div className="flex items-start space-x-3">
                     <Bus className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: colorPalette.accent }} />
                     <div className="text-left">
-                      <h4 
+                      <h4
                         className="font-medium mb-1"
                         style={{ color: colorPalette.accent }}
                       >
@@ -119,12 +118,12 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
                     </div>
                   </div>
                 )}
-                
+
                 {invitationData.shuttleInfo && (
                   <div className="flex items-start space-x-3">
                     <Bus className="h-5 w-5 mt-1 flex-shrink-0" style={{ color: colorPalette.accent }} />
                     <div className="text-left">
-                      <h4 
+                      <h4
                         className="font-medium mb-1"
                         style={{ color: colorPalette.accent }}
                       >
@@ -137,36 +136,36 @@ const AdditionalInfoSection: React.FC<AdditionalInfoSectionProps> = ({
               </div>
             </div>
           )}
-          
+
           {/* Accommodation Information */}
           {invitationData.preferredHotelName && (
-            <div 
+            <div
               className="p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}15`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
             >
               <div className="flex justify-center mb-3">
-                <Hotel 
-                  className="h-6 w-6" 
+                <Hotel
+                  className="h-6 w-6"
                   style={{ color: colorPalette.primary }}
                 />
               </div>
-              
-              <h3 
+
+              <h3
                 className="text-lg font-semibold mb-2"
-                style={{ 
+                style={{
                   fontFamily: fontFamily.heading,
                   color: colorPalette.primary
                 }}
               >
                 Hébergement recommandé
               </h3>
-              
+
               <p className="font-medium">{invitationData.preferredHotelName}</p>
-              
+
               {invitationData.preferredHotelCode && (
                 <p className="mt-2 text-sm">
                   <span className="font-medium">Code de réduction:</span> {invitationData.preferredHotelCode}

@@ -310,13 +310,11 @@ const Editor: React.FC = () => {
               setActiveTab={setActiveTab}
               activeSection={activeSection}
               setActiveSection={setActiveSection}
-              // Removed type prop
             />
           </div>
 
           {/* Main Content - Editor */}
           <div className="lg:col-span-1 lg:flex lg:flex-col h-full"> {/* Adjusted col-span */}
-            {/* Removed Horizontal Sub-Sidebar as it's now integrated */}
             
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-grow h-full">
               <div className="p-6 h-full overflow-y-auto">

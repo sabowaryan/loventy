@@ -48,6 +48,13 @@ const RsvpEditor: React.FC<RsvpEditorProps> = ({
     is_required: false
   });
 
+  // Get today's date in YYYY-MM-DD format for default values
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const defaultDate = `${year}-${month}-${day}`;
+
   // Fonctions de gestion des questions (simulées)
   const handleAddQuestion = () => {
     // Simuler l'ajout d'une question
@@ -145,7 +152,7 @@ const RsvpEditor: React.FC<RsvpEditorProps> = ({
             </label>
             <input
               type="date"
-              value={invitationData.rsvpDate}
+              value={invitationData.rsvpDate || defaultDate}
               onChange={(e) => onInputChange('rsvpDate', e.target.value === '' ? null : e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
             />

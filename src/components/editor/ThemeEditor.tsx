@@ -1,5 +1,9 @@
 import React from 'react';
-import { Palette, Type } from 'lucide-react';
+import {
+  Palette,
+  Type,
+  Sliders
+} from 'lucide-react';
 import { InvitationDesignSettings } from '../../types/models';
 import { colorPalettes, fontFamilies } from '../../utils/designConstants';
 
@@ -8,22 +12,22 @@ interface ThemeEditorProps {
   onDesignChange: (newSettings: InvitationDesignSettings) => void;
 }
 
-const ThemeEditor: React.FC<ThemeEditorProps> = ({ 
-  designSettings, 
-  onDesignChange 
+const ThemeEditor: React.FC<ThemeEditorProps> = ({
+  designSettings,
+  onDesignChange
 }) => {
   // Helper to update design settings
   const updateDesign = (path: string, value: any) => {
     const newSettings = { ...designSettings };
-    
+
     // Handle nested paths like 'animations.enabled'
     const parts = path.split('.');
     let current: any = newSettings;
-    
+
     for (let i = 0; i < parts.length - 1; i++) {
       current = current[parts[i]];
     }
-    
+
     current[parts[parts.length - 1]] = value;
     onDesignChange(newSettings);
   };
@@ -36,7 +40,7 @@ const ThemeEditor: React.FC<ThemeEditorProps> = ({
           <Palette className="h-5 w-5 mr-2 text-[#D4A5A5]" />
           Palette de couleurs
         </h3>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {colorPalettes.map(palette => (
             <button
@@ -65,7 +69,7 @@ const ThemeEditor: React.FC<ThemeEditorProps> = ({
           <Type className="h-5 w-5 mr-2 text-[#D4A5A5]" />
           Police d'écriture
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {fontFamilies.map(font => (
             <button
@@ -102,7 +106,7 @@ const ThemeEditor: React.FC<ThemeEditorProps> = ({
         <h3 className="text-lg font-semibold text-[#131837] mb-4">
           Animations
         </h3>
-        
+
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-600">Activer les animations</span>
           <button
@@ -118,7 +122,7 @@ const ThemeEditor: React.FC<ThemeEditorProps> = ({
             />
           </button>
         </div>
-        
+
         {designSettings.animations.enabled && (
           <div className="flex items-center space-x-4">
             <label className="text-sm text-gray-600">Type d'animation:</label>

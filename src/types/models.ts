@@ -370,6 +370,7 @@ export interface SectionDesign {
   coupleImageUrl?: string | null;
   coupleImageShape?: 'original' | 'rounded' | 'circle' | 'heart';
   visible?: boolean;
+  decorativeElementUrl?: string | null;
 }
 
 export interface ExtendedInvitationData {

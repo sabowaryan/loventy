@@ -1,17 +1,17 @@
 import React from 'react';
-import { 
-  Type, 
-  Palette, 
-  Calendar, 
-  Brain, 
-  MessageSquare, 
-  Users, 
-  Heart, 
-  Music, 
-  Share2, 
-  FileText, 
-  Info, 
-  CheckSquare, 
+import {
+  Type,
+  Palette,
+  Calendar,
+  Brain,
+  MessageSquare,
+  Users,
+  Heart,
+  Music,
+  Share2,
+  FileText,
+  Info,
+  CheckSquare,
   DollarSign,
   Image as ImageIcon,
   Settings,
@@ -26,8 +26,8 @@ interface EditorSidebarProps {
   setActiveSection: (section: string) => void;
 }
 
-const EditorSidebar: React.FC<EditorSidebarProps> = ({ 
-  activeTab, 
+const EditorSidebar: React.FC<EditorSidebarProps> = ({
+  activeTab,
   setActiveTab,
   activeSection,
   setActiveSection
@@ -74,10 +74,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:flex lg:flex-col">
       {/* Catégories principales */}
-      <div className="border-b border-gray-100">
-        <nav className="flex">
+      <div className="border-b border-gray-100 lg:border-b-0 lg:border-r lg:w-full">
+        <nav className="flex lg:flex-row lg:justify-around">
           {mainCategories.map((category) => (
             <button
               key={category.id}
@@ -103,16 +103,16 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
       </div>
 
       {/* Sections de la catégorie active */}
-      <div className="p-4">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+      <div className="p-4 lg:flex-1 lg:overflow-x-auto lg:whitespace-nowrap">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 lg:hidden">
           Sections
         </h3>
-        <nav className="space-y-1">
+        <nav className="space-y-1 lg:flex lg:space-y-0 lg:space-x-2">
           {getActiveSections().map((section) => (
             <button
               key={section.id}
               onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors lg:w-auto lg:flex-shrink-0 ${
                 activeSection === section.id
                   ? 'bg-[#D4A5A5]/10 text-[#D4A5A5]'
                   : 'text-gray-700 hover:bg-gray-50 hover:text-[#D4A5A5]'

@@ -8,29 +8,44 @@ interface LayoutEditorProps {
   onDesignChange: (newSettings: InvitationDesignSettings) => void;
 }
 
-const LayoutEditor: React.FC<LayoutEditorProps> = ({ 
-  designSettings, 
-  onDesignChange 
+const LayoutEditor: React.FC<LayoutEditorProps> = ({
+  designSettings,
+  onDesignChange
 }) => {
   // Helper to update design settings
   const updateDesign = (path: string, value: any) => {
     const newSettings = { ...designSettings };
-    
+
     // Handle nested paths like 'sections.hero.visible'
     const parts = path.split('.');
     let current: any = newSettings;
-    
+
     for (let i = 0; i < parts.length - 1; i++) {
       current = current[parts[i]];
     }
-    
+
     current[parts[parts.length - 1]] = value;
     onDesignChange(newSettings);
   };
 
   // Toggle section visibility
-  const toggleSectionVisibility = (sectionId: string) => {
-    updateDesign(`sections.${sectionId}.visible`, !designSettings.sections[sectionId as keyof typeof designSettings.sections].visible);
+  const toggleSectionVisibility = (sectionId: keyof InvitationDesignSettings['sections']) => {
+    updateDesign(`sections.${sectionId}.visible`, !designSettings.sections[sectionId].visible);
+  };
+
+  // Map section IDs to user-friendly names
+  const sectionNames: Record<keyof InvitationDesignSettings['sections'], string> = {
+    hero: 'Section d\'accueil',
+    details: 'Détails de l\'événement',
+    rsvp: 'Confirmation de présence',
+    welcome: 'Message de bienvenue',
+    program: 'Programme',
+    honeymoon: 'Cagnotte lune de miel',
+    music: 'Musique',
+    interactive: 'Fonctionnalités interactives',
+    contact: 'Contact et liens',
+    policies: 'Informations pratiques',
+    additional: 'Informations supplémentaires',
   };
 
   return (
@@ -41,7 +56,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({
           <Layout className="h-5 w-5 mr-2 text-[#D4A5A5]" />
           Disposition
         </h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {layoutOptions.map(layout => (
             <button
@@ -78,27 +93,17 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({
         <h3 className="text-lg font-semibold text-[#131837] mb-4">
           Visibilité des sections
         </h3>
-        
+
         <div className="space-y-3">
           {Object.entries(designSettings.sections).map(([sectionId, section]) => (
             <div key={sectionId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
               <div>
                 <h4 className="font-medium text-[#131837]">
-                  {sectionId === 'hero' && 'Section d\'accueil'}
-                  {sectionId === 'details' && 'Détails de l\'événement'}
-                  {sectionId === 'rsvp' && 'Confirmation de présence'}
-                  {sectionId === 'welcome' && 'Message de bienvenue'}
-                  {sectionId === 'program' && 'Programme'}
-                  {sectionId === 'honeymoon' && 'Cagnotte lune de miel'}
-                  {sectionId === 'music' && 'Musique'}
-                  {sectionId === 'interactive' && 'Fonctionnalités interactives'}
-                  {sectionId === 'contact' && 'Contact et liens'}
-                  {sectionId === 'policies' && 'Politiques'}
-                  {sectionId === 'additional' && 'Informations supplémentaires'}
+                  {sectionNames[sectionId as keyof InvitationDesignSettings['sections']]}
                 </h4>
               </div>
               <button
-                onClick={() => toggleSectionVisibility(sectionId)}
+                onClick={() => toggleSectionVisibility(sectionId as keyof InvitationDesignSettings['sections'])}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   section.visible !== false ? 'bg-[#D4A5A5]' : 'bg-gray-200'
                 }`}
@@ -120,7 +125,7 @@ const LayoutEditor: React.FC<LayoutEditorProps> = ({
           <Sliders className="h-5 w-5 mr-2 text-[#D4A5A5]" />
           Espacement
         </h3>
-        
+
         <div className="flex items-center space-x-4">
           <label className="text-sm text-gray-600">Espacement entre les éléments:</label>
           <select

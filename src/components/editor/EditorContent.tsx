@@ -22,7 +22,7 @@ import MusicEditor from './MusicEditor';
 import QuizEditor from './QuizEditor';
 import SocialWallEditor from './SocialWallEditor';
 import MediaManager from './MediaManager';
-import SectionDesignEditor from '../SectionDesignEditor'; /
+import SectionDesignEditor from './SectionDesignEditor'; /
 import AdvancedSettings from './AdvancedSettings';
 import ThemeEditor from './ThemeEditor';
 import LayoutEditor from './LayoutEditor';

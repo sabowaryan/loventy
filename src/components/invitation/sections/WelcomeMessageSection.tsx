@@ -71,15 +71,28 @@ const WelcomeMessageSection: React.FC<WelcomeMessageSectionProps> = ({
 
         {/* Formal message intro if available */}
         {invitationData.formalMessageIntro && (
-          <p
-            className="text-lg"
-            style={{
-              fontFamily: fontFamily.body,
-              color: colorPalette.textColor
-            }}
-          >
-            {invitationData.formalMessageIntro}
-          </p>
+          <>
+            {guestName && (
+              <p
+                className="font-medium mb-2"
+                style={{
+                  fontFamily: fontFamily.body,
+                  color: colorPalette.textColor
+                }}
+              >
+                Cher/Chère {guestName}
+              </p>
+            )}
+            <p
+              className="text-lg"
+              style={{
+                fontFamily: fontFamily.body,
+                color: colorPalette.textColor
+              }}
+            >
+              {invitationData.formalMessageIntro}
+            </p>
+          </>
         )}
 
         {/* Welcome Message */}

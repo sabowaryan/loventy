@@ -1,4 +1,3 @@
-// src/components/editor/WelcomeMessageEditor.tsx
 import React from 'react';
 import {
   MessageSquare,

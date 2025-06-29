@@ -1,17 +1,19 @@
 import React from 'react';
 import { Baby, Gift, Info } from 'lucide-react';
-import { ExtendedInvitationData, InvitationDesignSettings } from '../../../types/models';
+import { ExtendedInvitationData, InvitationDesignSettings, SectionDesign } from '../../../types/models';
 import InvitationSection from '../InvitationSection';
 import { colorPalettes, fontFamilies } from '../../../utils/designConstants';
 
 interface PoliciesSectionProps {
   invitationData: ExtendedInvitationData;
   designSettings: InvitationDesignSettings;
+  design: SectionDesign; // New prop for section-specific design
 }
 
-const PoliciesSection: React.FC<PoliciesSectionProps> = ({ 
-  invitationData, 
-  designSettings
+const PoliciesSection: React.FC<PoliciesSectionProps> = ({
+  invitationData,
+  designSettings,
+  design // Use this for section-specific design properties
 }) => {
   // Si aucune politique n'est définie, ne pas afficher la section
   if (!invitationData.childrenPolicy && !invitationData.giftPolicy) {
@@ -21,9 +23,6 @@ const PoliciesSection: React.FC<PoliciesSectionProps> = ({
   // Récupérer la palette de couleurs et la famille de polices
   const colorPalette = colorPalettes.find(p => p.id === designSettings.colorPaletteId) || colorPalettes[0];
   const fontFamily = fontFamilies.find(f => f.id === designSettings.fontFamilyId) || fontFamilies[0];
-  
-  // Récupérer les paramètres de design spécifiques à cette section
-  const sectionDesign = designSettings.sections.policies;
 
   // Obtenir le texte de la politique concernant les enfants
   const getChildrenPolicyText = () => {
@@ -40,113 +39,113 @@ const PoliciesSection: React.FC<PoliciesSectionProps> = ({
   };
 
   return (
-    <InvitationSection 
-      design={sectionDesign} 
+    <InvitationSection
+      design={design} // Pass the section-specific design
       colorPaletteId={designSettings.colorPaletteId}
       id="policies-section"
       className="min-h-[30vh]"
     >
       <div className="text-center space-y-6">
-        <h2 
+        <h2
           className="text-2xl md:text-3xl font-bold"
-          style={{ 
+          style={{
             fontFamily: fontFamily.heading,
             color: colorPalette.primary
           }}
         >
           Informations pratiques
         </h2>
-        
+
         <div className="max-w-md mx-auto space-y-6">
           {/* Children Policy */}
           {invitationData.childrenPolicy && (
-            <div 
+            <div
               className="p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}15`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
             >
               <div className="flex justify-center mb-3">
-                <Baby 
-                  className="h-6 w-6" 
+                <Baby
+                  className="h-6 w-6"
                   style={{ color: colorPalette.primary }}
                 />
               </div>
-              
-              <h3 
+
+              <h3
                 className="text-lg font-semibold mb-2"
-                style={{ 
+                style={{
                   fontFamily: fontFamily.heading,
                   color: colorPalette.primary
                 }}
               >
                 Concernant les enfants
               </h3>
-              
+
               <p>{getChildrenPolicyText()}</p>
             </div>
           )}
-          
+
           {/* Gift Policy */}
           {invitationData.giftPolicy && (
-            <div 
+            <div
               className="p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}15`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
             >
               <div className="flex justify-center mb-3">
-                <Gift 
-                  className="h-6 w-6" 
+                <Gift
+                  className="h-6 w-6"
                   style={{ color: colorPalette.primary }}
                 />
               </div>
-              
-              <h3 
+
+              <h3
                 className="text-lg font-semibold mb-2"
-                style={{ 
+                style={{
                   fontFamily: fontFamily.heading,
                   color: colorPalette.primary
                 }}
               >
                 Concernant les cadeaux
               </h3>
-              
+
               <p>{invitationData.giftPolicy}</p>
             </div>
           )}
-          
+
           {/* Dress Code */}
           {invitationData.dressCode && (
-            <div 
+            <div
               className="p-4 rounded-lg"
-              style={{ 
+              style={{
                 backgroundColor: `${colorPalette.secondary}15`,
                 fontFamily: fontFamily.body,
                 color: colorPalette.textColor
               }}
             >
               <div className="flex justify-center mb-3">
-                <Info 
-                  className="h-6 w-6" 
+                <Info
+                  className="h-6 w-6"
                   style={{ color: colorPalette.primary }}
                 />
               </div>
-              
-              <h3 
+
+              <h3
                 className="text-lg font-semibold mb-2"
-                style={{ 
+                style={{
                   fontFamily: fontFamily.heading,
                   color: colorPalette.primary
                 }}
               >
                 Code vestimentaire
               </h3>
-              
+
               <p>{invitationData.dressCode}</p>
             </div>
           )}

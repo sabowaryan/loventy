@@ -1,3 +1,4 @@
+// src/components/editor/EditorContent.tsx
 import React from 'react';
 import {
   ExtendedInvitationData,
@@ -91,12 +92,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
   onReorderQuestions,
   onToggleSocialWall,
   onToggleModeration,
-  onApprovePost,
-  onRejectPost,
-  onDeletePost,
-  onApproveComment,
-  onRejectComment,
-  onDeleteComment,
+  onApprovePost, // This is the prop received by EditorContent
+  onRejectPost,   // This is the prop received by EditorContent
+  onDeletePost,   // This is the prop received by EditorContent
+  onApproveComment, // This is the prop received by EditorContent
+  onRejectComment,   // This is the prop received by EditorContent
+  onDeleteComment,   // This is the prop received by EditorContent
   onDeleteMedia, // Destructure onDeleteMedia
   designSettings,
   onDesignChange,
@@ -217,12 +218,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
               comments={comments}
               onToggleEnabled={onToggleSocialWall}
               onToggleModeration={onToggleModeration}
-              onApprovePost={approvePost}
-              onRejectPost={rejectPost}
-              onDeletePost={deletePost}
-              onApproveComment={approveComment}
-              onRejectComment={rejectComment}
-              onDeleteComment={deleteComment}
+              onApprovePost={onApprovePost} // FIX: Use the prop received by EditorContent
+              onRejectPost={onRejectPost}   // FIX: Use the prop received by EditorContent
+              onDeletePost={onDeletePost}   // FIX: Use the prop received by EditorContent
+              onApproveComment={onApproveComment} // FIX: Use the prop received by EditorContent
+              onRejectComment={onRejectComment}   // FIX: Use the prop received by EditorContent
+              onDeleteComment={onDeleteComment}   // FIX: Use the prop received by EditorContent
             />
           );
         default:

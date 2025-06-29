@@ -1,3 +1,4 @@
+// src/pages/Editor.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   useParams,
@@ -16,7 +17,9 @@ import {
   AlertCircle,
   X,
   Loader2,
-  Layers
+  Layers,
+  Undo2, // Import for Undo button
+  Redo2 // Import for Redo button
 } from 'lucide-react';
 import {
   usePageTitle
@@ -41,6 +44,9 @@ import {
   ExtendedInvitationData
 } from '../types/models';
 
+// Import the new useHistory hook
+import { useHistory } from '../hooks/useHistory';
+
 // Import editor sections
 import EditorSidebar from '../components/editor/EditorSidebar';
 import EditorContent from '../components/editor/EditorContent';
@@ -48,22 +54,18 @@ import EditorContent from '../components/editor/EditorContent';
 const Editor: React.FC = () => {
   usePageTitle('Éditeur d\'invitation');
 
-  const {
-    templateId
-  } = useParams();
+  const { templateId } = useParams();
   const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('content');
   const [activeSection, setActiveSection] = useState('details');
   const [showPreview, setShowPreview] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState < 'desktop' | 'tablet' | 'mobile' > ('desktop');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [lastSaved, setLastSaved] = useState < Date | null > (null);
-  const [errorMessage, setErrorMessage] = useState < string | null > (null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Utiliser le hook useInvitation pour charger et gérer les données
+  // Use the useInvitation hook to load and manage data
   const {
     invitation,
     events,
@@ -94,9 +96,7 @@ const Editor: React.FC = () => {
     approveComment,
     rejectComment,
     deleteComment
-  } = useInvitation({
-    invitationId: templateId
-  });
+  } = useInvitation({ invitationId: templateId });
 
   // Use the invitation design hook
   const {
@@ -107,25 +107,34 @@ const Editor: React.FC = () => {
     updateDesignSettings,
     saveDesignSettings,
     uploadImage
-  } = useInvitationDesign({
-    invitationId: templateId || '',
-    initialDesignSettings: defaultDesignSettings
-  });
+  } = useInvitationDesign({ invitationId: templateId || '', initialDesignSettings: defaultDesignSettings });
 
-  // État local pour les modifications de l'invitation (pour une réactivité immédiate de l'UI)
-  const [localInvitationData, setLocalInvitationData] = useState < ExtendedInvitationData | null > (null);
-  // Ref pour stocker la dernière version de localInvitationData pour le debounce
-  const latestLocalInvitationData = useRef < ExtendedInvitationData | null > (null);
+  // Replace useState with useHistory for localInvitationData
+  const {
+    current: localInvitationData,
+    add,
+    undo,
+    redo,
+    canUndo,
+    canRedo
+  } = useHistory<ExtendedInvitationData | null>(null);
 
-  // Synchroniser localInvitationData avec l'invitation chargée
+  // Ref to store the latest version of localInvitationData for the debounce
+  const latestLocalInvitationData = useRef<ExtendedInvitationData | null>(null);
+
+  // Synchronize localInvitationData with the invitation loaded from useInvitation
   useEffect(() => {
     if (invitation) {
-      setLocalInvitationData(invitation);
+      // Add the loaded invitation to history as the initial state
+      // Only add if it's different from the current history state to avoid duplicates
+      if (localInvitationData === null || JSON.stringify(localInvitationData) !== JSON.stringify(invitation)) {
+        add(invitation);
+      }
       latestLocalInvitationData.current = invitation;
     }
-  }, [invitation]);
+  }, [invitation, add, localInvitationData]); // Add localInvitationData to dependencies to prevent infinite loop
 
-  // Fonction de sauvegarde debounced
+  // Function to save debounced
   const triggerDebouncedSave = useCallback(
     debounce(async (dataToSave: ExtendedInvitationData) => {
       if (!dataToSave) return;
@@ -143,11 +152,11 @@ const Editor: React.FC = () => {
         setErrorMessage(userFriendlyMessage);
         setTimeout(() => setErrorMessage(null), 5000);
       }
-    }, 180000), // Délai de 3 minutes
+    }, 180000), // 3 minutes debounce
     [updateInvitation]
   );
 
-  // Gérer les changements d'input
+  // Handle input changes
   const handleInputChange = (field: keyof ExtendedInvitationData, value: any) => {
     if (!localInvitationData) return;
 
@@ -160,15 +169,16 @@ const Editor: React.FC = () => {
       }
     }
 
-    // Mettre à jour l'état local immédiatement pour une UI réactive
+    // Update the local state immediately for a reactive UI
     const updatedData = {
       ...localInvitationData,
       [field]: processedValue
     };
-    setLocalInvitationData(updatedData);
-    latestLocalInvitationData.current = updatedData; // Mettre à jour la ref
+    // Use the add function from useHistory
+    add(updatedData);
+    latestLocalInvitationData.current = updatedData; // Update the ref
 
-    // Déclencher la sauvegarde debounced avec la dernière version
+    // Trigger debounced save with the latest version
     triggerDebouncedSave(updatedData);
   };
 
@@ -177,21 +187,23 @@ const Editor: React.FC = () => {
     if (!localInvitationData) return;
 
     const autoSaveTimer = setTimeout(() => {
-      // Déclencher la sauvegarde debounced pour l'auto-save
-      triggerDebouncedSave(latestLocalInvitationData.current!);
+      // Trigger debounced save for auto-save
+      if (latestLocalInvitationData.current) { // Ensure ref is not null
+        triggerDebouncedSave(latestLocalInvitationData.current);
+      }
     }, 180000); // Auto-save every 3 minutes
 
     return () => clearTimeout(autoSaveTimer);
-  }, [localInvitationData, designSettings, triggerDebouncedSave]); // Dépend de localInvitationData et designSettings
+  }, [localInvitationData, designSettings, triggerDebouncedSave]); // Depends on localInvitationData and designSettings
 
   const handleSave = async (showNotification = true) => {
     if (!localInvitationData) return;
 
     setErrorMessage(null); // Clear previous errors
     try {
-      // Sauvegarder les paramètres de design
+      // Save design settings
       await saveDesignSettings();
-      // Sauvegarder les données de l'invitation immédiatement (pas debounced)
+      // Save invitation data using the current state from useHistory
       await updateInvitation(localInvitationData);
 
       setLastSaved(new Date());
@@ -215,9 +227,7 @@ const Editor: React.FC = () => {
     if (!localInvitationData) return;
 
     await handleSave();
-    await updateInvitation({
-      status: 'published'
-    });
+    await updateInvitation({ status: 'published' });
     console.log('Invitation publiée');
   };
 
@@ -238,8 +248,8 @@ const Editor: React.FC = () => {
     }
   };
 
-  // Afficher un état de chargement pendant que les données sont récupérées
-  if (isInvitationLoading || !localInvitationData) {
+  // Display loading state while data is being fetched
+  if (isInvitationLoading || localInvitationData === null) { // Check for null explicitly
     return (
       <div className="min-h-screen bg-[#FAF9F7] flex items-center justify-center">
         <div className="text-center">
@@ -250,7 +260,7 @@ const Editor: React.FC = () => {
     );
   }
 
-  // Afficher un message d'erreur si le chargement a échoué
+  // Display error message if loading failed
   if (invitationError) {
     return (
       <div className="min-h-screen bg-[#FAF9F7] flex items-center justify-center p-4">
@@ -281,11 +291,11 @@ const Editor: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FAF9F7]">
-      {/* Header fixe */}
+      {/* Fixed Header */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Navigation gauche */}
+            {/* Left Navigation */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/dashboard/invitations')}
@@ -301,10 +311,7 @@ const Editor: React.FC = () => {
                 </h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <span>
-                    {lastSaved ? `Sauvegardé ${lastSaved.toLocaleTimeString('fr-FR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}` : 'Non sauvegardé'}
+                    {lastSaved ? `Sauvegardé ${lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Non sauvegardé'}
                   </span>
                   {(isInvitationSaving || isSavingDesign) && (
                     <div className="flex items-center space-x-1">
@@ -316,27 +323,35 @@ const Editor: React.FC = () => {
               </div>
             </div>
 
-            {/* Actions droite */}
+            {/* Right Actions */}
             <div className="flex items-center space-x-3">
-              {/* Sélecteur d'appareil pour l'aperçu */}
+              {/* Undo/Redo Buttons */}
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                className="flex items-center space-x-2 px-3 py-2 border border-gray-200 text-[#131837] rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                title="Annuler"
+              >
+                <Undo2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Annuler</span>
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                className="flex items-center space-x-2 px-3 py-2 border border-gray-200 text-[#131837] rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                title="Rétablir"
+              >
+                <Redo2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Rétablir</span>
+              </button>
+
+              {/* Device Selector for Preview */}
               <div className="hidden lg:flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                 {[
-                  {
-                    id: 'desktop',
-                    icon: Monitor
-                  },
-                  {
-                    id: 'tablet',
-                    icon: Tablet
-                  },
-                  {
-                    id: 'mobile',
-                    icon: Smartphone
-                  }
-                ].map(({
-                  id,
-                  icon: Icon
-                }) => (
+                  { id: 'desktop', icon: Monitor },
+                  { id: 'tablet', icon: Tablet },
+                  { id: 'mobile', icon: Smartphone }
+                ].map(({ id, icon: Icon }) => (
                   <button
                     key={id}
                     onClick={() => setPreviewDevice(id as any)}
@@ -390,7 +405,7 @@ const Editor: React.FC = () => {
         </div>
       </div>
 
-      {/* Message de succès */}
+      {/* Success Message */}
       {showSuccessMessage && (
         <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-in slide-in-from-top-2">
           <CheckCircle className="h-5 w-5" />
@@ -404,7 +419,7 @@ const Editor: React.FC = () => {
         </div>
       )}
 
-      {/* Message d'erreur */}
+      {/* Error Message */}
       {errorMessage && (
         <div className="fixed top-20 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-in slide-in-from-top-2">
           <AlertCircle className="h-5 w-5" />
@@ -496,21 +511,12 @@ const Editor: React.FC = () => {
                     Aperçu en direct
                   </h3>
 
-                  {/* Sélecteur d'appareil mobile */}
+                  {/* Mobile Device Selector */}
                   <div className="lg:hidden flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                     {[
-                      {
-                        id: 'desktop',
-                        icon: Monitor
-                      },
-                      {
-                        id: 'mobile',
-                        icon: Smartphone
-                      }
-                    ].map(({
-                      id,
-                      icon: Icon
-                    }) => (
+                      { id: 'desktop', icon: Monitor },
+                      { id: 'mobile', icon: Smartphone }
+                    ].map(({ id, icon: Icon }) => (
                       <button
                         key={id}
                         onClick={() => setPreviewDevice(id as any)}
@@ -542,30 +548,18 @@ const Editor: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal d'aperçu plein écran */}
+      {/* Full-screen Preview Modal */}
       {showPreview && localInvitationData && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
           <div className="relative w-full h-full max-w-6xl">
             <div className="absolute top-4 right-4 z-10 flex items-center space-x-2">
-              {/* Sélecteur d'appareil dans le modal */}
+              {/* Device Selector in Modal */}
               <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-sm rounded-lg p-1">
                 {[
-                  {
-                    id: 'desktop',
-                    icon: Monitor
-                  },
-                  {
-                    id: 'tablet',
-                    icon: Tablet
-                  },
-                  {
-                    id: 'mobile',
-                    icon: Smartphone
-                  }
-                ].map(({
-                  id,
-                  icon: Icon
-                }) => (
+                  { id: 'desktop', icon: Monitor },
+                  { id: 'tablet', icon: Tablet },
+                  { id: 'mobile', icon: Smartphone }
+                ].map(({ id, icon: Icon }) => (
                   <button
                     key={id}
                     onClick={() => setPreviewDevice(id as any)}

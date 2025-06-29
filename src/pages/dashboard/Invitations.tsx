@@ -1,19 +1,18 @@
+// src/pages/dashboard/Invitations.tsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Plus, 
-  Search, 
-  MoreVertical, 
-  Eye, 
-  Edit, 
-  Send, 
-  Copy, 
-  Trash2, 
-  Calendar, 
-  Users, 
-   
-  Clock, 
-  
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Eye,
+  Edit,
+  Send,
+  Copy,
+  Trash2,
+  Calendar,
+  Users,
+  Clock,
   Crown,
   Heart,
   Sparkles,
@@ -30,7 +29,7 @@ import { usePageTitle } from '../../hooks/usePageTitle';
 import { usePlanLimits } from '../../hooks/usePlanLimits';
 import { useInvitations } from '../../hooks/useInvitations';
 import PlanLimitWarning from '../../components/PlanLimitWarning';
-import Modal from '../../components/Modal'; // Assurez-vous d'avoir un composant Modal générique
+import Modal from '../../components/Modal';
 import type { InvitationDetails } from '../../types/models';
 
 // Component for the status badge
@@ -53,7 +52,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const { text, color, icon } = getStatusInfo(status);
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors ${color}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${color}`}>
       {icon}
       <span className="ml-1">{text}</span>
     </span>
@@ -111,7 +110,7 @@ const InvitationCard: React.FC<{
   const progressPercentDeclined = invitation.total_guests > 0 ? (invitation.declined_guests / invitation.total_guests) * 100 : 0;
 
   return (
-    <div className="card hover:shadow-lg transition-all duration-200 overflow-hidden group flex flex-col h-full">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-200 overflow-hidden group flex flex-col h-full">
       {/* Header avec sélection et menu */}
       <div className="p-4 sm:p-6 pb-4 flex-grow">
         <div className="flex items-start justify-between mb-4">
@@ -138,7 +137,7 @@ const InvitationCard: React.FC<{
           
           {/* Menu d'actions pour desktop */}
           <div className="hidden sm:block relative action-menu">
-            <button 
+            <button
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               onClick={() => toggleActionMenu(invitation.id)}
               aria-label="Menu d'actions"
@@ -183,7 +182,7 @@ const InvitationCard: React.FC<{
                   </button>
                 )}
                 {canSendInvitations() && invitation.status === 'published' && (
-                  <button 
+                  <button
                     onClick={() => navigate(`/dashboard/guests?invitation=${invitation.id}&action=send`)}
                     className="block w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition-colors flex items-center"
                   >
@@ -242,11 +241,11 @@ const InvitationCard: React.FC<{
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div className="flex h-2 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="bg-green-500 transition-all duration-500"
                 style={{ width: `${progressPercentConfirmed}%` }}
               />
-              <div 
+              <div
                 className="bg-red-500 transition-all duration-500"
                 style={{ width: `${progressPercentDeclined}%` }}
               />
@@ -317,8 +316,8 @@ const InvitationCard: React.FC<{
           {/* Actions supplémentaires pour desktop */}
           <div className="hidden sm:flex items-center space-x-2">
             {invitation.status === 'draft' && (
-              <button 
-                className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-white" 
+              <button
+                className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-white"
                 title="Publier"
                 onClick={() => handlePublishInvitation(invitation.id)}
                 aria-label="Publier l'invitation"
@@ -328,8 +327,8 @@ const InvitationCard: React.FC<{
             )}
             
             {canSendInvitations() && invitation.status === 'published' && (
-              <button 
-                className="p-2 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-white" 
+              <button
+                className="p-2 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-white"
                 title="Envoyer"
                 onClick={() => navigate(`/dashboard/guests?invitation=${invitation.id}&action=send`)}
                 aria-label="Envoyer l'invitation"
@@ -379,18 +378,18 @@ const Invitations: React.FC = () => {
   
   const [sortBy, sortOrder] = useMemo(() => sortValue.split('-') as ['date' | 'name' | 'status', 'asc' | 'desc'], [sortValue]);
   
-  const { 
-    invitations, 
-    isLoading, 
-    error, 
-    refreshInvitations, 
+  const {
+    invitations,
+    isLoading,
+    error,
+    refreshInvitations,
     deleteInvitation,
     duplicateInvitation,
     updateInvitationStatus
   } = useInvitations({
     status: statusFilter !== 'all' ? statusFilter : undefined,
     searchTerm: searchTerm || undefined,
-    sortBy: sortBy === 'date' ? 'created_at' : 
+    sortBy: sortBy === 'date' ? 'created_at' :
             sortBy === 'name' ? 'title' : 'status',
     sortOrder: sortOrder
   });
@@ -511,7 +510,7 @@ const Invitations: React.FC = () => {
         Aucune invitation trouvée
       </h3>
       <p className="text-gray-600 mb-8 max-w-md mx-auto">
-        {searchTerm || statusFilter !== 'all' 
+        {searchTerm || statusFilter !== 'all'
           ? 'Aucune invitation ne correspond à vos critères de recherche.'
           : 'Commencez par créer votre première invitation de mariage.'
         }
@@ -548,7 +547,7 @@ const Invitations: React.FC = () => {
             <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-primary mb-2">Erreur de chargement</h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <button 
+            <button
               onClick={refreshInvitations}
               className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
             >
@@ -564,7 +563,7 @@ const Invitations: React.FC = () => {
     <div className="min-h-screen bg-accent py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
           <div>
             <h1 className="text-3xl font-bold text-primary font-serif mb-2">
               Mes invitations
@@ -603,10 +602,10 @@ const Invitations: React.FC = () => {
         )}
 
         {/* Filtres et recherche */}
-        <div className="card mb-6 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             {/* Recherche */}
-            <div className="relative flex-1 max-w-lg w-full">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
@@ -669,7 +668,7 @@ const Invitations: React.FC = () => {
                   <button className="btn-secondary-outline">
                     <Download className="h-4 w-4 mr-2" /> Exporter
                   </button>
-                  <button 
+                  <button
                     className="btn-danger-outline"
                     onClick={() => {
                       if (selectedInvitations.length === 1) {
@@ -738,17 +737,17 @@ const Invitations: React.FC = () => {
 
         {/* Upgrade Prompt pour les utilisateurs non-premium */}
         {!isPremiumUser() && (
-          <div className="mt-12 gradient-secondary rounded-2xl p-6 sm:p-8 text-center text-white">
+          <div className="mt-12 gradient-secondary rounded-2xl p-6 sm:p-8 text-center text-white shadow-lg">
             <Sparkles className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-white/90" />
             <h3 className="text-xl sm:text-2xl font-bold mb-2 font-serif">Débloquez tout le potentiel de Loventy</h3>
-            <p className="text-base sm:text-lg opacity-90 mb-6 max-w-2xl mx-auto">
+            <p className="text-lg opacity-90 mb-6 max-w-2xl mx-auto">
               Invitations illimitées, modèles premium, analytics avancées et bien plus encore.
             </p>
             <Link
               to="/pricing"
               className="inline-block px-6 sm:px-8 py-3 bg-white text-secondary font-semibold rounded-full hover:bg-gray-50 transition-colors duration-200 shadow-lg"
             >
-              Découvrir Premium
+              Voir les tarifs
             </Link>
           </div>
         )}

@@ -88,7 +88,7 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
   }, []);
 
   // Handle image upload
-  const uploadImage = useCallback(async (sectionId: string, imageType: 'background' | 'couple', file: File): Promise<string> => {
+  const uploadImage = useCallback(async (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File): Promise<string> => {
     if (!invitationId) {
       throw new Error('ID d\'invitation non défini');
     }
@@ -119,6 +119,23 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
       if (!urlData?.publicUrl) {
         throw new Error('Failed to get public URL');
       }
+
+      let imageWidth: number | null = null;
+      let imageHeight: number | null = null;
+
+      // Extract image dimensions
+      try {
+        const img = new Image();
+        img.src = urlData.publicUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        imageWidth = img.naturalWidth;
+        imageHeight = img.naturalHeight;
+      } catch (dimError) {
+        console.warn('Could not get image dimensions:', dimError);
+      }
       
       // Create an entry in user_files table
       await supabase
@@ -132,6 +149,24 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
           file_path: filePath,
           file_url: urlData.publicUrl,
           is_public: true
+        });
+
+      // Store metadata in invitation_media table
+      // NOTE: To store width and height, you would need to add 'width' and 'height' columns
+      // to your 'invitation_media' table in the database.
+      await supabase
+        .from('invitation_media')
+        .insert({
+          invitation_id: invitationId,
+          user_id: user.id,
+          media_type: imageType, // e.g., 'background', 'couple', 'decorative', 'gallery'
+          file_id: null, // Assuming file_id is not directly used here, or linked to user_files.id if needed
+          title: fileName, // Or a more descriptive title
+          description: `Uploaded ${imageType} image`,
+          display_order: 0, // Or a calculated order
+          is_featured: false, // Or based on imageType
+          // width: imageWidth, // Uncomment and add to DB schema
+          // height: imageHeight, // Uncomment and add to DB schema
         });
       
       return urlData.publicUrl;

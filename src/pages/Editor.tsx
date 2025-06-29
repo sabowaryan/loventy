@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Save, 
-  Eye, 
-  Send, 
+import {
+  Save,
+  Eye,
+  Send,
   ArrowLeft,
   Settings,
   Monitor,
@@ -30,7 +30,7 @@ import EditorContent from '../components/editor/EditorContent';
 
 const Editor: React.FC = () => {
   usePageTitle('Éditeur d\'invitation');
-  
+
   const { templateId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -40,16 +40,17 @@ const Editor: React.FC = () => {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // New state for error message
+
   // Utiliser le hook useInvitation pour charger et gérer les données
-  const { 
-    invitation, 
-    events, 
-    quizzes, 
-    questions, 
-    posts, 
+  const {
+    invitation,
+    events,
+    quizzes,
+    questions,
+    posts,
     comments,
-    isLoading: isInvitationLoading, 
+    isLoading: isInvitationLoading,
     error: invitationError,
     isSaving: isInvitationSaving,
     updateInvitation,
@@ -75,15 +76,15 @@ const Editor: React.FC = () => {
   } = useInvitation({ invitationId: templateId });
 
   // Use the invitation design hook
-  const { 
-    designSettings, 
-    isSaving: isSavingDesign, 
+  const {
+    designSettings,
+    isSaving: isSavingDesign,
     error: designError,
     isUploading,
     updateDesignSettings,
     saveDesignSettings,
     uploadImage
-  } = useInvitationDesign({ 
+  } = useInvitationDesign({
     invitationId: templateId || '',
     initialDesignSettings: defaultDesignSettings
   });
@@ -100,7 +101,7 @@ const Editor: React.FC = () => {
   // Auto-save functionality
   useEffect(() => {
     if (!invitation) return;
-    
+
     const autoSave = setTimeout(() => {
       handleSave(false);
     }, 30000); // Auto-save every 30 seconds
@@ -110,7 +111,7 @@ const Editor: React.FC = () => {
 
   const handleInputChange = (field: keyof ExtendedInvitationData, value: any) => {
     if (!invitation) return;
-    
+
     // Mettre à jour l'état local immédiatement pour une UI réactive
     // mais utiliser la version debounced pour l'API
     debouncedUpdateInvitation({
@@ -120,25 +121,35 @@ const Editor: React.FC = () => {
 
   const handleSave = async (showNotification = true) => {
     if (!invitation) return;
-    
+
+    setErrorMessage(null); // Clear previous errors
     try {
       // Sauvegarder les paramètres de design
       await saveDesignSettings();
-      
+
       setLastSaved(new Date());
-      
+
       if (showNotification) {
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
       }
-    } catch (error) {
+    } catch (error: any) { // Explicitly type error as 'any' for message property
       console.error('Erreur lors de la sauvegarde:', error);
+      let userFriendlyMessage = 'Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.';
+
+      if (error.message && (error.message.includes('NetworkError') || error.message.includes('Failed to fetch') || error.message.includes('timeout'))) {
+        userFriendlyMessage = 'Problème de connexion réseau. Veuillez vérifier votre internet et réessayer.';
+      } else if (error.message) {
+        userFriendlyMessage = `Erreur: ${error.message}`;
+      }
+      setErrorMessage(userFriendlyMessage);
+      setTimeout(() => setErrorMessage(null), 5000); // Clear error message after 5 seconds
     }
   };
 
   const handlePublish = async () => {
     if (!invitation) return;
-    
+
     await handleSave();
     await updateInvitation({ status: 'published' });
     console.log('Invitation publiée');
@@ -146,7 +157,7 @@ const Editor: React.FC = () => {
 
   const handleSendInvitation = async () => {
     if (!invitation) return;
-    
+
     await handleSave();
     navigate(`/dashboard/guests?invitation=${invitation.id}&action=send`);
   };
@@ -217,7 +228,7 @@ const Editor: React.FC = () => {
                 <ArrowLeft className="h-4 w-4" />
                 <span className="hidden sm:inline">Retour</span>
               </button>
-              
+
               <div className="border-l border-gray-200 pl-4">
                 <h1 className="text-lg font-semibold text-[#131837] truncate max-w-xs">
                   {invitation?.title || 'Nouvelle invitation'}
@@ -249,8 +260,8 @@ const Editor: React.FC = () => {
                     key={id}
                     onClick={() => setPreviewDevice(id as any)}
                     className={`p-2 rounded-md transition-colors ${
-                      previewDevice === id 
-                        ? 'bg-white text-[#D4A5A5] shadow-sm' 
+                      previewDevice === id
+                        ? 'bg-white text-[#D4A5A5] shadow-sm'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -266,7 +277,7 @@ const Editor: React.FC = () => {
                 <Eye className="h-4 w-4" />
                 <span className="hidden sm:inline">Aperçu</span>
               </button>
-              
+
               <button
                 onClick={() => handleSave(true)}
                 disabled={isInvitationSaving || isSavingDesign}
@@ -275,7 +286,7 @@ const Editor: React.FC = () => {
                 <Save className="h-4 w-4" />
                 <span className="hidden sm:inline">Sauvegarder</span>
               </button>
-              
+
               {invitation?.status === 'draft' ? (
                 <button
                   onClick={handlePublish}
@@ -313,12 +324,12 @@ const Editor: React.FC = () => {
       )}
 
       {/* Message d'erreur */}
-      {(invitationError || designError) && (
+      {errorMessage && (
         <div className="fixed top-20 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-in slide-in-from-top-2">
           <AlertCircle className="h-5 w-5" />
-          <span>{invitationError || designError}</span>
+          <span>{errorMessage}</span>
           <button
-            onClick={() => {/* Clear error */}}
+            onClick={() => setErrorMessage(null)} // Allow user to dismiss error
             className="ml-2 hover:bg-red-600 rounded p-1 transition-colors"
           >
             <X className="h-4 w-4" />
@@ -330,8 +341,8 @@ const Editor: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           {/* Sidebar - Navigation */}
           <div className="xl:col-span-2">
-            <EditorSidebar 
-              activeTab={activeTab} 
+            <EditorSidebar
+              activeTab={activeTab}
               setActiveTab={setActiveTab}
               activeSection={activeSection}
               setActiveSection={setActiveSection}
@@ -342,7 +353,7 @@ const Editor: React.FC = () => {
           <div className="xl:col-span-7">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                <EditorContent 
+                <EditorContent
                   activeTab={activeTab}
                   activeSection={activeSection}
                   invitation={invitation}
@@ -391,7 +402,7 @@ const Editor: React.FC = () => {
                     <Eye className="h-5 w-5 mr-2 text-[#D4A5A5]" />
                     Aperçu en direct
                   </h3>
-                  
+
                   {/* Sélecteur d'appareil mobile */}
                   <div className="lg:hidden flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                     {[
@@ -402,8 +413,8 @@ const Editor: React.FC = () => {
                         key={id}
                         onClick={() => setPreviewDevice(id as any)}
                         className={`p-1 rounded transition-colors ${
-                          previewDevice === id 
-                            ? 'bg-white text-[#D4A5A5] shadow-sm' 
+                          previewDevice === id
+                            ? 'bg-white text-[#D4A5A5] shadow-sm'
                             : 'text-gray-500'
                         }`}
                       >
@@ -412,10 +423,10 @@ const Editor: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="overflow-hidden rounded-lg">
                   {invitation && (
-                    <InvitationPreview 
+                    <InvitationPreview
                       invitationData={invitation}
                       designSettings={designSettings}
                       previewDevice={previewDevice}
@@ -445,8 +456,8 @@ const Editor: React.FC = () => {
                     key={id}
                     onClick={() => setPreviewDevice(id as any)}
                     className={`p-2 rounded transition-colors ${
-                      previewDevice === id 
-                        ? 'bg-white text-[#D4A5A5] shadow-sm' 
+                      previewDevice === id
+                        ? 'bg-white text-[#D4A5A5] shadow-sm'
                         : 'text-white/70 hover:text-white'
                     }`}
                   >
@@ -454,7 +465,7 @@ const Editor: React.FC = () => {
                   </button>
                 ))}
               </div>
-              
+
               <button
                 onClick={() => setShowPreview(false)}
                 className="p-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors"
@@ -462,8 +473,8 @@ const Editor: React.FC = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
-            <InvitationPreview 
+
+            <InvitationPreview
               invitationData={invitation}
               designSettings={designSettings}
               isFullscreen

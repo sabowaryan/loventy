@@ -147,7 +147,7 @@ const Editor: React.FC = () => {
     const autoSaveTimer = setTimeout(() => {
       // Déclencher la sauvegarde debounced pour l'auto-save
       triggerDebouncedSave(latestLocalInvitationData.current!);
-    }, 30000); // Auto-save every 30 seconds
+    }, 180000); // Auto-save every 30 seconds
 
     return () => clearTimeout(autoSaveTimer);
   }, [localInvitationData, designSettings, triggerDebouncedSave]); // Dépend de localInvitationData et designSettings

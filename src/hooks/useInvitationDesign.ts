@@ -1,3 +1,4 @@
+// src/hooks/useInvitationDesign.ts
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { InvitationDesignSettings } from '../types/models';
@@ -88,7 +89,13 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
   }, []);
 
   // Handle image upload
-  const uploadImage = useCallback(async (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File): Promise<string> => {
+  const uploadImage = useCallback(async (
+    sectionId: string,
+    imageType: 'background' | 'couple' | 'decorative',
+    file: File,
+    croppedWidth?: number, // New parameter
+    croppedHeight?: number // New parameter
+  ): Promise<{ url: string; width: number | null; height: number | null }> => { // Updated return type
     if (!invitationId) {
       throw new Error('ID d\'invitation non défini');
     }
@@ -120,21 +127,23 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
         throw new Error('Failed to get public URL');
       }
 
-      let imageWidth: number | null = null;
-      let imageHeight: number | null = null;
+      let finalImageWidth: number | null = croppedWidth || null;
+      let finalImageHeight: number | null = croppedHeight || null;
 
-      // Extract image dimensions
-      try {
-        const img = new Image();
-        img.src = urlData.publicUrl;
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        imageWidth = img.naturalWidth;
-        imageHeight = img.naturalHeight;
-      } catch (dimError) {
-        console.warn('Could not get image dimensions:', dimError);
+      // If width/height not provided by cropper, try to extract them from the image itself
+      if (finalImageWidth === null || finalImageHeight === null) {
+        try {
+          const img = new Image();
+          img.src = urlData.publicUrl;
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          finalImageWidth = img.naturalWidth;
+          finalImageHeight = img.naturalHeight;
+        } catch (dimError) {
+          console.warn('Could not get image dimensions:', dimError);
+        }
       }
       
       // Create an entry in user_files table
@@ -165,11 +174,11 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
           description: `Uploaded ${imageType} image`,
           display_order: 0, // Or a calculated order
           is_featured: false, // Or based on imageType
-          // width: imageWidth, // Uncomment and add to DB schema
-          // height: imageHeight, // Uncomment and add to DB schema
+          // width: finalImageWidth, // Uncomment and add to DB schema
+          // height: finalImageHeight, // Uncomment and add to DB schema
         });
       
-      return urlData.publicUrl;
+      return { url: urlData.publicUrl, width: finalImageWidth, height: finalImageHeight };
     } catch (err) {
       console.error('Error uploading image:', err);
       setError('Impossible de télécharger l\'image');

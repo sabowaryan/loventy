@@ -73,6 +73,7 @@ const Editor: React.FC = () => {
     questions,
     posts,
     comments,
+    media, // Destructure media
     isLoading: isInvitationLoading,
     error: invitationError,
     isSaving: isInvitationSaving,
@@ -95,7 +96,8 @@ const Editor: React.FC = () => {
     deletePost,
     approveComment,
     rejectComment,
-    deleteComment
+    deleteComment,
+    deleteMedia // Destructure deleteMedia
   } = useInvitation({ invitationId: templateId });
 
   // Use the invitation design hook
@@ -470,6 +472,7 @@ const Editor: React.FC = () => {
                   questions={questions}
                   posts={posts}
                   comments={comments}
+                  media={media} // Pass media
                   onInputChange={handleInputChange}
                   onAddEvent={addEvent}
                   onUpdateEvent={updateEvent}
@@ -490,6 +493,7 @@ const Editor: React.FC = () => {
                   onApproveComment={approveComment}
                   onRejectComment={rejectComment}
                   onDeleteComment={deleteComment}
+                  onDeleteMedia={deleteMedia} // Pass deleteMedia
                   designSettings={designSettings}
                   onDesignChange={updateDesignSettings}
                   onImageUpload={handleImageUpload}

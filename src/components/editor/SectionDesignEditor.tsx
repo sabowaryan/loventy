@@ -1,3 +1,4 @@
+// src/components/editor/SectionDesignEditor.tsx
 import React, { useState } from 'react';
 import {
   Palette,
@@ -20,7 +21,7 @@ import type { InvitationDesignSettings, SectionDesign } from '../../types/models
 interface DesignControlsProps {
   designSettings: InvitationDesignSettings;
   onDesignChange: (newSettings: InvitationDesignSettings) => void;
-  onImageUpload: (sectionId: string, imageType: 'background' | 'couple', file: File) => Promise<string>;
+  onImageUpload: (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File) => Promise<string>; // Updated imageType
   isUploading: boolean;
 }
 
@@ -30,17 +31,12 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
   onImageUpload,
   isUploading
 }) => {
-  // This component manages which specific section (e.g., 'hero', 'details', 'rsvp')
-  // is currently being edited within its own scope.
   const [activeSection, setActiveSection] = useState<'hero' | 'details' | 'rsvp' | 'welcome' | 'program' | 'honeymoon' | 'music' | 'interactive' | 'contact' | 'policies' | 'additional'>('hero');
-  const [activeTab, setActiveTab] = useState<'general' | 'section'>('section'); // Default to 'section' tab for granular controls
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Helper to update design settings
   const updateDesign = (path: string, value: any) => {
     const newSettings = { ...designSettings };
 
-    // Handle nested paths like 'sections.hero.backgroundColor'
     const parts = path.split('.');
     let current: any = newSettings;
 
@@ -52,7 +48,6 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
     onDesignChange(newSettings);
   };
 
-  // Helper to update section design for the currently active section
   const updateSectionDesign = (sectionId: typeof activeSection, property: keyof SectionDesign, value: any) => {
     const newSettings = { ...designSettings };
     newSettings.sections[sectionId] = {
@@ -62,8 +57,7 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
     onDesignChange(newSettings);
   };
 
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, sectionId: typeof activeSection, imageType: 'background' | 'couple') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, sectionId: typeof activeSection, imageType: 'background' | 'couple' | 'decorative') => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
@@ -71,8 +65,7 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
     }
   };
 
-  // Handle image upload
-  const handleImageUpload = async (sectionId: typeof activeSection, imageType: 'background' | 'couple', file: File) => {
+  const handleImageUpload = async (sectionId: typeof activeSection, imageType: 'background' | 'couple' | 'decorative', file: File) => {
     try {
       const imageUrl = await onImageUpload(sectionId, imageType, file);
 
@@ -80,6 +73,8 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
         updateSectionDesign(sectionId, 'backgroundImageUrl', imageUrl);
       } else if (imageType === 'couple') {
         updateSectionDesign(sectionId, 'coupleImageUrl', imageUrl);
+      } else if (imageType === 'decorative') { // Handle decorative element
+        updateSectionDesign(sectionId, 'decorativeElementUrl', imageUrl);
       }
 
       setSelectedFile(null);
@@ -91,16 +86,16 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
     }
   };
 
-  // Remove image
-  const handleRemoveImage = (sectionId: typeof activeSection, imageType: 'background' | 'couple') => {
+  const handleRemoveImage = (sectionId: typeof activeSection, imageType: 'background' | 'couple' | 'decorative') => {
     if (imageType === 'background') {
       updateSectionDesign(sectionId, 'backgroundImageUrl', null);
     } else if (imageType === 'couple') {
       updateSectionDesign(sectionId, 'coupleImageUrl', null);
+    } else if (imageType === 'decorative') { // Handle decorative element removal
+      updateSectionDesign(sectionId, 'decorativeElementUrl', null);
     }
   };
 
-  // List of all sections that can have their design edited
   const allSections = [
     { id: 'hero', name: 'Section d\'accueil' },
     { id: 'welcome', name: 'Message de bienvenue' },
@@ -111,8 +106,8 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
     { id: 'music', name: 'Musique' },
     { id: 'interactive', name: 'Fonctionnalités interactives' },
     { id: 'contact', name: 'Contact et liens' },
-    { id: 'policies', name: 'Politiques' },
-    { id: 'additional', name: 'Informations supplémentaires' },
+    { id: 'policies', name: 'Informations supplémentaires' },
+    { id: 'additional', name: 'Informations pratiques' },
   ];
 
   return (
@@ -315,7 +310,7 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
                   className={`w-full h-full object-cover ${
                     designSettings.sections[activeSection].coupleImageShape === 'rounded' ? 'rounded-xl' :
                     designSettings.sections[activeSection].coupleImageShape === 'circle' ? 'rounded-full' :
-                    designSettings.sections[activeSection].coupleImageShape === 'heart' ? 'heart-shape' : '' // Added heart shape class
+                    designSettings.sections[activeSection].coupleImageShape === 'heart' ? 'heart-shape' : ''
                   }`}
                 />
                 <button
@@ -392,6 +387,62 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
               />
               <label
                 htmlFor={`couple-upload-${activeSection}`}
+                className={`inline-block px-4 py-2 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors cursor-pointer ${
+                  isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isUploading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Téléchargement...</span>
+                  </div>
+                ) : (
+                  'Choisir une image'
+                )}
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Decorative Element - Only for hero section */}
+      {activeSection === 'hero' && (
+        <div className="bg-white rounded-xl p-6 border border-gray-100">
+          <h3 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
+            <ImageIcon className="h-5 w-5 mr-2 text-[#D4A5A5]" />
+            Élément décoratif
+          </h3>
+
+          {designSettings.sections[activeSection].decorativeElementUrl ? (
+            <div className="mb-4">
+              <div className="relative rounded-lg overflow-hidden h-40 mb-2 flex items-center justify-center bg-gray-100">
+                <img
+                  src={designSettings.sections[activeSection].decorativeElementUrl}
+                  alt="Decorative Element"
+                  className="h-24 w-24 object-contain"
+                />
+                <button
+                  onClick={() => handleRemoveImage(activeSection, 'decorative')}
+                  className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#D4A5A5] transition-colors">
+              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 mb-2">Ajoutez une petite image ou icône décorative</p>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e, activeSection, 'decorative')}
+                className="hidden"
+                id={`decorative-upload-${activeSection}`}
+                disabled={isUploading}
+              />
+              <label
+                htmlFor={`decorative-upload-${activeSection}`}
                 className={`inline-block px-4 py-2 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors cursor-pointer ${
                   isUploading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}

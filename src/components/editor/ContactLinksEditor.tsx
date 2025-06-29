@@ -49,7 +49,7 @@ const ContactLinksEditor: React.FC<ContactLinksEditorProps> = ({
             </label>
             <input
               type="tel"
-              value={invitationData.phoneContact}
+              value={invitationData.phoneContact || ''}
               onChange={(e) => onInputChange('phoneContact', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
               placeholder="+33 6 12 34 56 78"
@@ -63,7 +63,7 @@ const ContactLinksEditor: React.FC<ContactLinksEditorProps> = ({
             </label>
             <input
               type="email"
-              value={invitationData.emailContact}
+              value={invitationData.emailContact || ''}
               onChange={(e) => onInputChange('emailContact', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
               placeholder="sarah.alex@email.com"
@@ -77,7 +77,7 @@ const ContactLinksEditor: React.FC<ContactLinksEditorProps> = ({
             </label>
             <input
               type="url"
-              value={invitationData.weddingWebsite}
+              value={invitationData.weddingWebsite || ''}
               onChange={(e) => onInputChange('weddingWebsite', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
               placeholder="https://sarah-alex-wedding.com"
@@ -91,7 +91,7 @@ const ContactLinksEditor: React.FC<ContactLinksEditorProps> = ({
             </label>
             <input
               type="url"
-              value={invitationData.registryLink}
+              value={invitationData.registryLink || ''}
               onChange={(e) => onInputChange('registryLink', e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
               placeholder="https://liste-mariage.fr/sarah-alex"

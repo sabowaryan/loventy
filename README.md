@@ -1,4 +1,5 @@
 # Loventy - Plateforme d'invitations de mariage
+[![Built with Bolt.new](https://bolt.new/built-with-bolt-badge.svg)](https://bolt.new)
 
 ## Structure de la base de données
 

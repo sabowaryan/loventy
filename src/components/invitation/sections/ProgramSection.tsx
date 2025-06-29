@@ -1,26 +1,25 @@
 import React from 'react';
 import { Calendar, Clock, MapPin, CloudSun } from 'lucide-react';
-import { ExtendedInvitationData, InvitationDesignSettings, InvitationEvent } from '../../../types/models';
+import { ExtendedInvitationData, InvitationDesignSettings, InvitationEvent, SectionDesign } from '../../../types/models';
 import InvitationSection from '../InvitationSection';
 import { colorPalettes, fontFamilies } from '../../../utils/designConstants';
 
 interface ProgramSectionProps {
   invitationData: ExtendedInvitationData;
-  designSettings: InvitationDesignSettings;
+  designSettings: InvitationDesignSettings; // Keep for global design settings
   events: InvitationEvent[];
+  design: SectionDesign; // New prop for section-specific design
 }
 
-const ProgramSection: React.FC<ProgramSectionProps> = ({ 
-  invitationData, 
-  designSettings,
-  events
+const ProgramSection: React.FC<ProgramSectionProps> = ({
+  invitationData,
+  designSettings, // Keep for global design settings like color palette and font
+  events,
+  design // Use this for section-specific design properties
 }) => {
   // Récupérer la palette de couleurs et la famille de polices
   const colorPalette = colorPalettes.find(p => p.id === designSettings.colorPaletteId) || colorPalettes[0];
   const fontFamily = fontFamilies.find(f => f.id === designSettings.fontFamilyId) || fontFamilies[0];
-  
-  // Récupérer les paramètres de design spécifiques à cette section
-  const sectionDesign = designSettings.sections.program;
 
   // Fonction pour obtenir la couleur en fonction du type d'événement
   const getEventTypeColor = (type: string) => {
@@ -59,27 +58,27 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
   };
 
   return (
-    <InvitationSection 
-      design={sectionDesign} 
+    <InvitationSection
+      design={design} // Pass the section-specific design
       colorPaletteId={designSettings.colorPaletteId}
       id="program-section"
       className="min-h-[50vh]"
     >
       <div className="space-y-8">
-        <h2 
+        <h2
           className="text-2xl md:text-3xl font-bold text-center mb-6"
-          style={{ 
+          style={{
             fontFamily: fontFamily.heading,
             color: colorPalette.primary
           }}
         >
           Programme
         </h2>
-        
+
         {events.length === 0 ? (
-          <div 
+          <div
             className="text-center p-6 rounded-lg"
-            style={{ 
+            style={{
               backgroundColor: `${colorPalette.secondary}15`,
               fontFamily: fontFamily.body,
               color: colorPalette.textColor
@@ -90,46 +89,46 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
         ) : (
           <div className="relative">
             {/* Timeline line */}
-            <div 
+            <div
               className="absolute left-4 top-0 bottom-0 w-0.5"
               style={{ backgroundColor: `${colorPalette.primary}40` }}
             ></div>
-            
+
             {/* Events */}
             <div className="space-y-8 ml-10">
               {events.map((event, index) => (
                 <div key={event.id} className="relative">
                   {/* Timeline dot */}
-                  <div 
+                  <div
                     className="absolute -left-10 top-0 w-4 h-4 rounded-full"
-                    style={{ 
+                    style={{
                       backgroundColor: getEventTypeColor(event.event_type),
                       border: `2px solid white`,
                       boxShadow: `0 0 0 2px ${getEventTypeColor(event.event_type)}40`
                     }}
                   ></div>
-                  
+
                   {/* Event card */}
-                  <div 
+                  <div
                     className="rounded-lg p-4"
-                    style={{ 
+                    style={{
                       backgroundColor: `${getEventTypeColor(event.event_type)}10`,
                       borderLeft: `3px solid ${getEventTypeColor(event.event_type)}`
                     }}
                   >
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span 
+                      <span
                         className="px-2 py-0.5 rounded-full text-xs font-medium"
-                        style={{ 
+                        style={{
                           backgroundColor: `${getEventTypeColor(event.event_type)}20`,
                           color: getEventTypeColor(event.event_type)
                         }}
                       >
                         {getEventTypeLabel(event.event_type)}
                       </span>
-                      <h3 
+                      <h3
                         className="text-lg font-semibold"
-                        style={{ 
+                        style={{
                           fontFamily: fontFamily.heading,
                           color: colorPalette.textColor
                         }}
@@ -137,10 +136,10 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
                         {event.title}
                       </h3>
                     </div>
-                    
-                    <div 
+
+                    <div
                       className="space-y-2 text-sm"
-                      style={{ 
+                      style={{
                         fontFamily: fontFamily.body,
                         color: colorPalette.textColor
                       }}
@@ -149,7 +148,7 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
                         <Clock className="h-4 w-4" style={{ color: getEventTypeColor(event.event_type) }} />
                         <span>{event.event_time}</span>
                       </div>
-                      
+
                       <div className="flex items-start space-x-2">
                         <MapPin className="h-4 w-4 mt-1 flex-shrink-0" style={{ color: getEventTypeColor(event.event_type) }} />
                         <div>
@@ -157,20 +156,20 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
                           <div className="text-xs opacity-75">{event.address}</div>
                         </div>
                       </div>
-                      
+
                       {event.description && (
                         <p className="italic text-sm mt-2">{event.description}</p>
                       )}
-                      
+
                       {/* Plan B information if available */}
                       {(event.plan_b_location_name || event.plan_b_address || event.plan_b_description) && (
-                        <div 
+                        <div
                           className="mt-2 p-2 rounded-lg"
                           style={{ backgroundColor: `${colorPalette.secondary}15` }}
                         >
                           <div className="flex items-center space-x-1 mb-1">
                             <CloudSun className="h-3 w-3" style={{ color: colorPalette.accent }} />
-                            <span className="text-xs font-medium">Plan B (en cas de mauvais temps)</span>
+                            <span className="font-medium">Plan B</span>
                           </div>
                           {event.plan_b_location_name && (
                             <div className="text-xs">{event.plan_b_location_name}</div>
@@ -190,12 +189,12 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
             </div>
           </div>
         )}
-        
+
         {/* Additional event information */}
         {invitationData.additionalInfo && (
-          <div 
+          <div
             className="mt-6 p-4 rounded-lg"
-            style={{ 
+            style={{
               backgroundColor: `${colorPalette.secondary}15`,
               fontFamily: fontFamily.body,
               color: colorPalette.textColor

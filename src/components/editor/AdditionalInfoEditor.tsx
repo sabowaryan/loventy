@@ -31,7 +31,7 @@ const AdditionalInfoEditor: React.FC<AdditionalInfoEditorProps> = ({
               Informations additionnelles
             </label>
             <textarea
-              value={invitationData.additionalInfo}
+              value={invitationData.additionalInfo || ''}
               onChange={(e) => onInputChange('additionalInfo', e.target.value)}
               rows={3}
               className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"

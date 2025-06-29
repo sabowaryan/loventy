@@ -1,3 +1,4 @@
+// src/components/invitation/sections/HeroSection.tsx
 import React from 'react';
 import { Heart, Calendar } from 'lucide-react';
 import { ExtendedInvitationData, InvitationDesignSettings, SectionDesign } from '../../../types/models';
@@ -46,7 +47,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               <img
                 src={design.coupleImageUrl}
                 alt="Couple"
-                className="w-full h-full object-cover"
+                className="w-full h-full" // Removed object-cover here
+                style={{ objectFit: design.coupleImageFit || 'cover' }} // Apply objectFit here
               />
             </div>
           </div>
@@ -139,3 +141,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
+

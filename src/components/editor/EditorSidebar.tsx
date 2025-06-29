@@ -24,13 +24,15 @@ interface EditorSidebarProps {
   setActiveTab: (tab: string) => void;
   activeSection: string;
   setActiveSection: (section: string) => void;
+  type: 'tabs' | 'sections'; // New prop to control rendering type
 }
 
 const EditorSidebar: React.FC<EditorSidebarProps> = ({
   activeTab,
   setActiveTab,
   activeSection,
-  setActiveSection
+  setActiveSection,
+  type // Destructure the new prop
 }) => {
   // Définition des catégories principales
   const mainCategories = [
@@ -73,11 +75,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
     return sectionsByCategory[activeTab as keyof typeof sectionsByCategory] || [];
   };
 
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:flex lg:flex-col">
-      {/* Catégories principales */}
-      <div className="border-b border-gray-100 lg:border-b-0 lg:border-r lg:w-full">
-        <nav className="flex lg:flex-row lg:justify-around">
+  if (type === 'tabs') {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
+        <nav className="flex flex-col flex-grow">
           {mainCategories.map((category) => (
             <button
               key={category.id}
@@ -89,43 +90,51 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   setActiveSection(sections[0].id);
                 }
               }}
-              className={`flex-1 flex flex-col items-center py-4 px-2 text-sm font-medium transition-colors ${
+              className={`w-full flex items-center py-4 px-4 text-sm font-medium transition-colors ${
                 activeTab === category.id
-                  ? 'text-[#D4A5A5] border-b-2 border-[#D4A5A5]'
+                  ? 'text-[#D4A5A5] border-r-2 border-[#D4A5A5] bg-[#D4A5A5]/10'
                   : 'text-gray-500 hover:text-[#131837] hover:bg-gray-50'
               }`}
             >
-              <category.icon className="h-5 w-5 mb-1" />
-              <span className="text-xs">{category.name}</span>
+              <category.icon className="h-5 w-5 mr-3" />
+              <span>{category.name}</span>
             </button>
           ))}
         </nav>
       </div>
+    );
+  }
 
-      {/* Sections de la catégorie active */}
-      <div className="p-4 lg:flex-1 lg:overflow-x-auto lg:whitespace-nowrap">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 lg:hidden">
-          Sections
-        </h3>
-        <nav className="space-y-1 lg:flex lg:space-y-0 lg:space-x-2">
-          {getActiveSections().map((section) => (
-            <button
-              key={section.id}
-              onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors lg:w-auto lg:flex-shrink-0 ${
-                activeSection === section.id
-                  ? 'bg-[#D4A5A5]/10 text-[#D4A5A5]'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-[#D4A5A5]'
-              }`}
-            >
-              <section.icon className="h-4 w-4 mr-3 flex-shrink-0" />
-              <span className="truncate">{section.name}</span>
-            </button>
-          ))}
-        </nav>
+  if (type === 'sections') {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-4">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 lg:hidden">
+            Sections
+          </h3>
+          <nav className="space-y-1 lg:flex lg:space-y-0 lg:space-x-2 lg:overflow-x-auto lg:whitespace-nowrap hide-scrollbar">
+            {getActiveSections().map((section) => (
+              <button
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors lg:w-auto lg:flex-shrink-0 ${
+                  activeSection === section.id
+                    ? 'bg-[#D4A5A5]/10 text-[#D4A5A5]'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-[#D4A5A5]'
+                }`}
+              >
+                <section.icon className="h-4 w-4 mr-3 flex-shrink-0" />
+                <span className="truncate">{section.name}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // Fallback for unexpected type (should not happen with proper usage)
+  return null;
 };
 
 export default EditorSidebar;

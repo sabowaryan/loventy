@@ -54,6 +54,19 @@ const PoliciesEditor: React.FC<PoliciesEditorProps> = ({
               placeholder="Votre présence est notre plus beau cadeau. Si vous souhaitez néanmoins nous offrir quelque chose, une urne sera à votre disposition."
             />
           </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-[#131837] mb-2">
+              Code vestimentaire
+            </label>
+            <input
+              type="text"
+              value={invitationData.dressCode || ''}
+              onChange={(e) => onInputChange('dressCode', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
+              placeholder="Tenue de soirée souhaitée"
+            />
+          </div>
         </div>
       </div>
     </div>

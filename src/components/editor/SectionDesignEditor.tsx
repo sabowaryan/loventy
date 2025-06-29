@@ -28,7 +28,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 interface DesignControlsProps {
   designSettings: InvitationDesignSettings;
   onDesignChange: (newSettings: InvitationDesignSettings) => void;
-  onImageUpload: (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File) => Promise<string>;
+  onImageUpload: (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File, croppedWidth?: number, croppedHeight?: number) => Promise<{ url: string; width: number | null; height: number | null }>;
   isUploading: boolean;
 }
 
@@ -123,14 +123,14 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
     onDesignChange(newSettings);
   };
 
-  const updateSectionDesign = useCallback((sectionId: typeof activeSection, property: keyof SectionDesign, value: any) => {
+  const updateSectionDesign = useCallback((sectionId: typeof activeSection, property: keyof SectionDesign | Partial<SectionDesign>, value?: any) => {
     onDesignChange(prev => ({
       ...prev,
       sections: {
         ...prev.sections,
         [sectionId]: {
           ...prev.sections[sectionId],
-          [property]: value
+          ...(typeof property === 'object' ? property : { [property]: value })
         }
       }
     }));
@@ -156,25 +156,31 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
         const croppedBlob = await getCroppedImg(imageRef.current, completedCrop);
         const croppedFile = new File([croppedBlob], selectedFileForCrop.name, { type: selectedFileForCrop.type });
         
-        const imageUrl = await onImageUpload(activeSection, currentImageType, croppedFile);
+        const { url, width, height } = await onImageUpload(
+          activeSection,
+          currentImageType,
+          croppedFile,
+          completedCrop.width, // Pass cropped width
+          completedCrop.height // Pass cropped height
+        );
 
         // Update design settings with the new image URL and its dimensions
         const newSectionDesign: Partial<SectionDesign> = {};
         if (currentImageType === 'background') {
-          newSectionDesign.backgroundImageUrl = imageUrl;
-          newSectionDesign.backgroundImageWidth = completedCrop.width;
-          newSectionDesign.backgroundImageHeight = completedCrop.height;
+          newSectionDesign.backgroundImageUrl = url;
+          newSectionDesign.backgroundImageWidth = width;
+          newSectionDesign.backgroundImageHeight = height;
           newSectionDesign.backgroundPattern = null; // Remove pattern if image is selected
         } else if (currentImageType === 'couple') {
-          newSectionDesign.coupleImageUrl = imageUrl;
-          newSectionDesign.coupleImageWidth = completedCrop.width;
-          newSectionDesign.coupleImageHeight = completedCrop.height;
+          newSectionDesign.coupleImageUrl = url;
+          newSectionDesign.coupleImageWidth = width;
+          newSectionDesign.coupleImageHeight = height;
         } else if (currentImageType === 'decorative') {
-          newSectionDesign.decorativeElementUrl = imageUrl;
-          newSectionDesign.decorativeElementWidth = completedCrop.width;
-          newSectionDesign.decorativeElementHeight = completedCrop.height;
+          newSectionDesign.decorativeElementUrl = url;
+          newSectionDesign.decorativeElementWidth = width;
+          newSectionDesign.decorativeElementHeight = height;
         }
-        updateSectionDesign(activeSection, newSectionDesign as any); // Cast to any for partial update
+        updateSectionDesign(activeSection, newSectionDesign);
 
         setCropperModalOpen(false);
         setImgSrc('');
@@ -184,7 +190,7 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
         setCurrentImageType(null);
       } catch (e) {
         console.error('Error cropping or uploading image:', e);
-        setErrorMessage('Erreur lors du rognage ou du téléchargement de l\'image.');
+        // setErrorMessage('Erreur lors du rognage ou du téléchargement de l\'image.'); // Assuming you have an error state setter
       }
     }
   };
@@ -200,17 +206,23 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
 
   const handleRemoveImage = (sectionId: typeof activeSection, imageType: 'background' | 'couple' | 'decorative') => {
     if (imageType === 'background') {
-      updateSectionDesign(sectionId, 'backgroundImageUrl', null);
-      updateSectionDesign(sectionId, 'backgroundImageWidth', null);
-      updateSectionDesign(sectionId, 'backgroundImageHeight', null);
+      updateSectionDesign(sectionId, {
+        backgroundImageUrl: null,
+        backgroundImageWidth: null,
+        backgroundImageHeight: null
+      });
     } else if (imageType === 'couple') {
-      updateSectionDesign(sectionId, 'coupleImageUrl', null);
-      updateSectionDesign(sectionId, 'coupleImageWidth', null);
-      updateSectionDesign(sectionId, 'coupleImageHeight', null);
+      updateSectionDesign(sectionId, {
+        coupleImageUrl: null,
+        coupleImageWidth: null,
+        coupleImageHeight: null
+      });
     } else if (imageType === 'decorative') {
-      updateSectionDesign(sectionId, 'decorativeElementUrl', null);
-      updateSectionDesign(sectionId, 'decorativeElementWidth', null);
-      updateSectionDesign(sectionId, 'decorativeElementHeight', null);
+      updateSectionDesign(sectionId, {
+        decorativeElementUrl: null,
+        decorativeElementWidth: null,
+        decorativeElementHeight: null
+      });
     }
   };
 
@@ -742,3 +754,4 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
 };
 
 export default SectionDesignEditor;
+

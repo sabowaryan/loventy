@@ -21,7 +21,8 @@ import {
   BarChart3,
   Loader2,
   AlertTriangle,
-  ChevronDown
+  ChevronDown,
+  X // Import for clear search button
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -615,6 +616,14 @@ const Invitations: React.FC = () => {
                 className="form-input pl-10 w-full"
                 aria-label="Rechercher une invitation"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
             {/* Filtres */}

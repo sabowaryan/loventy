@@ -112,7 +112,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 lg:hidden">
             Sections
           </h3>
-          <nav className="space-y-1 lg:flex lg:space-y-0 lg:space-x-2 lg:overflow-x-auto lg:whitespace-nowrap hide-scrollbar">
+          <nav className="space-y-1 lg:flex lg:flex-wrap lg:space-y-0 lg:gap-2 hide-scrollbar">
             {getActiveSections().map((section) => (
               <button
                 key={section.id}
@@ -138,3 +138,4 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 };
 
 export default EditorSidebar;
+

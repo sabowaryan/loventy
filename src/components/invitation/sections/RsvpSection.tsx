@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, X, Send, Calendar } from 'lucide-react';
-import { ExtendedInvitationData, InvitationDesignSettings, GuestDetails } from '../../../types/models';
+import { ExtendedInvitationData, InvitationDesignSettings, GuestDetails, SectionDesign } from '../../../types/models';
 import InvitationSection from '../InvitationSection';
 import { colorPalettes, fontFamilies } from '../../../utils/designConstants';
 
@@ -9,20 +9,19 @@ interface RsvpSectionProps {
   designSettings: InvitationDesignSettings;
   guestDetails?: GuestDetails;
   onRsvpSubmit?: (status: 'confirmed' | 'declined', message: string) => Promise<void>;
+  design: SectionDesign; // New prop for section-specific design
 }
 
-const RsvpSection: React.FC<RsvpSectionProps> = ({ 
-  invitationData, 
+const RsvpSection: React.FC<RsvpSectionProps> = ({
+  invitationData,
   designSettings,
   guestDetails,
-  onRsvpSubmit
+  onRsvpSubmit,
+  design // Use this for section-specific design properties
 }) => {
   // Récupérer la palette de couleurs et la famille de polices
   const colorPalette = colorPalettes.find(p => p.id === designSettings.colorPaletteId) || colorPalettes[0];
   const fontFamily = fontFamilies.find(f => f.id === designSettings.fontFamilyId) || fontFamilies[0];
-  
-  // Récupérer les paramètres de design spécifiques à cette section
-  const sectionDesign = designSettings.sections.rsvp;
 
   // États pour le formulaire RSVP
   const [rsvpStatus, setRsvpStatus] = useState<'pending' | 'confirmed' | 'declined'>(
@@ -35,9 +34,9 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
   // Gérer la soumission du formulaire RSVP
   const handleRsvpSubmit = async (status: 'confirmed' | 'declined') => {
     if (!onRsvpSubmit) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await onRsvpSubmit(status, message);
       setRsvpStatus(status);
@@ -50,27 +49,27 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
   };
 
   return (
-    <InvitationSection 
-      design={sectionDesign} 
+    <InvitationSection
+      design={design} // Pass the section-specific design
       colorPaletteId={designSettings.colorPaletteId}
       id="rsvp-section"
       className="min-h-[40vh]"
     >
       <div className="text-center space-y-6">
-        <h2 
+        <h2
           className="text-2xl md:text-3xl font-bold"
-          style={{ 
+          style={{
             fontFamily: fontFamily.heading,
             color: colorPalette.primary
           }}
         >
           Confirmez votre présence
         </h2>
-        
+
         {invitationData.rsvpDate && (
-          <p 
+          <p
             className="text-lg"
-            style={{ 
+            style={{
               fontFamily: fontFamily.body,
               color: colorPalette.textColor
             }}
@@ -82,12 +81,12 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
             })}
           </p>
         )}
-        
+
         {/* RSVP Status Display */}
         {rsvpStatus !== 'pending' ? (
-          <div 
+          <div
             className="max-w-md mx-auto p-6 rounded-lg"
-            style={{ 
+            style={{
               backgroundColor: `${colorPalette.secondary}15`,
               fontFamily: fontFamily.body,
               color: colorPalette.textColor
@@ -96,18 +95,18 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
             {rsvpStatus === 'confirmed' ? (
               <div>
                 <div className="flex items-center justify-center space-x-2 mb-4">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: `${colorPalette.primary}20` }}
                   >
-                    <Check 
-                      className="h-6 w-6" 
+                    <Check
+                      className="h-6 w-6"
                       style={{ color: colorPalette.primary }}
                     />
                   </div>
-                  <h3 
+                  <h3
                     className="text-xl font-semibold"
-                    style={{ 
+                    style={{
                       fontFamily: fontFamily.heading,
                       color: colorPalette.primary
                     }}
@@ -115,22 +114,22 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                     Présence confirmée
                   </h3>
                 </div>
-                
+
                 <p>Merci d'avoir confirmé votre présence. Nous avons hâte de vous voir !</p>
-                
+
                 {message && (
-                  <div 
+                  <div
                     className="mt-4 p-3 rounded-lg italic"
                     style={{ backgroundColor: `${colorPalette.secondary}15` }}
                   >
                     "{message}"
                   </div>
                 )}
-                
-                <button 
+
+                <button
                   onClick={() => setShowRsvpForm(true)}
                   className="mt-4 px-4 py-2 rounded-lg text-sm font-medium"
-                  style={{ 
+                  style={{
                     backgroundColor: `${colorPalette.secondary}20`,
                     color: colorPalette.textColor
                   }}
@@ -141,18 +140,18 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
             ) : (
               <div>
                 <div className="flex items-center justify-center space-x-2 mb-4">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: `${colorPalette.secondary}20` }}
                   >
-                    <X 
-                      className="h-6 w-6" 
+                    <X
+                      className="h-6 w-6"
                       style={{ color: colorPalette.secondary }}
                     />
                   </div>
-                  <h3 
+                  <h3
                     className="text-xl font-semibold"
-                    style={{ 
+                    style={{
                       fontFamily: fontFamily.heading,
                       color: colorPalette.secondary
                     }}
@@ -160,22 +159,22 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                     Absence confirmée
                   </h3>
                 </div>
-                
+
                 <p>Nous comprenons et vous remercions de nous avoir prévenus.</p>
-                
+
                 {message && (
-                  <div 
+                  <div
                     className="mt-4 p-3 rounded-lg italic"
                     style={{ backgroundColor: `${colorPalette.secondary}15` }}
                   >
                     "{message}"
                   </div>
                 )}
-                
-                <button 
+
+                <button
                   onClick={() => setShowRsvpForm(true)}
                   className="mt-4 px-4 py-2 rounded-lg text-sm font-medium"
-                  style={{ 
+                  style={{
                     backgroundColor: `${colorPalette.secondary}20`,
                     color: colorPalette.textColor
                   }}
@@ -192,7 +191,7 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                 <button
                   onClick={() => setShowRsvpForm(true)}
                   className="px-6 py-3 rounded-lg font-medium inline-flex items-center justify-center space-x-2 transition-transform hover:scale-105 active:scale-95"
-                  style={{ 
+                  style={{
                     backgroundColor: colorPalette.primary,
                     color: 'white',
                     fontFamily: fontFamily.body
@@ -201,12 +200,12 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                   <Check className="h-5 w-5" />
                   <span>Je serai présent(e)</span>
                 </button>
-                
+
                 <button
                   onClick={() => handleRsvpSubmit('declined')}
                   disabled={isSubmitting}
                   className="px-6 py-3 rounded-lg font-medium inline-flex items-center justify-center space-x-2 transition-transform hover:scale-105 active:scale-95"
-                  style={{ 
+                  style={{
                     backgroundColor: 'transparent',
                     border: `2px solid ${colorPalette.primary}`,
                     color: colorPalette.primary,
@@ -226,7 +225,7 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                     onChange={(e) => setMessage(e.target.value)}
                     rows={3}
                     className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-shadow"
-                    style={{ 
+                    style={{
                       borderColor: `${colorPalette.primary}30`,
                       fontFamily: fontFamily.body,
                       color: colorPalette.textColor,
@@ -234,13 +233,13 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                     }}
                   />
                 </div>
-                
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleRsvpSubmit('confirmed')}
                     disabled={isSubmitting}
                     className="flex-1 px-6 py-3 rounded-lg font-medium inline-flex items-center justify-center space-x-2 transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
-                    style={{ 
+                    style={{
                       backgroundColor: colorPalette.primary,
                       color: 'white',
                       fontFamily: fontFamily.body
@@ -255,11 +254,11 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
                       </>
                     )}
                   </button>
-                  
+
                   <button
                     onClick={() => setShowRsvpForm(false)}
                     className="px-4 py-3 rounded-lg font-medium transition-transform hover:scale-105 active:scale-95"
-                    style={{ 
+                    style={{
                       backgroundColor: 'transparent',
                       border: `2px solid ${colorPalette.primary}`,
                       color: colorPalette.primary,
@@ -273,12 +272,12 @@ const RsvpSection: React.FC<RsvpSectionProps> = ({
             )}
           </div>
         )}
-        
+
         {/* Calendar Add Button */}
         <div className="pt-6">
-          <button 
+          <button
             className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg transition-transform hover:scale-105 active:scale-95"
-            style={{ 
+            style={{
               backgroundColor: `${colorPalette.secondary}20`,
               color: colorPalette.textColor,
               fontFamily: fontFamily.body

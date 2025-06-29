@@ -1,8 +1,6 @@
-Voici le **fichier `README.md` complet**, prêt à être utilisé pour ton dépôt GitHub avec le **badge Bolt.new** et **lien vers la démo YouTube** :
 
----
 
-````markdown
+
 # 💌 Loventy
 
 **Modern Wedding Invitations & Guest Management – Powered by Love & Tech**

@@ -1,3 +1,4 @@
+// src/types/models.ts
 // Types pour les modèles d'invitation et tables connexes
 
 export interface TemplateCategory {
@@ -367,8 +368,10 @@ export interface SectionDesign {
   backgroundImageUrl: string | null;
   backgroundPattern: string | null;
   backgroundOpacity: number;
+  backgroundFit?: 'cover' | 'contain'; // Nouvelle propriété
   coupleImageUrl?: string | null;
   coupleImageShape?: 'original' | 'rounded' | 'circle' | 'heart';
+  coupleImageFit?: 'cover' | 'contain'; // Nouvelle propriété
   visible?: boolean;
   decorativeElementUrl?: string | null;
 }
@@ -436,4 +439,6 @@ export interface ExtendedInvitationData {
   socialWallEnabled: boolean;
   socialWallModerationEnabled: boolean;
   virtualKeepsakeEnabled: boolean;
+  
 }
+

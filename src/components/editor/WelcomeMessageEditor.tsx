@@ -1,7 +1,8 @@
+// src/components/editor/WelcomeMessageEditor.tsx
 import React from 'react';
-import { 
-  MessageSquare, 
-  Quote, 
+import {
+  MessageSquare,
+  Quote,
   Heart
 } from 'lucide-react';
 import { ExtendedInvitationData } from '../../types/models';
@@ -11,9 +12,9 @@ interface WelcomeMessageEditorProps {
   onInputChange: (field: string, value: any) => void;
 }
 
-const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({ 
-  invitationData, 
-  onInputChange 
+const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
+  invitationData,
+  onInputChange
 }) => {
   return (
     <div className="space-y-8">
@@ -23,7 +24,7 @@ const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
           <Heart className="h-5 w-5 mr-2 text-[#D4A5A5]" />
           Message de bienvenue
         </h3>
-        
+
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-[#131837] mb-2">
@@ -56,7 +57,7 @@ const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
               Message principal qui apparaîtra sur votre invitation
             </p>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[#131837] mb-2">
               Citation ou verset préféré
@@ -72,7 +73,7 @@ const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
               Une citation ou un verset qui représente votre couple
             </p>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-[#131837] mb-2">
               Déclaration des valeurs du couple
@@ -97,7 +98,7 @@ const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
           <MessageSquare className="h-5 w-5 mr-2 text-[#D4A5A5]" />
           Type de message
         </h3>
-        
+
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-[#131837] mb-2">
@@ -113,7 +114,7 @@ const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
               <option value="audio">Audio</option>
             </select>
           </div>
-          
+
           {invitationData.coupleMessageType !== 'text' && (
             <div>
               <label className="block text-sm font-medium text-[#131837] mb-2">
@@ -127,8 +128,8 @@ const WelcomeMessageEditor: React.FC<WelcomeMessageEditorProps> = ({
                 placeholder={invitationData.coupleMessageType === 'video' ? 'https://youtube.com/watch?v=...' : 'https://soundcloud.com/...'}
               />
               <p className="mt-1 text-xs text-gray-500">
-                {invitationData.coupleMessageType === 'video' 
-                  ? 'Lien vers une vidéo YouTube, Vimeo, etc.' 
+                {invitationData.coupleMessageType === 'video'
+                  ? 'Lien vers une vidéo YouTube, Vimeo, etc.'
                   : 'Lien vers un fichier audio SoundCloud, Spotify, etc.'}
               </p>
             </div>

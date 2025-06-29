@@ -338,29 +338,31 @@ const Editor: React.FC = () => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Horizontal Sidebar for large screens */}
-        <div className="hidden lg:block mb-6">
-          <EditorSidebar
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[calc(100vh - 112px)]">
-          {/* Sidebar - Navigation (hidden on large screens) */}
-          <div className="lg:hidden lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_350px] gap-6 lg:h-[calc(100vh - 112px)]">
+          {/* Vertical Sidebar (Main Tabs) */}
+          <div className="hidden lg:block h-full">
             <EditorSidebar
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               activeSection={activeSection}
               setActiveSection={setActiveSection}
+              type="tabs"
             />
           </div>
 
           {/* Main Content - Editor */}
           <div className="lg:col-span-7 lg:flex lg:flex-col h-full">
+            {/* Horizontal Sub-Sidebar (Sections) */}
+            <div className="hidden lg:block mb-6">
+              <EditorSidebar
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                type="sections"
+              />
+            </div>
+
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-grow h-full">
               <div className="p-6 h-full overflow-y-auto">
                 <EditorContent
@@ -499,3 +501,4 @@ const Editor: React.FC = () => {
 };
 
 export default Editor;
+

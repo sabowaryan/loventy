@@ -15,7 +15,8 @@ import {
   DollarSign,
   Image as ImageIcon,
   Settings,
-  Layers
+  Layers,
+  Layout
 } from 'lucide-react';
 
 interface EditorSidebarProps {
@@ -54,6 +55,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
     design: [
       { id: 'theme', name: 'Thème et couleurs', icon: Palette, description: 'Style visuel' },
       { id: 'layout', name: 'Mise en page', icon: Layers, description: 'Structure des sections' },
+      { id: 'section-design', name: 'Design par section', icon: Layout, description: 'Contrôle détaillé des sections' }, // New section
       { id: 'media', name: 'Médias', icon: ImageIcon, description: 'Photos et images' },
     ],
     interactive: [

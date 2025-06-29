@@ -123,18 +123,18 @@ const Editor: React.FC = () => {
 
   // Ref to store the latest version of localInvitationData for the debounce
   const latestLocalInvitationData = useRef<ExtendedInvitationData | null>(null);
+  // Ref to track the last 'invitation' object from useInvitation that was added to history
+  const lastAddedInvitationRef = useRef<ExtendedInvitationData | null>(null);
+
 
   // Synchronize localInvitationData with the invitation loaded from useInvitation
+  // This useEffect should only push 'invitation' to history when it changes from the DB source
   useEffect(() => {
-    if (invitation) {
-      // Add the loaded invitation to history as the initial state
-      // Only add if it's different from the current history state to avoid duplicates
-      if (localInvitationData === null || JSON.stringify(localInvitationData) !== JSON.stringify(invitation)) {
-        add(invitation);
-      }
-      latestLocalInvitationData.current = invitation;
+    if (invitation && JSON.stringify(invitation) !== JSON.stringify(lastAddedInvitationRef.current)) {
+      add(invitation);
+      lastAddedInvitationRef.current = invitation;
     }
-  }, [invitation, add, localInvitationData]); // Add localInvitationData to dependencies to prevent infinite loop
+  }, [invitation, add]); // Removed localInvitationData from dependencies
 
   // Function to save debounced
   const triggerDebouncedSave = useCallback(

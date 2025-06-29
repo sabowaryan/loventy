@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import LoventyLogo from '../LoventyLogo';
-import Boltbadge from "../BoltBadge"
+import BoltBadge from '../BoltBadge';
 
 
 interface PublicLayoutProps {
@@ -370,10 +370,11 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                 </li>
               </ul>
             </div>
+            <div className="mt-6 flex justify-center">
+  <BoltBadge />
+</div>
           </div>
-          <div className="mt-6 flex justify-center">
-      <BoltBadge />
-    </div>
+          
 
           <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row md:justify-between items-center text-sm text-gray-400">
             <p>&copy; {new Date().getFullYear()} Loventy. Tous droits réservés.</p>

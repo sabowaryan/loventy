@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Upload, 
   Image as ImageIcon, 
   Trash2, 
   Plus, 
   Loader2,
-  Heart
+  Heart,
+  Search,
+  X,
+  Monitor,
+  Smartphone,
+  Tablet
 } from 'lucide-react';
+import { MediaDetails } from '../../types/models';
 
 interface MediaManagerProps {
-  onImageUpload: (sectionId: string, imageType: 'background' | 'couple', file: File) => Promise<string>;
+  onImageUpload: (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File) => Promise<string>;
   isUploading: boolean;
   invitationId: string;
-  media: Array<{
-    id: string;
-    title?: string;
-    description?: string;
-    file_url: string;
-    media_type: string;
-    created_at: string;
-  }>;
+  media: MediaDetails[]; // Now receives actual media data
   onRefreshMedia: () => void;
+  onDeleteMedia: (mediaId: string, filePath: string) => Promise<boolean>; // New prop for deleting media
 }
 
 const MediaManager: React.FC<MediaManagerProps> = ({ 
@@ -28,13 +28,38 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   isUploading, 
   invitationId,
   media = [],
-  onRefreshMedia
+  onRefreshMedia,
+  onDeleteMedia
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadType, setUploadType] = useState<'gallery' | 'background'>('gallery');
+  const [uploadType, setUploadType] = useState<'gallery' | 'background' | 'couple' | 'decorative'>('gallery');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [showUploadForm, setShowUploadForm] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'photo' | 'video' | 'audio'>('all');
+  const [selectedImage, setSelectedImage] = useState<MediaDetails | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  // Filter media based on search term and type
+  const filteredMedia = useMemo(() => {
+    let filtered = media;
+
+    if (searchTerm) {
+      filtered = filtered.filter(item =>
+        item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.file_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (filterType !== 'all') {
+      filtered = filtered.filter(item => item.media_type === filterType);
+    }
+
+    return filtered;
+  }, [media, searchTerm, filterType]);
 
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,15 +74,46 @@ const MediaManager: React.FC<MediaManagerProps> = ({
     if (!selectedFile) return;
     
     try {
-      await onImageUpload('gallery', 'background', selectedFile);
+      // Determine sectionId based on uploadType for onImageUpload
+      const sectionIdMap: Record<typeof uploadType, string> = {
+        gallery: 'gallery',
+        background: 'hero', // Assuming background images are for hero section
+        couple: 'hero',     // Assuming couple images are for hero section
+        decorative: 'hero'  // Assuming decorative elements are for hero section
+      };
+      const sectionId = sectionIdMap[uploadType];
+
+      await onImageUpload(sectionId, uploadType as any, selectedFile); // Cast uploadType to match expected type
       setSelectedFile(null);
       setTitle('');
       setDescription('');
       setShowUploadForm(false);
-      onRefreshMedia();
+      onRefreshMedia(); // Refresh media list after upload
     } catch (error) {
       console.error('Error uploading image:', error);
     }
+  };
+
+  const handleDeleteMedia = async (mediaId: string, filePath: string) => {
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce média ? Cette action est irréversible.')) {
+      try {
+        await onDeleteMedia(mediaId, filePath);
+        onRefreshMedia(); // Refresh media list after deletion
+      } catch (error) {
+        console.error('Error deleting media:', error);
+        alert('Erreur lors de la suppression du média.');
+      }
+    }
+  };
+
+  const openImageModal = (image: MediaDetails) => {
+    setSelectedImage(image);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+    setShowImageModal(false);
   };
 
   return (
@@ -76,7 +132,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
           >
             {showUploadForm ? (
               <>
-                <Trash2 className="h-4 w-4 mr-1" />
+                <X className="h-4 w-4 mr-1" />
                 <span>Annuler</span>
               </>
             ) : (
@@ -153,6 +209,8 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                   >
                     <option value="gallery">Image de galerie</option>
                     <option value="background">Image de fond</option>
+                    <option value="couple">Image de couple</option>
+                    <option value="decorative">Élément décoratif</option>
                   </select>
                 </div>
                 
@@ -175,7 +233,31 @@ const MediaManager: React.FC<MediaManagerProps> = ({
           </div>
         ) : (
           <>
-            {media.length === 0 ? (
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Rechercher des médias..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as typeof filterType)}
+                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
+              >
+                <option value="all">Tous les types</option>
+                <option value="photo">Photos</option>
+                <option value="video">Vidéos</option>
+                <option value="audio">Audios</option>
+              </select>
+            </div>
+
+            {filteredMedia.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
                 <Heart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h4 className="text-lg font-medium text-gray-900 mb-2">Aucune image</h4>
@@ -189,20 +271,29 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {media.map((item) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredMedia.map((item) => (
                   <div key={item.id} className="group relative rounded-lg overflow-hidden border border-gray-200">
                     <img 
-                      src={item.file_url} 
+                      src={item.file_url || ''} 
                       alt={item.title || 'Image'} 
-                      className="w-full h-32 object-cover"
+                      className="w-full h-32 object-cover cursor-pointer"
+                      onClick={() => openImageModal(item)}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
-                        <button className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors">
-                          <ImageIcon className="h-4 w-4 text-gray-700" />
+                        <button 
+                          className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                          onClick={() => openImageModal(item)}
+                          title="Prévisualiser"
+                        >
+                          <Eye className="h-4 w-4 text-gray-700" />
                         </button>
-                        <button className="p-1 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors">
+                        <button 
+                          className="p-1 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
+                          onClick={() => handleDeleteMedia(item.id, item.file_path || '')}
+                          title="Supprimer"
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </button>
                       </div>
@@ -220,7 +311,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
         )}
       </div>
 
-      {/* Galerie d'images prédéfinies */}
+      {/* Predefined Images Gallery */}
       <div className="bg-white rounded-xl p-6 border border-gray-100">
         <h3 className="text-lg font-semibold text-[#131837] mb-4">
           Images prédéfinies
@@ -255,6 +346,36 @@ const MediaManager: React.FC<MediaManagerProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {showImageModal && selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+            <button
+              onClick={closeImageModal}
+              className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-gray-900"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img 
+              src={selectedImage.file_url || ''} 
+              alt={selectedImage.title || 'Aperçu de l\'image'} 
+              className="w-full h-auto max-h-[80vh] object-contain"
+            />
+            {selectedImage.title && (
+              <div className="p-4 border-t border-gray-200">
+                <h4 className="font-semibold text-lg text-[#131837]">{selectedImage.title}</h4>
+                {selectedImage.description && (
+                  <p className="text-sm text-gray-600 mt-1">{selectedImage.description}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                  Type: {selectedImage.media_type} | Taille: {(selectedImage.file_size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

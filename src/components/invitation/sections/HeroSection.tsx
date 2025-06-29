@@ -81,29 +81,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           >
             {invitationData.brideName} & {invitationData.groomName}
           </h1>
-
-          {/* Formal message intro if available */}
-          {invitationData.formalMessageIntro ? (
-            <p
-              className="text-lg"
-              style={{
-                fontFamily: fontFamily.body,
-                color: colorPalette.textColor
-              }}
-            >
-              {invitationData.formalMessageIntro}
-            </p>
-          ) : (
-            <p
-              className="text-lg"
-              style={{
-                fontFamily: fontFamily.body,
-                color: colorPalette.textColor
-              }}
-            >
-              {guestName ? `Cher/Chère ${guestName}, vous êtes invité(e) à notre mariage` : 'Vous invitent à célébrer leur union'}
-            </p>
-          )}
         </div>
 
         {/* Date */}
@@ -153,3 +130,4 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 };
 
 export default HeroSection;
+

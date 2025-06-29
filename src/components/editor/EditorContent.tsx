@@ -203,10 +203,10 @@ const EditorContent: React.FC<EditorContentProps> = ({
               onAddQuiz={onAddQuiz}
               onUpdateQuiz={onUpdateQuiz}
               onDeleteQuiz={onDeleteQuiz}
-              onAddQuestion={onAddQuestion}
-              onUpdateQuestion={onUpdateQuestion}
-              onDeleteQuestion={onDeleteQuestion}
-              onReorderQuestions={onReorderQuestions}
+              onAddQuestion={addQuestion}
+              onUpdateQuestion={updateQuestion}
+              onDeleteQuestion={deleteQuestion}
+              onReorderQuestions={reorderQuestions}
             />
           );
         case 'social':
@@ -218,12 +218,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
               comments={comments}
               onToggleEnabled={onToggleSocialWall}
               onToggleModeration={onToggleModeration}
-              onApprovePost={approvePost} // FIX: Use the prop received by EditorContent
-              onRejectPost={rejectPost}   // FIX: Use the prop received by EditorContent
-              onDeletePost={deletePost}   // FIX: Use the prop received by EditorContent
-              onApproveComment={approveComment} // FIX: Use the prop received by EditorContent
-              onRejectComment={rejectComment}   // FIX: Use the prop received by EditorContent
-              onDeleteComment={deleteComment}   // FIX: Use the prop received by EditorContent
+              onApprovePost={onApprovePost} // Use the prop received by EditorContent
+              onRejectPost={onRejectPost}   // Use the prop received by EditorContent
+              onDeletePost={onDeletePost}   // Use the prop received by EditorContent
+              onApproveComment={onApproveComment} // Use the prop received by EditorContent
+              onRejectComment={onRejectComment}   // Use the prop received by EditorContent
+              onDeleteComment={onDeleteComment}   // Use the prop received by EditorContent
             />
           );
         default:
@@ -257,3 +257,4 @@ const EditorContent: React.FC<EditorContentProps> = ({
 };
 
 export default EditorContent;
+

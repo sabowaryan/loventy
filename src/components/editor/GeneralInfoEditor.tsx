@@ -151,48 +151,6 @@ const GeneralInfoEditor: React.FC<GeneralInfoEditorProps> = ({ invitationData, o
           </div>
         </div>
       </div>
-
-      {/* Titre d'annonce */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <h3 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
-          <Type className="h-5 w-5 mr-2 text-[#D4A5A5]" />
-          Titres et en-têtes
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-[#131837] mb-2">
-              Titre d'annonce
-            </label>
-            <input
-              type="text"
-              value={invitationData.announcementTitle || ''}
-              onChange={(e) => onInputChange('announcementTitle', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
-              placeholder="SAVE THE DATE"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Ce titre apparaîtra en haut de votre invitation (ex: SAVE THE DATE, NOUS NOUS MARIONS, etc.)
-            </p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-[#131837] mb-2">
-              Nom des hôtes
-            </label>
-            <input
-              type="text"
-              value={invitationData.hostName || ''}
-              onChange={(e) => onInputChange('hostName', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#D4A5A5] focus:border-transparent"
-              placeholder="Familles Dubois & Martin"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Nom des personnes qui organisent l'événement (généralement les parents)
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

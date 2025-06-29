@@ -36,9 +36,6 @@ import {
 import {
   defaultDesignSettings
 } from '../utils/designConstants';
-import {
-  debounce
-} from '../utils/debounce';
 import InvitationPreview from '../components/invitation/InvitationPreview';
 import {
   ExtendedInvitationData
@@ -64,6 +61,10 @@ const Editor: React.FC = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // New states for auto-save feedback
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [autoSaveCountdown, setAutoSaveCountdown] = useState(180); // 3 minutes in seconds
 
   // Use the useInvitation hook to load and manage data
   const {
@@ -121,11 +122,8 @@ const Editor: React.FC = () => {
     canRedo
   } = useHistory<ExtendedInvitationData | null>(null);
 
-  // Ref to store the latest version of localInvitationData for the debounce
-  const latestLocalInvitationData = useRef<ExtendedInvitationData | null>(null);
   // Ref to track the last 'invitation' object from useInvitation that was added to history
   const lastAddedInvitationRef = useRef<ExtendedInvitationData | null>(null);
-
 
   // Synchronize localInvitationData with the invitation loaded from useInvitation
   // This useEffect should only push 'invitation' to history when it changes from the DB source
@@ -136,27 +134,35 @@ const Editor: React.FC = () => {
     }
   }, [invitation, add]); // Removed localInvitationData from dependencies
 
-  // Function to save debounced
-  const triggerDebouncedSave = useCallback(
-    debounce(async (dataToSave: ExtendedInvitationData) => {
-      if (!dataToSave) return;
-      try {
-        await updateInvitation(dataToSave);
-        setLastSaved(new Date());
+  // Function to save
+  const handleSave = useCallback(async (showNotification = true) => {
+    if (!localInvitationData) return; // Ensure localInvitationData is not null
+
+    setErrorMessage(null); // Clear previous errors
+    try {
+      // Save design settings
+      await saveDesignSettings();
+      // Save invitation data using the current state from history
+      await updateInvitation(localInvitationData);
+
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false); // Reset unsaved changes flag
+      setAutoSaveCountdown(180); // Reset countdown
+
+      if (showNotification) {
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
-      } catch (error: any) {
-        console.error('Erreur lors de la sauvegarde debounced:', error);
-        let userFriendlyMessage = 'Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.';
-        if (error.message) {
-          userFriendlyMessage = `Erreur: ${error.message}`;
-        }
-        setErrorMessage(userFriendlyMessage);
-        setTimeout(() => setErrorMessage(null), 5000);
       }
-    }, 180000), // 3 minutes debounce
-    [updateInvitation]
-  );
+    } catch (error: any) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      let userFriendlyMessage = 'Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.';
+      if (error.message) {
+        userFriendlyMessage = `Erreur: ${error.message}`;
+      }
+      setErrorMessage(userFriendlyMessage);
+      setTimeout(() => setErrorMessage(null), 5000);
+    }
+  }, [localInvitationData, saveDesignSettings, updateInvitation]); // Dependencies for useCallback
 
   // Handle input changes
   const handleInputChange = (field: keyof ExtendedInvitationData, value: any) => {
@@ -178,52 +184,28 @@ const Editor: React.FC = () => {
     };
     // Use the add function from useHistory
     add(updatedData);
-    latestLocalInvitationData.current = updatedData; // Update the ref
 
-    // Trigger debounced save with the latest version
-    triggerDebouncedSave(updatedData);
+    setHasUnsavedChanges(true); // Set unsaved changes flag
+    setAutoSaveCountdown(180); // Reset countdown on any change
   };
 
-  // Auto-save functionality
+  // Auto-save functionality (fixed interval)
   useEffect(() => {
-    if (!localInvitationData) return;
+    const interval = setInterval(() => {
+      setAutoSaveCountdown((prev) => {
+        if (prev <= 1) {
+          // Time to auto-save
+          if (hasUnsavedChanges && localInvitationData) { // Only auto-save if there are unsaved changes
+            handleSave(false); // Trigger auto-save without notification
+          }
+          return 180; // Reset countdown for the next cycle
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-    const autoSaveTimer = setTimeout(() => {
-      // Trigger debounced save for auto-save
-      if (latestLocalInvitationData.current) { // Ensure ref is not null
-        triggerDebouncedSave(latestLocalInvitationData.current);
-      }
-    }, 180000); // Auto-save every 3 minutes
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [localInvitationData, designSettings, triggerDebouncedSave]); // Depends on localInvitationData and designSettings
-
-  const handleSave = async (showNotification = true) => {
-    if (!localInvitationData) return;
-
-    setErrorMessage(null); // Clear previous errors
-    try {
-      // Save design settings
-      await saveDesignSettings();
-      // Save invitation data using the current state from useHistory
-      await updateInvitation(localInvitationData);
-
-      setLastSaved(new Date());
-
-      if (showNotification) {
-        setShowSuccessMessage(true);
-        setTimeout(() => setShowSuccessMessage(false), 3000);
-      }
-    } catch (error: any) {
-      console.error('Erreur lors de la sauvegarde:', error);
-      let userFriendlyMessage = 'Une erreur est survenue lors de la sauvegarde. Veuillez réessayer.';
-      if (error.message) {
-        userFriendlyMessage = `Erreur: ${error.message}`;
-      }
-      setErrorMessage(userFriendlyMessage);
-      setTimeout(() => setErrorMessage(null), 5000);
-    }
-  };
+    return () => clearInterval(interval);
+  }, [hasUnsavedChanges, localInvitationData, handleSave]); // Dependencies for the interval
 
   const handlePublish = async () => {
     if (!localInvitationData) return;
@@ -312,9 +294,18 @@ const Editor: React.FC = () => {
                   {localInvitationData.title || 'Nouvelle invitation'}
                 </h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <span>
-                    {lastSaved ? `Sauvegardé ${lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Non sauvegardé'}
-                  </span>
+                  {hasUnsavedChanges ? (
+                    <span className="text-amber-600 font-medium">Modifications non sauvegardées</span>
+                  ) : (
+                    <>
+                      <span>
+                        {lastSaved ? `Sauvegardé ${lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : 'Non sauvegardé'}
+                      </span>
+                      <span className="ml-2">
+                        (Auto-save dans {autoSaveCountdown}s)
+                      </span>
+                    </>
+                  )}
                   {(isInvitationSaving || isSavingDesign) && (
                     <div className="flex items-center space-x-1">
                       <div className="w-2 h-2 bg-[#D4A5A5] rounded-full animate-pulse"></div>

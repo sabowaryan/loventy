@@ -22,7 +22,7 @@ import MusicEditor from './MusicEditor';
 import QuizEditor from './QuizEditor';
 import SocialWallEditor from './SocialWallEditor';
 import MediaManager from './MediaManager';
-import SectionDesignEditor from './SectionDesignEditor'; /
+import SectionDesignEditor from './SectionDesignEditor';
 import AdvancedSettings from './AdvancedSettings';
 import ThemeEditor from './ThemeEditor';
 import LayoutEditor from './LayoutEditor';
@@ -211,12 +211,12 @@ const EditorContent: React.FC<EditorContentProps> = ({
               comments={comments}
               onToggleEnabled={onToggleSocialWall}
               onToggleModeration={onToggleModeration}
-              onApprovePost={approvePost}
-              onRejectPost={rejectPost}
-              onDeletePost={deletePost}
-              onApproveComment={approveComment}
-              onRejectComment={rejectComment}
-              onDeleteComment={deleteComment}
+              onApprovePost={onApprovePost}
+              onRejectPost={onRejectPost}
+              onDeletePost={onDeletePost}
+              onApproveComment={onApproveComment}
+              onRejectComment={onRejectComment}
+              onDeleteComment={onDeleteComment}
             />
           );
         default:

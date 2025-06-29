@@ -1,5 +1,4 @@
-// src/hooks/useHistory.ts
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 interface HistoryHook<T> {
   current: T;
@@ -24,6 +23,10 @@ export function useHistory<T>(initialValue: T): HistoryHook<T> {
   const [history, setHistory] = useState<T[]>([initialValue]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Ref to hold the latest currentIndex to avoid stale closures in setHistory
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex; // Keep the ref updated on every render
+
   /**
    * Adds a new state to the history. If the current index is not at the end of the history,
    * it truncates the history from the current index + 1 before adding the new state.
@@ -33,18 +36,21 @@ export function useHistory<T>(initialValue: T): HistoryHook<T> {
    */
   const add = useCallback((newState: T) => {
     setHistory(prevHistory => {
+      const currentIdx = currentIndexRef.current; // Use the latest index from ref
+
       // If the new state is identical to the current state, do nothing.
       // This prevents unnecessary history entries for no-op changes.
-      if (JSON.stringify(prevHistory[currentIndex]) === JSON.stringify(newState)) {
+      // We compare with the state at the current index.
+      if (JSON.stringify(prevHistory[currentIdx]) === JSON.stringify(newState)) {
         return prevHistory;
       }
 
       // Discard any "future" states if we're not at the end of the history
-      const newHistory = prevHistory.slice(0, currentIndex + 1);
+      const newHistory = prevHistory.slice(0, currentIdx + 1);
       return [...newHistory, newState];
     });
     setCurrentIndex(prevIndex => prevIndex + 1);
-  }, [currentIndex]);
+  }, []); // No dependencies needed for `add` if `currentIndexRef` is used
 
   /**
    * Moves the current state back one step in the history.
@@ -77,4 +83,3 @@ export function useHistory<T>(initialValue: T): HistoryHook<T> {
     canRedo,
   };
 }
-

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Save, 
-  Eye, 
-  Send, 
+import {
+  Save,
+  Eye,
+  Send,
   ArrowLeft,
   Settings,
   Monitor,
@@ -16,7 +15,7 @@ import {
   Layers
 } from 'lucide-react';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useAuth } from '../contexts/Auth/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useInvitationDesign } from '../hooks/useInvitationDesign';
 import { useInvitation } from '../hooks/useInvitation';
 import { defaultDesignSettings } from '../utils/designConstants';
@@ -30,7 +29,7 @@ import EditorContent from '../components/editor/EditorContent';
 
 const Editor: React.FC = () => {
   usePageTitle('Éditeur d\'invitation');
-  
+
   const { templateId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -43,14 +42,14 @@ const Editor: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Utiliser le hook useInvitation pour charger et gérer les données
-  const { 
-    invitation, 
-    events, 
-    quizzes, 
-    questions, 
-    posts, 
+  const {
+    invitation,
+    events,
+    quizzes,
+    questions,
+    posts,
     comments,
-    isLoading: isInvitationLoading, 
+    isLoading: isInvitationLoading,
     error: invitationError,
     isSaving: isInvitationSaving,
     updateInvitation,
@@ -76,15 +75,15 @@ const Editor: React.FC = () => {
   } = useInvitation({ invitationId: templateId });
 
   // Use the invitation design hook
-  const { 
-    designSettings, 
-    isSaving: isSavingDesign, 
+  const {
+    designSettings,
+    isSaving: isSavingDesign,
     error: designError,
     isUploading,
     updateDesignSettings,
     saveDesignSettings,
     uploadImage
-  } = useInvitationDesign({ 
+  } = useInvitationDesign({
     invitationId: templateId || '',
     initialDesignSettings: defaultDesignSettings
   });
@@ -152,7 +151,7 @@ const Editor: React.FC = () => {
   // Auto-save functionality
   useEffect(() => {
     if (!localInvitationData) return;
-    
+
     const autoSaveTimer = setTimeout(() => {
       // Déclencher la sauvegarde debounced pour l'auto-save
       triggerDebouncedSave(latestLocalInvitationData.current!);
@@ -163,16 +162,16 @@ const Editor: React.FC = () => {
 
   const handleSave = async (showNotification = true) => {
     if (!localInvitationData) return;
-    
+
     setErrorMessage(null); // Clear previous errors
     try {
       // Sauvegarder les paramètres de design
       await saveDesignSettings();
       // Sauvegarder les données de l'invitation immédiatement (pas debounced)
       await updateInvitation(localInvitationData);
-      
+
       setLastSaved(new Date());
-      
+
       if (showNotification) {
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
@@ -190,7 +189,7 @@ const Editor: React.FC = () => {
 
   const handlePublish = async () => {
     if (!localInvitationData) return;
-    
+
     await handleSave();
     await updateInvitation({ status: 'published' });
     console.log('Invitation publiée');
@@ -198,7 +197,7 @@ const Editor: React.FC = () => {
 
   const handleSendInvitation = async () => {
     if (!localInvitationData) return;
-    
+
     await handleSave();
     navigate(`/dashboard/guests?invitation=${localInvitationData.id}&action=send`);
   };
@@ -269,7 +268,7 @@ const Editor: React.FC = () => {
                 <ArrowLeft className="h-4 w-4" />
                 <span className="hidden sm:inline">Retour</span>
               </button>
-              
+
               <div className="border-l border-gray-200 pl-4">
                 <h1 className="text-lg font-semibold text-[#131837] truncate max-w-xs">
                   {localInvitationData.title || 'Nouvelle invitation'}
@@ -301,8 +300,8 @@ const Editor: React.FC = () => {
                     key={id}
                     onClick={() => setPreviewDevice(id as any)}
                     className={`p-2 rounded-md transition-colors ${
-                      previewDevice === id 
-                        ? 'bg-white text-[#D4A5A5] shadow-sm' 
+                      previewDevice === id
+                        ? 'bg-white text-[#D4A5A5] shadow-sm'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -318,7 +317,7 @@ const Editor: React.FC = () => {
                 <Eye className="h-4 w-4" />
                 <span className="hidden sm:inline">Aperçu</span>
               </button>
-              
+
               <button
                 onClick={() => handleSave(true)}
                 disabled={isInvitationSaving || isSavingDesign}
@@ -327,7 +326,7 @@ const Editor: React.FC = () => {
                 <Save className="h-4 w-4" />
                 <span className="hidden sm:inline">Sauvegarder</span>
               </button>
-              
+
               {localInvitationData.status === 'draft' ? (
                 <button
                   onClick={handlePublish}
@@ -382,8 +381,8 @@ const Editor: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_350px] gap-6 lg:h-[calc(100vh - 112px)]">
           {/* Vertical Sidebar (Main Tabs) */}
           <div className="hidden lg:block h-full">
-            <EditorSidebar 
-              activeTab={activeTab} 
+            <EditorSidebar
+              activeTab={activeTab}
               setActiveTab={setActiveTab}
               activeSection={activeSection}
               setActiveSection={setActiveSection}
@@ -395,8 +394,8 @@ const Editor: React.FC = () => {
           <div className="lg:col-span-7 lg:flex lg:flex-col h-full">
             {/* Horizontal Sub-Sidebar (Sections) */}
             <div className="hidden lg:block mb-6">
-              <EditorSidebar 
-                activeTab={activeTab} 
+              <EditorSidebar
+                activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 activeSection={activeSection}
                 setActiveSection={setActiveSection}
@@ -406,7 +405,7 @@ const Editor: React.FC = () => {
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex-grow h-full">
               <div className="p-6 h-full overflow-y-auto">
-                <EditorContent 
+                <EditorContent
                   activeTab={activeTab}
                   activeSection={activeSection}
                   invitation={localInvitationData} // Pass localInvitationData
@@ -455,7 +454,7 @@ const Editor: React.FC = () => {
                     <Eye className="h-5 w-5 mr-2 text-[#D4A5A5]" />
                     Aperçu en direct
                   </h3>
-                  
+
                   {/* Sélecteur d'appareil mobile */}
                   <div className="lg:hidden flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
                     {[
@@ -466,8 +465,8 @@ const Editor: React.FC = () => {
                         key={id}
                         onClick={() => setPreviewDevice(id as any)}
                         className={`p-1 rounded transition-colors ${
-                          previewDevice === id 
-                            ? 'bg-white text-[#D4A5A5] shadow-sm' 
+                          previewDevice === id
+                            ? 'bg-white text-[#D4A5A5] shadow-sm'
                             : 'text-gray-500'
                         }`}
                       >
@@ -476,10 +475,10 @@ const Editor: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="overflow-hidden rounded-lg flex-grow">
                   {localInvitationData && (
-                    <InvitationPreview 
+                    <InvitationPreview
                       invitationData={localInvitationData} // Pass localInvitationData
                       designSettings={designSettings}
                       previewDevice={previewDevice}
@@ -509,8 +508,8 @@ const Editor: React.FC = () => {
                     key={id}
                     onClick={() => setPreviewDevice(id as any)}
                     className={`p-2 rounded transition-colors ${
-                      previewDevice === id 
-                        ? 'bg-white text-[#D4A5A5] shadow-sm' 
+                      previewDevice === id
+                        ? 'bg-white text-[#D4A5A5] shadow-sm'
                         : 'text-white/70 hover:text-white'
                     }`}
                   >
@@ -518,7 +517,7 @@ const Editor: React.FC = () => {
                   </button>
                 ))}
               </div>
-              
+
               <button
                 onClick={() => setShowPreview(false)}
                 className="p-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors"
@@ -526,8 +525,8 @@ const Editor: React.FC = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
-            <InvitationPreview 
+
+            <InvitationPreview
               invitationData={localInvitationData} // Pass localInvitationData
               designSettings={designSettings}
               isFullscreen

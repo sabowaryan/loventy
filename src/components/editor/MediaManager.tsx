@@ -1,10 +1,10 @@
 // src/components/editor/MediaManager.tsx
-import React, { useState, useMemo } from 'react';
-import { 
-  Upload, 
-  Image as ImageIcon, 
-  Trash2, 
-  Plus, 
+import React, { useState, useMemo, useRef } from 'react';
+import {
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Plus,
   Loader2,
   Heart,
   Search,
@@ -14,6 +14,13 @@ import {
   Tablet
 } from 'lucide-react';
 import { MediaDetails } from '../../types/models';
+import ReactCrop, {
+  centerCrop,
+  makeAspectCrop,
+  Crop,
+  PixelCrop,
+} from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface MediaManagerProps {
   onImageUpload: (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File) => Promise<string>;
@@ -26,9 +33,30 @@ interface MediaManagerProps {
   onDesignChange: (newSettings: any) => void; // Add onDesignChange prop
 }
 
-const MediaManager: React.FC<MediaManagerProps> = ({ 
-  onImageUpload, 
-  isUploading, 
+// Helper function to center the crop
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number,
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight,
+    ),
+    mediaWidth,
+    mediaHeight,
+  );
+}
+
+const MediaManager: React.FC<MediaManagerProps> = ({
+  onImageUpload,
+  isUploading,
   invitationId,
   media = [],
   onRefreshMedia,
@@ -46,6 +74,15 @@ const MediaManager: React.FC<MediaManagerProps> = ({
   const [filterType, setFilterType] = useState<'all' | 'photo' | 'video' | 'audio'>('all');
   const [selectedImage, setSelectedImage] = useState<MediaDetails | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
+
+  // Cropping states
+  const [imgSrc, setImgSrc] = useState('');
+  const imageRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [cropperModalOpen, setCropperModalOpen] = useState(false);
+  const aspect = 16 / 9; // Default aspect ratio for cropping
 
   // Filter media based on search term and type
   const filteredMedia = useMemo(() => {
@@ -66,18 +103,92 @@ const MediaManager: React.FC<MediaManagerProps> = ({
     return filtered;
   }, [media, searchTerm, filterType]);
 
-  // Handle file selection
+  // Handle file selection and open cropper
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
+    if (e.target.files && e.target.files.length > 0) {
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setImgSrc(reader.result?.toString() || '');
+        setCropperModalOpen(true);
+      });
+      reader.readAsDataURL(e.target.files[0]);
     }
+  };
+
+  // Handle image load in cropper
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    imageRef.current = e.currentTarget;
+    const { width, height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, aspect));
+  };
+
+  // Get cropped image as a Blob
+  const getCroppedImg = (image: HTMLImageElement, crop: PixelCrop): Promise<Blob> => {
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      return Promise.reject(new Error('No 2d context'));
+    }
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height,
+    );
+
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Canvas is empty'));
+        }
+      }, 'image/jpeg'); // You can change the format here
+    });
+  };
+
+  // Apply crop and set selected file
+  const handleApplyCrop = async () => {
+    if (completedCrop && imageRef.current) {
+      try {
+        const croppedBlob = await getCroppedImg(imageRef.current, completedCrop);
+        const croppedFile = new File([croppedBlob], selectedFile?.name || 'cropped_image.jpg', { type: 'image/jpeg' });
+        setSelectedFile(croppedFile);
+        setCropperModalOpen(false);
+        setImgSrc(''); // Clear image source
+        setCrop(undefined); // Clear crop state
+        setCompletedCrop(undefined); // Clear completed crop state
+      } catch (e) {
+        console.error('Error cropping image:', e);
+      }
+    }
+  };
+
+  // Cancel cropping
+  const handleCancelCrop = () => {
+    setCropperModalOpen(false);
+    setImgSrc('');
+    setCrop(undefined);
+    setCompletedCrop(undefined);
+    setSelectedFile(null); // Clear selected file if cropping is cancelled
   };
 
   // Handle image upload
   const handleUpload = async () => {
     if (!selectedFile) return;
-    
+
     try {
       // Determine sectionId based on uploadType for onImageUpload
       const sectionIdMap: Record<typeof uploadType, string> = {
@@ -135,6 +246,46 @@ const MediaManager: React.FC<MediaManagerProps> = ({
 
   return (
     <div className="space-y-8">
+      {/* Cropper Modal */}
+      {cropperModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-[#131837]">Rogner l'image</h3>
+              <button onClick={handleCancelCrop} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+              {!!imgSrc && (
+                <ReactCrop
+                  crop={crop}
+                  onChange={c => setCrop(c)}
+                  onComplete={c => setCompletedCrop(c)}
+                  aspect={aspect}
+                >
+                  <img ref={imageRef} alt="Source" src={imgSrc} onLoad={onImageLoad} />
+                </ReactCrop>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                onClick={handleCancelCrop}
+                className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleApplyCrop}
+                className="px-4 py-2 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors"
+              >
+                Appliquer le rognage
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Gallery Header */}
       <div className="bg-white rounded-xl p-6 border border-gray-100">
         <div className="flex items-center justify-between mb-4">
@@ -142,7 +293,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
             <ImageIcon className="h-5 w-5 mr-2 text-[#D4A5A5]" />
             Galerie d'images
           </h3>
-          
+
           <button
             onClick={() => setShowUploadForm(!showUploadForm)}
             className="px-3 py-1.5 bg-[#D4A5A5] text-white rounded-lg hover:bg-[#D4A5A5]/90 transition-colors text-sm flex items-center"
@@ -160,7 +311,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
             )}
           </button>
         </div>
-        
+
         {showUploadForm ? (
           <div className="space-y-4">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#D4A5A5] transition-colors">
@@ -169,10 +320,10 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                 {selectedFile ? `Fichier sélectionné: ${selectedFile.name}` : 'Glissez une image ou cliquez pour parcourir'}
               </p>
               <p className="text-sm text-gray-500 mb-4">PNG, JPG jusqu'à 5MB</p>
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
                 id="gallery-upload"
                 onChange={handleFileChange}
                 disabled={isUploading}
@@ -186,7 +337,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                 Choisir une image
               </label>
             </div>
-            
+
             {selectedFile && (
               <>
                 <div>
@@ -201,7 +352,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                     placeholder="Notre photo de couple"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-[#131837] mb-2">
                     Description (optionnelle)
@@ -214,7 +365,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                     placeholder="Une description de cette image..."
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-[#131837] mb-2">
                     Type d'image
@@ -230,7 +381,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
                     <option value="decorative">Élément décoratif</option>
                   </select>
                 </div>
-                
+
                 <button
                   onClick={handleUpload}
                   disabled={isUploading || !selectedFile}
@@ -291,22 +442,22 @@ const MediaManager: React.FC<MediaManagerProps> = ({
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredMedia.map((item) => (
                   <div key={item.id} className="group relative rounded-lg overflow-hidden border border-gray-200">
-                    <img 
-                      src={item.file_url || ''} 
-                      alt={item.title || 'Image'} 
+                    <img
+                      src={item.file_url || ''}
+                      alt={item.title || 'Image'}
                       className="w-full h-32 object-cover cursor-pointer"
                       onClick={() => openImageModal(item)}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity duration-200 flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
-                        <button 
+                        <button
                           className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
                           onClick={() => openImageModal(item)}
                           title="Prévisualiser"
                         >
                           <Eye className="h-4 w-4 text-gray-700" />
                         </button>
-                        <button 
+                        <button
                           className="p-1 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
                           onClick={() => handleDeleteMedia(item.id, item.file_path || '')}
                           title="Supprimer"
@@ -333,7 +484,7 @@ const MediaManager: React.FC<MediaManagerProps> = ({
         <h3 className="text-lg font-semibold text-[#131837] mb-4">
           Images prédéfinies
         </h3>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { name: 'Fleurs roses', url: 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg' },
@@ -375,9 +526,9 @@ const MediaManager: React.FC<MediaManagerProps> = ({
             >
               <X className="h-5 w-5" />
             </button>
-            <img 
-              src={selectedImage.file_url || ''} 
-              alt={selectedImage.title || 'Aperçu de l\'image'} 
+            <img
+              src={selectedImage.file_url || ''}
+              alt={selectedImage.title || 'Aperçu de l\'image'}
               className="w-full h-auto max-h-[80vh] object-contain"
             />
             {selectedImage.title && (

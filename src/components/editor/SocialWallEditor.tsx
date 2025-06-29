@@ -119,40 +119,44 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
         <div className="p-6">
           {activeTab === 'settings' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h4 className="font-medium text-[#131837] flex items-center">
-                    <Users className="h-5 w-5 mr-2 text-[#D4A5A5]" />
-                    Mur social
-                  </h4>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Permettez à vos invités de partager des messages et des photos
-                  </p>
-                </div>
-                <div>
-                  <button
-                    onClick={() => onToggleEnabled(!enabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      enabled ? 'bg-[#D4A5A5]' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        enabled ? 'translate-x-6' : 'translate-x-1'
+              <div className="bg-white rounded-xl p-6 border border-gray-100">
+                <h4 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-[#D4A5A5]" />
+                  Mur social
+                </h4>
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-[#131837]">Activer le mur social</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Permettez à vos invités de partager des messages et des photos
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => onToggleEnabled(!enabled)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        enabled ? 'bg-[#D4A5A5]' : 'bg-gray-200'
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          enabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
               
               {enabled && (
-                <>
+                <div className="bg-white rounded-xl p-6 border border-gray-100">
+                  <h4 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
+                    <Shield className="h-5 w-5 mr-2 text-[#D4A5A5]" />
+                    Modération
+                  </h4>
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <h4 className="font-medium text-[#131837] flex items-center">
-                        <Shield className="h-5 w-5 mr-2 text-[#D4A5A5]" />
-                        Modération
-                      </h4>
+                      <p className="font-medium text-[#131837]">Activer la modération</p>
                       <p className="text-sm text-gray-600 mt-1">
                         Approuver les publications et commentaires avant qu'ils ne soient visibles
                       </p>
@@ -173,7 +177,7 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
                     </div>
                   </div>
                   
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mt-6">
                     <div className="flex">
                       <div className="flex-shrink-0">
                         <Info className="h-5 w-5 text-blue-500" />
@@ -192,7 +196,7 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
             </div>
           )}
@@ -213,8 +217,8 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
               ) : (
                 <>
                   {pendingPosts.length > 0 && (
-                    <div>
-                      <h4 className="font-medium text-[#131837] mb-3 flex items-center">
+                    <div className="bg-white rounded-xl p-6 border border-gray-100">
+                      <h4 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
                         <Eye className="h-5 w-5 mr-2 text-amber-500" />
                         Publications en attente ({pendingPosts.length})
                       </h4>
@@ -280,8 +284,8 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
                     </div>
                   )}
                   
-                  <div>
-                    <h4 className="font-medium text-[#131837] mb-3 flex items-center">
+                  <div className="bg-white rounded-xl p-6 border border-gray-100">
+                    <h4 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
                       <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
                       Publications approuvées ({approvedPosts.length})
                     </h4>
@@ -360,8 +364,8 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
               ) : (
                 <>
                   {pendingComments.length > 0 && (
-                    <div>
-                      <h4 className="font-medium text-[#131837] mb-3 flex items-center">
+                    <div className="bg-white rounded-xl p-6 border border-gray-100">
+                      <h4 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
                         <Eye className="h-5 w-5 mr-2 text-amber-500" />
                         Commentaires en attente ({pendingComments.length})
                       </h4>
@@ -406,8 +410,8 @@ const SocialWallEditor: React.FC<SocialWallEditorProps> = ({
                     </div>
                   )}
                   
-                  <div>
-                    <h4 className="font-medium text-[#131837] mb-3 flex items-center">
+                  <div className="bg-white rounded-xl p-6 border border-gray-100">
+                    <h4 className="text-lg font-semibold text-[#131837] mb-4 flex items-center">
                       <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
                       Commentaires approuvés ({approvedComments.length})
                     </h4>

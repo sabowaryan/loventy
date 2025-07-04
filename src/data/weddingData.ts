@@ -1,5 +1,8 @@
+import { Guest, WeddingData } from '../lib/database';
+
 // Wedding data types and default values
 export interface WeddingDetails {
+  id: string;
   groomName: string;
   brideName: string;
   couplePhoto: string;
@@ -85,32 +88,33 @@ export interface WeddingSection {
 }
 
 // Default data
-export const weddingDetails: WeddingDetails = {
-  groomName: "Isaac",
-  brideName: "Feza",
-  couplePhoto: "https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop",
-  weddingDate: {
-    day: "09",
-    month: "NOVEMBRE",
-    year: "2024",
-    dayOfWeek: "SAMEDI",
-    time: "15:30"
-  },
-  ceremony: {
-    time: "15h30",
-    venue: "Église ciel ouvert",
-    address: "Av. KONGAWI n°12, Q/Kinsuka-pecheur, C/Ngaliema"
-  },
-  reception: {
-    time: "20h00",
-    venue: "Salle de fête food market (macampagne)",
-    address: "Av.Nguma, Réf. église Catholique saint Luc"
-  }
+export const weddingDetails: WeddingData = {
+  id: '',
+  groom_name: "Isaac",
+  bride_name: "Feza",
+  couple_photo: "https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop",
+  wedding_day: "09",
+  wedding_month: "NOVEMBRE",
+  wedding_year: "2024",
+  wedding_day_of_week: "SAMEDI",
+  wedding_time: "15:30",
+  ceremony_time: "15h30",
+  ceremony_venue: "Église ciel ouvert",
+  ceremony_address: "Av. KONGAWI n°12, Q/Kinsuka-pecheur, C/Ngaliema",
+  reception_time: "20h00",
+  reception_venue: "Salle de fête food market (macampagne)",
+  reception_address: "Av.Nguma, Réf. église Catholique saint Luc"
 };
 
-export const guestInfo: GuestInfo = {
+export const guestInfo: Guest = {
+  id: '',
+  wedding_id: '',
   name: "Monsieur et Madame MUKENDI",
-  table: "Table Marbre"
+  table_name: "Table Marbre",
+  email: '',
+  rsvp_status: 'pending',
+  invitation_link: '',
+  message_sender: ''
 };
 
 export const drinkOptions: DrinkOptions = {

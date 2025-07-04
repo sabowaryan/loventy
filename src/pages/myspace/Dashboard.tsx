@@ -1,38 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Clock, Edit3, Calendar, MapPin, User, Wine,MailIcon, MessageSquare, Plus, Trash2, Download, Upload, Database, Edit, Clipboard, CheckCircle, X, Search, ArrowUp, ArrowDown } from 'lucide-react';
-import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../../data/weddingData';
-import { useDatabase } from '../../hooks/useDatabase';
+import { WeddingData } from '../../lib/database';
+import {
+  getGuests,
+  addGuest,
+  updateGuest,
+  deleteGuest,
+  getGuestPreferences,
+  getGuestMessages,
+  // autres fonctions nécessaires
+} from '../../lib/database';
 import InvitationEditModal from './InvitationEditModal';
 import AddGuestModal from '../../components/guests/AddGuestModal';
 import EditGuestModal from '../../components/guests/EditGuestModal';
 
 interface AdminPanelProps {
-  weddingDetails: WeddingDetails;
-  guestInfo: GuestInfo;
-  drinkOptions: DrinkOptions;
-  weddingTexts: WeddingTexts;
-  onSave: (data: {
-    weddingDetails: WeddingDetails;
-    guestInfo: GuestInfo;
-    drinkOptions: DrinkOptions;
-    weddingTexts: WeddingTexts;
-  }) => void;
-  onPreview: () => void;
+  weddingDetails: WeddingData;
+  onSave?: (data: { weddingDetails: WeddingData }) => void;
+  onPreview?: () => void;
 }
 
 export default function AdminPanel({
   weddingDetails: initialWeddingDetails,
-  guestInfo: initialGuestInfo,
-  drinkOptions: initialDrinkOptions,
-  weddingTexts: initialWeddingTexts,
   onSave,
   onPreview
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState('couple');
-  const [weddingDetails, setWeddingDetails] = useState(initialWeddingDetails);
-  const [guestInfo, setGuestInfo] = useState(initialGuestInfo);
-  const [drinkOptions, setDrinkOptions] = useState(initialDrinkOptions);
-  const [weddingTexts, setWeddingTexts] = useState(initialWeddingTexts);
+  const [weddingDetails, setWeddingDetails] = useState<WeddingData>(initialWeddingDetails);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [addGuestModalOpen, setAddGuestModalOpen] = useState(false);
   const [guests, setGuests] = useState<Array<any>>([]);
@@ -49,117 +43,31 @@ export default function AdminPanel({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const guestsPerPage = 12; // 3 colonnes x 4 rangées par défaut
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { saveWeddingData, exportDatabase, importDatabase, getGuestMessages, getGuestPreferences, addGuest, getGuests, updateGuestStatus, deleteGuest, updateGuest } = useDatabase();
+  const [selectedGuest, setSelectedGuest] = useState<any | null>(null);
+  const [guestPreferences, setGuestPreferences] = useState<{ alcoholic_drinks?: string; non_alcoholic_drinks?: string } | null>(null);
+  const [guestMessages, setGuestMessages] = useState<Array<{ message: string; created_at?: string }> | null>(null);
+  const [showPrefModal, setShowPrefModal] = useState(false);
+  const [showMsgModal, setShowMsgModal] = useState(false);
 
   useEffect(() => {
     const fetchGuests = async () => {
       try {
-        const data = await getGuests();
+        const data = await getGuests(weddingDetails.id ?? '');
         setGuests(data.sort((a, b) => a.name.localeCompare(b.name)));
       } catch (error) {
         console.error('Erreur lors du chargement des invités:', error);
       }
     };
     fetchGuests();
-  }, [refreshTrigger]); // Ajout de refreshTrigger pour forcer le rechargement
+  }, [refreshTrigger, weddingDetails.id]);
 
   const handleEditInvitation = () => {
     setEditModalOpen(true);
   };
 
-  const handleEditModalSave = (newDetails: WeddingDetails, newTexts: WeddingTexts) => {
-    setWeddingDetails(newDetails);
-    setWeddingTexts(newTexts);
-    setEditModalOpen(false);
-  };
-
-  const handleExportDatabase = async () => {
-    try {
-      await exportDatabase();
-      alert('Base de données exportée avec succès !');
-    } catch (error) {
-      alert('Erreur lors de l\'export: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
-    }
-  };
-
-  const handleImportDatabase = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      await importDatabase(file);
-      alert('Base de données importée avec succès ! La page va se recharger.');
-      window.location.reload();
-    } catch (error) {
-      alert('Erreur lors de l\'import: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
-    }
-  };
-
-  const addDrink = (category: 'alcoholic' | 'nonAlcoholic') => {
-    const newDrink = prompt(`Ajouter une nouvelle boisson ${category === 'alcoholic' ? 'alcoolisée' : 'non-alcoolisée'}:`);
-    if (newDrink) {
-      setDrinkOptions(prev => ({
-        ...prev,
-        [category]: [...prev[category], newDrink]
-      }));
-    }
-  };
-
-  const removeDrink = (category: 'alcoholic' | 'nonAlcoholic', index: number) => {
-    setDrinkOptions(prev => ({
-      ...prev,
-      [category]: prev[category].filter((_, i) => i !== index)
-    }));
-  };
-
-  const showGuestData = async () => {
-    try {
-      const messages = await getGuestMessages();
-      const preferences = await getGuestPreferences();
-      
-      let report = "=== MESSAGES DES INVITÉS ===\n\n";
-      messages.forEach(msg => {
-        report += `${msg.guestId} (${new Date(msg.createdAt).toLocaleString()}):\n${msg.message}\n\n`;
-      });
-      
-      report += "\n=== PRÉFÉRENCES DES INVITÉS ===\n\n";
-      preferences.forEach(pref => {
-        report += `${pref.guestId} (${new Date(pref.createdAt).toLocaleString()}):\n`;
-        report += `Alcoolisé: ${pref.alcoholicDrinks.join(', ')}\n`;
-        report += `Non-alcoolisé: ${pref.nonAlcoholicDrinks.join(', ')}\n\n`;
-      });
-      
-      // Create a new window to display the data
-      const newWindow = window.open('', '_blank');
-      if (newWindow) {
-        newWindow.document.write(`
-          <html>
-            <head><title>Données des Invités</title></head>
-            <body style="font-family: monospace; padding: 20px; white-space: pre-wrap;">
-              ${report}
-            </body>
-          </html>
-        `);
-      }
-    } catch (error) {
-      alert('Erreur lors de la récupération des données: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
-    }
-  };
-
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 2000);
-  };
-
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    try {
-      await updateGuestStatus(id, newStatus);
-      setRefreshTrigger(prev => prev + 1); // Déclencher le rechargement
-      showToast('success', 'Statut mis à jour !');
-    } catch (e) {
-      showToast('error', "Erreur lors de la mise à jour du statut.");
-    }
   };
 
   const handleDeleteGuest = async (id: string) => {
@@ -183,12 +91,34 @@ export default function AdminPanel({
 
   const handleSaveEditGuest = async (guest: any) => {
     try {
-      await updateGuest(guest.id, guest.name, guest.table_name, guest.email || '');
-      setRefreshTrigger(prev => prev + 1); // Déclencher le rechargement
+      await updateGuest({ ...guest, wedding_id: weddingDetails.id });
+      setRefreshTrigger(prev => prev + 1);
       setEditGuest(null);
       showToast('success', 'Invité modifié !');
     } catch (e) {
       showToast('error', "Erreur lors de la modification de l'invité.");
+    }
+  };
+
+  // Nouvelle version adaptée à Supabase
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const guest = guests.find(g => g.id === id);
+      if (!guest) return;
+      await updateGuest({
+        id: guest.id,
+        wedding_id: guest.wedding_id,
+        name: guest.name,
+        table_name: guest.table_name,
+        email: guest.email,
+        rsvp_status: newStatus,
+        invitation_link: guest.invitation_link,
+        message_sender: guest.message_sender
+      });
+      setRefreshTrigger(prev => prev + 1);
+      showToast('success', 'Statut mis à jour !');
+    } catch (e) {
+      showToast('error', "Erreur lors de la mise à jour du statut.");
     }
   };
 
@@ -198,7 +128,7 @@ export default function AdminPanel({
                          guest.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          guest.table_name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filterStatus === 'all' || guest.rsvpStatus === filterStatus;
+    const matchesStatus = filterStatus === 'all' || guest.rsvp_status === filterStatus;
     
     return matchesSearch && matchesStatus;
   });
@@ -216,8 +146,8 @@ export default function AdminPanel({
         bValue = b.table_name.toLowerCase();
         break;
       case 'status':
-        aValue = a.rsvpStatus || 'pending';
-        bValue = b.rsvpStatus || 'pending';
+        aValue = a.rsvp_status || 'pending';
+        bValue = b.rsvp_status || 'pending';
         break;
       case 'email':
         aValue = a.email?.toLowerCase() || '';
@@ -306,8 +236,10 @@ export default function AdminPanel({
           open={editModalOpen}
           onClose={() => setEditModalOpen(false)}
           initialDetails={weddingDetails}
-          initialTexts={weddingTexts}
-          onSave={handleEditModalSave}
+          onSave={(newDetails) => {
+            setWeddingDetails(newDetails);
+            setEditModalOpen(false);
+          }}
         />
       )}
       {addGuestModalOpen && (
@@ -316,15 +248,12 @@ export default function AdminPanel({
           onAddGuest={async (guest) => {
             if (!guest.id || !guest.name || !guest.table_name) return;
             try {
-              await addGuest(
-                guest.id,
-                guest.name,
-                guest.table_name,
-                guest.email || '',
-                '', // rsvpStatus
-                guest.invitation_id || '',
-                guest.additional_notes || ''
-              );
+              await addGuest({
+                ...guest,
+                wedding_id: weddingDetails.id ?? '',
+                name: guest.name ?? '',
+                table_name: guest.table_name ?? ''
+              });
               showToast('success', 'Invité ajouté avec succès !');
               setRefreshTrigger(prev => prev + 1); // Déclencher le rechargement
             } catch (e) {
@@ -333,7 +262,7 @@ export default function AdminPanel({
             setAddGuestModalOpen(false);
           }}
           invitations={[]}
-          weddingDetails={{ groomName: weddingDetails.groomName, brideName: weddingDetails.brideName }}
+          weddingDetails={{ groomName: weddingDetails.groom_name ?? '', brideName: weddingDetails.bride_name ?? '' }}
         />
       )}
       {editGuest && (
@@ -342,6 +271,46 @@ export default function AdminPanel({
           onSave={handleSaveEditGuest}
           onClose={() => setEditGuest(null)}
         />
+      )}
+      {showPrefModal && selectedGuest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100 animate-fade-in">
+            <h3 className="text-lg font-semibold mb-4 text-blue-700">Préférences de {selectedGuest.name}</h3>
+            <div className="mb-2">
+              <b>Boissons alcoolisées :</b>
+              <ul className="list-disc ml-6 mt-1 text-sm">
+                {(guestPreferences?.alcoholic_drinks ? JSON.parse(guestPreferences.alcoholic_drinks) : []).map((drink: string, idx: number) => (
+                  <li key={idx}>{drink}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="mb-2">
+              <b>Boissons non-alcoolisées :</b>
+              <ul className="list-disc ml-6 mt-1 text-sm">
+                {(guestPreferences?.non_alcoholic_drinks ? JSON.parse(guestPreferences.non_alcoholic_drinks) : []).map((drink: string, idx: number) => (
+                  <li key={idx}>{drink}</li>
+                ))}
+              </ul>
+            </div>
+            <button onClick={() => setShowPrefModal(false)} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Fermer</button>
+          </div>
+        </div>
+      )}
+      {showMsgModal && selectedGuest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100 animate-fade-in">
+            <h3 className="text-lg font-semibold mb-4 text-green-700">Messages de {selectedGuest.name}</h3>
+            <ul className="space-y-2">
+              {guestMessages && guestMessages.length > 0 ? guestMessages.map((msg, idx) => (
+                <li key={idx} className="bg-green-50 border border-green-200 rounded p-2 text-sm">
+                  <div>{msg.message}</div>
+                  {msg.created_at && <div className="text-xs text-gray-400 mt-1">{new Date(msg.created_at).toLocaleString()}</div>}
+                </li>
+              )) : <li className="text-gray-500 text-sm">Aucun message</li>}
+            </ul>
+            <button onClick={() => setShowMsgModal(false)} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Fermer</button>
+          </div>
+        </div>
       )}
       {/* Toast visuel */}
       {toast && (
@@ -375,7 +344,7 @@ export default function AdminPanel({
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Confirmés</p>
-                  <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvpStatus === 'confirmed').length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvp_status === 'confirmed').length}</p>
                 </div>
               </div>
             </div>
@@ -386,7 +355,7 @@ export default function AdminPanel({
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">En attente</p>
-                  <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvpStatus === 'pending').length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvp_status === 'pending').length}</p>
                 </div>
               </div>
             </div>
@@ -397,7 +366,7 @@ export default function AdminPanel({
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Annulés</p>
-                  <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvpStatus === 'cancelled').length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvp_status === 'cancelled').length}</p>
                 </div>
               </div>
             </div>
@@ -563,6 +532,30 @@ export default function AdminPanel({
                         >
                           <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </button>
+                        <button
+                          onClick={async () => {
+                            setSelectedGuest(guest);
+                            const prefs = await getGuestPreferences(guest.id);
+                            setGuestPreferences(prefs);
+                            setShowPrefModal(true);
+                          }}
+                          className="p-1.5 sm:p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                          title="Voir préférences"
+                        >
+                          <Wine className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
+                        <button
+                          onClick={async () => {
+                            setSelectedGuest(guest);
+                            const msgs = await getGuestMessages(guest.id);
+                            setGuestMessages(msgs);
+                            setShowMsgModal(true);
+                          }}
+                          className="p-1.5 sm:p-2 text-neutral-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
+                          title="Voir messages"
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -573,7 +566,7 @@ export default function AdminPanel({
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-primary mb-2">Statut RSVP</label>
                       <select
-                        value={guest.rsvpStatus || 'pending'}
+                        value={guest.rsvp_status || 'pending'}
                         onChange={e => handleStatusChange(guest.id, e.target.value)}
                         className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200"
                       >
@@ -620,18 +613,18 @@ export default function AdminPanel({
                     {/* Indicateur de statut visuel */}
                     <div className="flex items-center justify-center">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        guest.rsvpStatus === 'confirmed' 
+                        guest.rsvp_status === 'confirmed' 
                           ? 'bg-green-100 text-green-800 border border-green-200' 
-                          : guest.rsvpStatus === 'cancelled' 
+                          : guest.rsvp_status === 'cancelled' 
                           ? 'bg-red-100 text-red-800 border border-red-200' 
                           : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
                       }`}>
-                        {guest.rsvpStatus === 'confirmed' ? (
+                        {guest.rsvp_status === 'confirmed' ? (
                           <>
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Confirmé
                           </>
-                        ) : guest.rsvpStatus === 'cancelled' ? (
+                        ) : guest.rsvp_status === 'cancelled' ? (
                           <>
                             <X className="h-3 w-3 mr-1" />
                             Annulé

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { X, Plus, User, Mail, Phone, Calendar, MessageSquare, Upload } from 'lucide-react';
-import { GuestDetails } from '../../types/models';
+import { Guest } from '../../lib/database';
 import { v4 as uuidv4 } from 'uuid';
 import Papa, { ParseResult } from 'papaparse';
 
 interface AddGuestModalProps {
   onClose: () => void;
-  onAddGuest: (guest: Partial<GuestDetails>) => void;
+  onAddGuest: (guest: Partial<Guest>) => void;
   invitations: Array<{ id: string, title: string }>;
   weddingDetails: { groomName: string; brideName: string };
 }
@@ -28,15 +28,15 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
       return;
     }
     const id = uuidv4();
-    const invitation_id = `https://loventy.org/i/${id}`;
-    const additional_notes = getPersonalMessage(guestData.name, invitation_id);
+    const invitation_link = `https://loventy.org/i/${id}`;
+    const message_sender = getPersonalMessage(guestData.name, invitation_link);
     onAddGuest({
       id,
       name: guestData.name,
       email: guestData.email,
       table_name: guestData.table_name,
-      invitation_id,
-      additional_notes
+      invitation_link,
+      message_sender
     });
   };
 
@@ -72,15 +72,15 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
   const handleAddCsvGuests = () => {
     csvGuests.forEach(guest => {
       const id = uuidv4();
-      const invitation_id = `https://loventy.org/i/${id}`;
-      const additional_notes = getPersonalMessage(guest.name, invitation_id);
+      const invitation_link = `https://loventy.org/i/${id}`;
+      const message_sender = getPersonalMessage(guest.name, invitation_link);
       onAddGuest({
         id,
         name: guest.name,
         email: guest.email,
         table_name: guest.table_name,
-        invitation_id,
-        additional_notes
+        invitation_link,
+        message_sender
       });
     });
     setCsvGuests([]);
@@ -187,14 +187,14 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
                 <div className="max-h-40 overflow-y-auto border rounded bg-gray-50 p-2 mb-2">
                   {csvGuests.map((guest, idx) => {
                     const id = uuidv4();
-                    const link = `https://loventy.org/i/${id}`;
-                    const msg = getPersonalMessage(guest.name, link);
+                    const invitation_link = `https://loventy.org/i/${id}`;
+                    const message_sender = getPersonalMessage(guest.name, invitation_link);
                     return (
                       <div key={idx} className="mb-2 border-b pb-1 last:border-b-0 last:pb-0">
                         <div className="font-semibold text-blue-700">{guest.name}</div>
                         <div className="text-xs text-blue-500">{guest.email ? guest.email + ' — ' : ''}Table : {guest.table_name}</div>
-                        <pre className="text-xs text-blue-900 break-words whitespace-pre-wrap font-sans bg-white/60 rounded p-1 border border-blue-100 overflow-x-auto">{msg}</pre>
-                        <div className="text-[10px] text-blue-400">Lien : {link}</div>
+                        <pre className="text-xs text-blue-900 break-words whitespace-pre-wrap font-sans bg-white/60 rounded p-1 border border-blue-100 overflow-x-auto">{message_sender}</pre>
+                        <div className="text-[10px] text-blue-400">Lien : {invitation_link}</div>
                       </div>
                     );
                   })}

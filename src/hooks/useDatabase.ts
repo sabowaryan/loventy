@@ -1,55 +1,78 @@
 import { useState, useEffect, useCallback } from 'react';
-import { databaseService, WeddingData } from '../lib/database';
+import {
+  getWeddingData,
+  saveWeddingData,
+  getGuests,
+  addGuest,
+  updateGuest,
+  deleteGuest,
+  addGuestMessage,
+  getGuestMessages,
+  saveGuestPreferences,
+  getGuestPreferences,
+} from '../lib/database';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../data/weddingData';
 
 export const useDatabase = () => {
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const initializeDb = async () => {
-      try {
-        await databaseService.initialize();
-        setIsLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to initialize database');
-        setIsLoading(false);
-      }
-    };
-
-    initializeDb();
-  }, []);
-
-  const loadWeddingData = useCallback(async () => {
+  const loadWeddingData = async () => {
     try {
-      const data = await databaseService.getWeddingData();
-      if (!data) return null;
-
-      return convertDbToAppData(data);
+      return await getWeddingData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load wedding data');
       return null;
     }
-  }, []);
+  };
 
-  const saveWeddingData = useCallback(async (
-    weddingDetails: WeddingDetails,
-    guestInfo: GuestInfo,
-    drinkOptions: DrinkOptions,
-    weddingTexts: WeddingTexts
-  ) => {
+  const saveWedding = async (data) => {
     try {
-      const dbData = convertAppToDbData(weddingDetails, guestInfo, drinkOptions, weddingTexts);
-      await databaseService.saveWeddingData(dbData);
+      await saveWeddingData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save wedding data');
       throw err;
     }
-  }, []);
+  };
+
+  const fetchGuests = async (weddingId) => {
+    try {
+      return await getGuests(weddingId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to get guests');
+      return [];
+    }
+  };
+
+  const addNewGuest = async (guest) => {
+    try {
+      await addGuest(guest);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add guest');
+      throw err;
+    }
+  };
+
+  const updateExistingGuest = async (guest) => {
+    try {
+      await updateGuest(guest);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update guest');
+      throw err;
+    }
+  };
+
+  const removeGuest = async (id) => {
+    try {
+      await deleteGuest(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete guest');
+      throw err;
+    }
+  };
 
   const saveGuestMessage = useCallback(async (guestName: string, message: string) => {
     try {
-      await databaseService.saveGuestMessage(guestName, message);
+      await addGuestMessage(guestName, message);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save guest message');
       throw err;
@@ -58,7 +81,7 @@ export const useDatabase = () => {
 
   const saveGuestPreferences = useCallback(async (guestName: string, alcoholicDrinks: string[], nonAlcoholicDrinks: string[]) => {
     try {
-      await databaseService.saveGuestPreferences(guestName, alcoholicDrinks, nonAlcoholicDrinks);
+      await saveGuestPreferences(guestName, alcoholicDrinks, nonAlcoholicDrinks);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save guest preferences');
       throw err;
@@ -94,93 +117,20 @@ export const useDatabase = () => {
     }
   }, []);
 
-  const getGuestMessages = useCallback(async () => {
-    try {
-      return await databaseService.getGuestMessages();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get guest messages');
-      return [];
-    }
-  }, []);
-
-  const getGuestPreferences = useCallback(async () => {
-    try {
-      return await databaseService.getGuestPreferences();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get guest preferences');
-      return [];
-    }
-  }, []);
-
-  const getGuests = useCallback(async () => {
-    try {
-      return await databaseService.getGuests();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get guests');
-      return [];
-    }
-  }, []);
-
-  const addGuest = useCallback(async (
-    id: string,
-    name: string,
-    table_name: string,
-    email: string = '',
-    rsvpStatus: string = '',
-    invitationLink: string = '',
-    messageSender: string = ''
-  ) => {
-    try {
-      await databaseService.addGuest(id, name, table_name, email, rsvpStatus, invitationLink, messageSender);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add guest');
-      throw err;
-    }
-  }, []);
-
-  const updateGuestStatus = useCallback(async (id: string, newStatus: string) => {
-    try {
-      await databaseService.updateGuestStatus(id, newStatus);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update guest status');
-      throw err;
-    }
-  }, []);
-
-  const deleteGuest = useCallback(async (id: string) => {
-    try {
-      await databaseService.deleteGuest(id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete guest');
-      throw err;
-    }
-  }, []);
-
-  const updateGuest = useCallback(async (id: string, name: string, table_name: string, email: string = '') => {
-    try {
-      await databaseService.updateGuest(id, name, table_name, email);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update guest');
-      throw err;
-    }
-  }, []);
-
   return {
-    isLoading,
     error,
     loadWeddingData,
-    saveWeddingData,
+    saveWedding,
+    fetchGuests,
+    addNewGuest,
+    updateExistingGuest,
+    removeGuest,
     saveGuestMessage,
     saveGuestPreferences,
     exportDatabase,
     importDatabase,
     getGuestMessages,
     getGuestPreferences,
-    getGuests,
-    addGuest,
-    updateGuestStatus,
-    deleteGuest,
-    updateGuest
   };
 };
 

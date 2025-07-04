@@ -125,8 +125,3 @@ export const handleSupabaseError = (error: any, context: string = '') => {
   throw error;
 };
 
-// Types pour l'authentification
-type AuthUser = Database['auth']['Tables']['users']['Row'];
-type UserRole = Database['public']['Tables']['user_roles']['Row'];
-type Role = Database['public']['Tables']['roles']['Row'];
-type Permission = Database['public']['Tables']['permissions']['Row'];

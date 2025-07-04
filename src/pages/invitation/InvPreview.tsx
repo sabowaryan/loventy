@@ -4,15 +4,10 @@ import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight
 import { useDatabase } from '../../hooks/useDatabase';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../../data/weddingData';
 import LoventyLogo from '../../components/LoventyLogo';
-
-interface Guest {
-  id: string; // inviteId sécurisé
-  name: string;
-  table: string;
-}
+import { Guest, WeddingData } from '../../lib/database';
 
 // Construction dynamique des sections à partir des données chargées
-function buildWeddingSections(weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) {
+function buildWeddingSections(weddingDetails: WeddingData, weddingTexts: WeddingTexts) {
   return [
     { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/section1.jpg') center/cover no-repeat" },
     { id: 1, title: 'Invitation', background: 'linear-gradient(135deg, #fff 0%, #f3e8ff 100%)' },
@@ -27,43 +22,53 @@ export default function InvPreview() {
   const { id } = useParams<{ id: string }>();
   const [currentSection, setCurrentSection] = useState(0);
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [weddingDetails, setWeddingDetails] = useState<WeddingDetails | null>(null);
-  const [guestInfo, setGuestInfo] = useState<GuestInfo | null>(null);
+  const [weddingDetails, setWeddingDetails] = useState<WeddingData | null>(null);
   const [drinkOptions, setDrinkOptions] = useState<DrinkOptions | null>(null);
   const [weddingTexts, setWeddingTexts] = useState<WeddingTexts | null>(null);
   const [guestFound, setGuestFound] = useState<boolean | null>(null);
-  const { isLoading, loadWeddingData, getGuests } = useDatabase();
+  const { loadWeddingData, fetchGuests, saveGuestPreferences, updateExistingGuest, saveGuestMessage } = useDatabase();
+  const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Section boissons : parser les listes globales
+  const alcoholicDrinks = weddingDetails?.alcoholic_drinks ? (() => {
+    try { return JSON.parse(weddingDetails.alcoholic_drinks); } catch { return []; }
+  })() : [];
+  const nonAlcoholicDrinks = weddingDetails?.non_alcoholic_drinks ? (() => {
+    try { return JSON.parse(weddingDetails.non_alcoholic_drinks); } catch { return []; }
+  })() : [];
+  // State pour les choix de l'invité
+  const [selectedAlcoholic, setSelectedAlcoholic] = useState<string[]>([]);
+  const [selectedNonAlcoholic, setSelectedNonAlcoholic] = useState<string[]>([]);
+
+  // Ajout d'un state pour feedback utilisateur
+  const [toast, setToast] = useState<string | null>(null);
 
   // Charger les données de l'invitation et de l'invité
   useEffect(() => {
     const loadData = async () => {
-      if (!isLoading) {
-        const data = await loadWeddingData();
-        console.log('data', data);
-        if (data) {
-          setWeddingDetails(data.weddingDetails);
-          setDrinkOptions(data.drinkOptions);
-          setWeddingTexts(data.weddingTexts);
-          // Chercher l'invité par inviteId sécurisé dans la table guests
-          const allGuests = await getGuests();
-          const found = allGuests.find((g: any) => g.id === id);
-          if (found) {
-            setGuest({ id: found.id, name: found.name, table: found.table_name });
-            setGuestInfo({ name: found.name, table: found.table_name } as GuestInfo);
-            setGuestFound(true);
-          } else {
-            setGuest(null);
-            setGuestFound(false);
-          }
+      setLoading(true);
+      const data = await loadWeddingData();
+      if (data) {
+        setWeddingDetails(data);
+        // Ici, adapte si tu veux charger drinkOptions et weddingTexts à partir de data
+        const allGuests = await fetchGuests(data.id);
+        const found = allGuests.find((g: Guest) => g.id === id);
+        if (found) {
+          setGuest(found);
+          setGuestFound(true);
         } else {
+          setGuest(null);
           setGuestFound(false);
         }
+      } else {
+        setGuestFound(false);
       }
+      setLoading(false);
     };
     loadData();
     // eslint-disable-next-line
-  }, [isLoading, id]);
+  }, [id]);
 
   // Gestion du swipe mobile
   useEffect(() => {
@@ -125,7 +130,7 @@ export default function InvPreview() {
   };
 
   // Loader tant que les données ne sont pas chargées
-  if (isLoading || !weddingDetails || !guestInfo || !drinkOptions || !weddingTexts) {
+  if (loading || !weddingDetails || !drinkOptions || !weddingTexts) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
@@ -139,8 +144,56 @@ export default function InvPreview() {
   // Sections dynamiques
   const weddingSections = buildWeddingSections(weddingDetails, weddingTexts);
 
+  // Handler pour enregistrer les préférences de boissons
+  const handleSavePreferences = async () => {
+    if (!guest) return;
+    try {
+      await saveGuestPreferences(
+        guest.id!,
+        selectedAlcoholic,
+        selectedNonAlcoholic
+      );
+      setToast('Préférences enregistrées !');
+      setTimeout(() => setToast(null), 2000);
+    } catch (e) {
+      setToast("Erreur lors de l'enregistrement");
+      setTimeout(() => setToast(null), 2000);
+    }
+  };
+
+  // Handler pour confirmer ou annuler l'invitation
+  const handleRsvp = async (status: 'confirmed' | 'cancelled') => {
+    if (!guest) return;
+    try {
+      await updateExistingGuest({ ...guest, rsvp_status: status });
+      setGuest({ ...guest, rsvp_status: status });
+      setToast(status === 'confirmed' ? 'Invitation confirmée !' : 'Invitation annulée.');
+      setTimeout(() => setToast(null), 2000);
+    } catch (e) {
+      setToast("Erreur lors de la mise à jour du statut");
+      setTimeout(() => setToast(null), 2000);
+    }
+  };
+
+  // Handler pour envoyer un message dans le livre d'or
+  const [guestbookMessage, setGuestbookMessage] = useState('');
+  const handleSendGuestbook = async () => {
+    if (!guest || !guestbookMessage.trim()) return;
+    try {
+      await saveGuestMessage(guest.id!, guestbookMessage.trim());
+      setGuestbookMessage('');
+      setToast('Message envoyé !');
+      setTimeout(() => setToast(null), 2000);
+    } catch (e) {
+      setToast("Erreur lors de l'envoi du message");
+      setTimeout(() => setToast(null), 2000);
+    }
+  };
+
   // Fonction pour rendre dynamiquement la section courante
   const renderSection = (index: number) => {
+    // Ajout d'un guard pour les sections qui nécessitent guest
+    if ((index === 1 || index === 2) && !guest) return null;
     switch (index) {
       case 0:
         return (
@@ -154,8 +207,8 @@ export default function InvPreview() {
                 <div className="mb-4 sm:mb-6">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden border-2 sm:border-4 border-rose-200 shadow-xl">
                     <img 
-                      src={weddingDetails.couplePhoto}
-                      alt={`${weddingDetails.groomName} et ${weddingDetails.brideName}`}
+                      src={weddingDetails.couple_photo}
+                      alt={`${weddingDetails.groom_name} et ${weddingDetails.bride_name}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
@@ -165,7 +218,7 @@ export default function InvPreview() {
                 <div className="mb-4 sm:mb-6">
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-800 mb-2 sm:mb-4" 
                       style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
-                    {weddingDetails.groomName} <span className="text-rose-500 font-normal">&</span> {weddingDetails.brideName}
+                    {weddingDetails.groom_name} <span className="text-rose-500 font-normal">&</span> {weddingDetails.bride_name}
                   </h1>
                   {/* Ligne décorative */}
                   <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-3 sm:mb-4">
@@ -182,27 +235,27 @@ export default function InvPreview() {
                 </div>
                 {/* Date et détails */}
                 <div className="space-y-2 sm:space-y-4">
-                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.weddingDate.month}</div>
+                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.wedding_month}</div>
                   <div className="flex items-center justify-center space-x-4 sm:space-x-6 md:space-x-8">
                     <div className="text-center">
-                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.weddingDate.dayOfWeek}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.wedding_day_of_week}</div>
                       <div className="w-8 sm:w-12 h-px bg-gray-300"></div>
                     </div>
                     <div className="text-4xl sm:text-5xl md:text-6xl font-light text-gray-800" 
                          style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
-                      {weddingDetails.weddingDate.day}
+                      {weddingDetails.wedding_day}
                     </div>
                     <div className="text-center">
-                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.weddingDate.time}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.wedding_time}</div>
                       <div className="w-8 sm:w-12 h-px bg-gray-300"></div>
                     </div>
                   </div>
-                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.weddingDate.year}</div>
+                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.wedding_year}</div>
                 </div>
                 {/* Lieu */}
                 <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
                   <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-                    {weddingDetails.ceremony.venue}, {weddingDetails.ceremony.address}
+                    {weddingDetails.ceremony_venue}, {weddingDetails.ceremony_address}
                   </p>
                 </div>
                 {/* Décoration florale */}
@@ -240,7 +293,7 @@ export default function InvPreview() {
                         transform: 'skew(-2deg)',
                         transformOrigin: 'center'
                       }}>
-                    {guestInfo.name}
+                    {guest?.name ?? ''}
                   </h3>
                   <div className="flex items-center justify-center space-x-3 sm:space-x-4 mb-6">
                     <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-rose-300 to-transparent"></div>
@@ -266,7 +319,7 @@ export default function InvPreview() {
                   {/* Information de table */}
                   <div className="py-4 sm:py-6 px-4 sm:px-6 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl sm:rounded-2xl border border-rose-200">
                     <p className="text-sm sm:text-base text-gray-600">
-                      Vous serez placé(e) à la <span className="font-medium text-rose-700">{guestInfo.table}</span>
+                      Vous serez placé(e) à la <span className="font-medium text-rose-700">{guest?.table_name ?? ''}</span>
                     </p>
                   </div>
                   
@@ -312,12 +365,12 @@ export default function InvPreview() {
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-rose-800">{weddingTexts.program.ceremonyTitle}</h3>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.ceremony.time}</p>
+                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.ceremony_time}</p>
                       <div className="flex items-center justify-center space-x-2 text-gray-600">
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
-                        <span className="text-sm sm:text-base">{weddingDetails.ceremony.venue}</span>
+                        <span className="text-sm sm:text-base">{weddingDetails.ceremony_venue}</span>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.ceremony.address}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.ceremony_address}</p>
                     </div>
                   </div>
                   {/* Réception */}
@@ -327,12 +380,12 @@ export default function InvPreview() {
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-800">{weddingTexts.program.receptionTitle}</h3>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.reception.time}</p>
+                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.reception_time}</p>
                       <div className="flex items-center justify-center space-x-2 text-gray-600">
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                        <span className="text-sm sm:text-base">{weddingDetails.reception.venue}</span>
+                        <span className="text-sm sm:text-base">{weddingDetails.reception_venue}</span>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.reception.address}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.reception_address}</p>
                     </div>
                   </div>
                 </div>
@@ -361,12 +414,18 @@ export default function InvPreview() {
                     <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                     <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-green-800">Message pour les mariés</h3>
                   </div>
-                  <textarea 
+                  <textarea
                     className="w-full p-3 sm:p-4 border border-green-200 rounded-lg resize-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                     rows={4}
                     placeholder={weddingTexts.guestbook.placeholder}
+                    value={guestbookMessage}
+                    onChange={e => setGuestbookMessage(e.target.value)}
                   />
-                  <button className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                  <button
+                    className="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={handleSendGuestbook}
+                    disabled={!guest || !guestbookMessage.trim()}
+                  >
                     {weddingTexts.guestbook.saveButton}
                   </button>
                 </div>
@@ -403,31 +462,17 @@ export default function InvPreview() {
                       {weddingTexts.preferences.alcoholicTitle}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                      {Array.isArray(drinkOptions.alcoholic)
-                        ? drinkOptions.alcoholic.map((drink, index) => (
-                            <label key={index} className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-red-50 cursor-pointer">
-                              <input type="checkbox" className="text-red-600 focus:ring-red-500" />
-                              <span className="text-sm sm:text-base text-gray-700">{drink}</span>
-                            </label>
-                          ))
-                        : typeof drinkOptions.alcoholic === 'string'
-                          ? (() => {
-                              try {
-                                const arr = JSON.parse(drinkOptions.alcoholic);
-                                return Array.isArray(arr)
-                                  ? arr.map((drink: string, index: number) => (
-                                      <label key={index} className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-red-50 cursor-pointer">
-                                        <input type="checkbox" className="text-red-600 focus:ring-red-500" />
-                                        <span className="text-sm sm:text-base text-gray-700">{drink}</span>
-                                      </label>
-                                    ))
-                                  : null;
-                              } catch {
-                                return null;
-                              }
-                            })()
-                          : null
-                      }
+                      {alcoholicDrinks.map((drink: string, index: number) => (
+                        <label key={index} className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-red-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="text-red-600 focus:ring-red-500"
+                            checked={selectedAlcoholic.includes(drink)}
+                            onChange={e => setSelectedAlcoholic(sel => e.target.checked ? [...sel, drink] : sel.filter(d => d !== drink))}
+                          />
+                          <span className="text-sm sm:text-base text-gray-700">{drink}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
                   {/* Boissons non-alcoolisées */}
@@ -436,34 +481,27 @@ export default function InvPreview() {
                       {weddingTexts.preferences.nonAlcoholicTitle}
                     </h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                      {Array.isArray(drinkOptions.nonAlcoholic)
-                        ? drinkOptions.nonAlcoholic.map((drink, index) => (
-                            <label key={index} className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-blue-50 cursor-pointer">
-                              <input type="checkbox" className="text-blue-600 focus:ring-blue-500" />
-                              <span className="text-sm sm:text-base text-gray-700">{drink}</span>
-                            </label>
-                          ))
-                        : typeof drinkOptions.nonAlcoholic === 'string'
-                          ? (() => {
-                              try {
-                                const arr = JSON.parse(drinkOptions.nonAlcoholic);
-                                return Array.isArray(arr)
-                                  ? arr.map((drink: string, index: number) => (
-                                      <label key={index} className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-blue-50 cursor-pointer">
-                                        <input type="checkbox" className="text-blue-600 focus:ring-blue-500" />
-                                        <span className="text-sm sm:text-base text-gray-700">{drink}</span>
-                                      </label>
-                                    ))
-                                  : null;
-                              } catch {
-                                return null;
-                              }
-                            })()
-                          : null
-                      }
+                      {nonAlcoholicDrinks.map((drink: string, index: number) => (
+                        <label key={index} className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-blue-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="text-blue-600 focus:ring-blue-500"
+                            checked={selectedNonAlcoholic.includes(drink)}
+                            onChange={e => setSelectedNonAlcoholic(sel => e.target.checked ? [...sel, drink] : sel.filter(d => d !== drink))}
+                          />
+                          <span className="text-sm sm:text-base text-gray-700">{drink}</span>
+                        </label>
+                      ))}
                     </div>
                   </div>
                 </div>
+                <button
+                  className="mt-6 px-6 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-colors"
+                  onClick={handleSavePreferences}
+                  disabled={!guest}
+                >
+                  Enregistrer mes choix
+                </button>
               </div>
             </div>
           </div>
@@ -492,8 +530,19 @@ export default function InvPreview() {
                   <p className="text-base sm:text-lg text-gray-600 mb-4">
                     {weddingTexts.cancellation.timeLimit}
                   </p>
-                  <button className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                    {weddingTexts.cancellation.cancelButton}
+                  <button
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mr-2"
+                    onClick={() => handleRsvp('confirmed')}
+                    disabled={!guest || guest?.rsvp_status === 'confirmed'}
+                  >
+                    Confirmer ma présence
+                  </button>
+                  <button
+                    className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    onClick={() => handleRsvp('cancelled')}
+                    disabled={!guest || guest?.rsvp_status === 'cancelled'}
+                  >
+                    Annuler ma venue
                   </button>
                 </div>
               </div>
@@ -579,6 +628,12 @@ export default function InvPreview() {
           &nbsp;| contact: Ryan Sabowa <a href="tel:+243981682933" className="text-rose-600 hover:underline">+243 98 168 2933</a>
         </span>
       </footer>
+      {/* Toast visuel global */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 px-6 py-3 rounded-lg shadow-lg bg-green-600 text-white font-semibold text-base transition-all duration-300 animate-fade-in">
+          {toast}
+        </div>
+      )}
     </div>
   );
 } 

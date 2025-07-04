@@ -52,7 +52,7 @@ export default function InvPreview() {
       if (data) {
         setWeddingDetails(data);
         // Ici, adapte si tu veux charger drinkOptions et weddingTexts à partir de data
-        const allGuests = await fetchGuests(data.id);
+        const allGuests = await fetchGuests(data.id ?? '');
         const found = allGuests.find((g: Guest) => g.id === id);
         if (found) {
           setGuest(found);

@@ -313,7 +313,7 @@ export interface GuestDetails {
   special_access_code?: string;
 }
 
-interface MediaDetails {
+export interface MediaDetails {
   id: string;
   invitation_id: string;
   invitation_title: string;

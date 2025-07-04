@@ -8,10 +8,11 @@ import {
   deleteGuest,
   addGuestMessage,
   getGuestMessages,
-  saveGuestPreferences,
+ 
   getGuestPreferences,
 } from '../lib/database';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../data/weddingData';
+import type { WeddingData } from '../lib/database';
 
 export const useDatabase = () => {
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export const useDatabase = () => {
     }
   };
 
-  const saveWedding = async (data) => {
+  const saveWedding = async (data: any) => {
     try {
       await saveWeddingData(data);
     } catch (err) {
@@ -34,7 +35,7 @@ export const useDatabase = () => {
     }
   };
 
-  const fetchGuests = async (weddingId) => {
+  const fetchGuests = async (weddingId: string) => {
     try {
       return await getGuests(weddingId);
     } catch (err) {
@@ -43,7 +44,7 @@ export const useDatabase = () => {
     }
   };
 
-  const addNewGuest = async (guest) => {
+  const addNewGuest = async (guest: any) => {
     try {
       await addGuest(guest);
     } catch (err) {
@@ -52,7 +53,7 @@ export const useDatabase = () => {
     }
   };
 
-  const updateExistingGuest = async (guest) => {
+  const updateExistingGuest = async (guest: any) => {
     try {
       await updateGuest(guest);
     } catch (err) {
@@ -61,7 +62,7 @@ export const useDatabase = () => {
     }
   };
 
-  const removeGuest = async (id) => {
+  const removeGuest = async (id: string) => {
     try {
       await deleteGuest(id);
     } catch (err) {
@@ -88,35 +89,6 @@ export const useDatabase = () => {
     }
   }, []);
 
-  const exportDatabase = useCallback(async () => {
-    try {
-      const data = await databaseService.exportDatabase();
-      const blob = new Blob([data], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `wedding-database-${new Date().toISOString().split('T')[0]}.db`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to export database');
-      throw err;
-    }
-  }, []);
-
-  const importDatabase = useCallback(async (file: File) => {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      await databaseService.importDatabase(uint8Array);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to import database');
-      throw err;
-    }
-  }, []);
-
   return {
     error,
     loadWeddingData,
@@ -127,8 +99,6 @@ export const useDatabase = () => {
     removeGuest,
     saveGuestMessage,
     saveGuestPreferences,
-    exportDatabase,
-    importDatabase,
     getGuestMessages,
     getGuestPreferences,
   };
@@ -137,81 +107,82 @@ export const useDatabase = () => {
 // Helper functions to convert between app data structure and database structure
 const convertDbToAppData = (data: WeddingData) => {
   const weddingDetails: WeddingDetails = {
-    groomName: data.groomName,
-    brideName: data.brideName,
-    couplePhoto: data.couplePhoto,
+    id: data.id ?? '',
+    groomName: data.groom_name ?? '',
+    brideName: data.bride_name ?? '',
+    couplePhoto: data.couple_photo ?? '',
     weddingDate: {
-      day: data.weddingDay,
-      month: data.weddingMonth,
-      year: data.weddingYear,
-      dayOfWeek: data.weddingDayOfWeek,
-      time: data.weddingTime
+      day: data.wedding_day ?? '',
+      month: data.wedding_month ?? '',
+      year: data.wedding_year ?? '',
+      dayOfWeek: data.wedding_day_of_week ?? '',
+      time: data.wedding_time ?? ''
     },
     ceremony: {
-      time: data.ceremonyTime,
-      venue: data.ceremonyVenue,
-      address: data.ceremonyAddress
+      time: data.ceremony_time ?? '',
+      venue: data.ceremony_venue ?? '',
+      address: data.ceremony_address ?? ''
     },
     reception: {
-      time: data.receptionTime,
-      venue: data.receptionVenue,
-      address: data.receptionAddress
+      time: data.reception_time ?? '',
+      venue: data.reception_venue ?? '',
+      address: data.reception_address ?? ''
     }
   };
 
   const guestInfo: GuestInfo = {
-    name: data.guestName,
-    table: data.guestTable
+    name: (data as any).guest_name ?? '',
+    table: (data as any).guest_table ?? ''
   };
 
   const drinkOptions: DrinkOptions = {
-    alcoholic: JSON.parse(data.alcoholicDrinks),
-    nonAlcoholic: JSON.parse(data.nonAlcoholicDrinks)
+    alcoholic: data.alcoholic_drinks ? JSON.parse(data.alcoholic_drinks) : [],
+    nonAlcoholic: data.non_alcoholic_drinks ? JSON.parse(data.non_alcoholic_drinks) : []
   };
 
   const weddingTexts: WeddingTexts = {
     welcome: {
-      invitationMessage: data.welcomeMessage
+      invitationMessage: data.welcome_message ?? ''
     },
     invitation: {
-      title: data.invitationTitle,
+      title: data.invitation_title ?? '',
       personalTitle: "Votre Invitation Personnalisée",
       guestLabel: "Invité(e) :",
       tableLabel: "Table :",
-      loveQuote: data.invitationLoveQuote,
-      mainMessage: data.invitationMainMessage,
-      dateMessage: data.invitationDateMessage
+      loveQuote: data.invitation_love_quote ?? '',
+      mainMessage: data.invitation_main_message ?? '',
+      dateMessage: data.invitation_date_message ?? ''
     },
     program: {
-      title: data.programTitle,
-      ceremonyTitle: data.ceremonyTitle,
-      receptionTitle: data.receptionTitle,
-      welcomeMessage: data.programWelcomeMessage
+      title: data.program_title ?? '',
+      ceremonyTitle: data.ceremony_title ?? '',
+      receptionTitle: data.reception_title ?? '',
+      welcomeMessage: data.program_welcome_message ?? ''
     },
     guestbook: {
-      title: data.guestbookTitle,
-      subtitle: data.guestbookSubtitle,
-      placeholder: data.guestbookPlaceholder,
-      saveButton: data.guestbookSaveButton
+      title: data.guestbook_title ?? '',
+      subtitle: data.guestbook_subtitle ?? '',
+      placeholder: data.guestbook_placeholder ?? '',
+      saveButton: data.guestbook_save_button ?? ''
     },
     preferences: {
-      title: data.preferencesTitle,
-      subtitle: data.preferencesSubtitle,
-      description: data.preferencesDescription,
-      limitation: data.preferencesLimitation,
-      alcoholicTitle: data.preferencesAlcoholicTitle,
-      nonAlcoholicTitle: data.preferencesNonAlcoholicTitle
+      title: data.preferences_title ?? '',
+      subtitle: data.preferences_subtitle ?? '',
+      description: data.preferences_description ?? '',
+      limitation: data.preferences_limitation ?? '',
+      alcoholicTitle: data.preferences_alcoholic_title ?? '',
+      nonAlcoholicTitle: data.preferences_non_alcoholic_title ?? ''
     },
     cancellation: {
-      title: data.cancellationTitle,
-      description: data.cancellationDescription,
-      timeLimit: data.cancellationTimeLimit,
-      cancelButton: data.cancellationCancelButton,
-      modalTitle: data.cancellationModalTitle,
-      modalMessage: data.cancellationModalMessage,
-      keepButton: data.cancellationKeepButton,
-      confirmButton: data.cancellationConfirmButton,
-      successMessage: data.cancellationSuccessMessage
+      title: data.cancellation_title ?? '',
+      description: data.cancellation_description ?? '',
+      timeLimit: data.cancellation_time_limit ?? '',
+      cancelButton: data.cancellation_cancel_button ?? '',
+      modalTitle: data.cancellation_modal_title ?? '',
+      modalMessage: data.cancellation_modal_message ?? '',
+      keepButton: data.cancellation_keep_button ?? '',
+      confirmButton: data.cancellation_confirm_button ?? '',
+      successMessage: data.cancellation_success_message ?? ''
     }
   };
 
@@ -225,51 +196,49 @@ const convertAppToDbData = (
   weddingTexts: WeddingTexts
 ): Omit<WeddingData, 'id' | 'createdAt' | 'updatedAt'> => {
   return {
-    groomName: weddingDetails.groomName,
-    brideName: weddingDetails.brideName,
-    couplePhoto: weddingDetails.couplePhoto,
-    weddingDay: weddingDetails.weddingDate.day,
-    weddingMonth: weddingDetails.weddingDate.month,
-    weddingYear: weddingDetails.weddingDate.year,
-    weddingDayOfWeek: weddingDetails.weddingDate.dayOfWeek,
-    weddingTime: weddingDetails.weddingDate.time,
-    ceremonyTime: weddingDetails.ceremony.time,
-    ceremonyVenue: weddingDetails.ceremony.venue,
-    ceremonyAddress: weddingDetails.ceremony.address,
-    receptionTime: weddingDetails.reception.time,
-    receptionVenue: weddingDetails.reception.venue,
-    receptionAddress: weddingDetails.reception.address,
-    guestName: guestInfo.name,
-    guestTable: guestInfo.table,
-    alcoholicDrinks: JSON.stringify(drinkOptions.alcoholic),
-    nonAlcoholicDrinks: JSON.stringify(drinkOptions.nonAlcoholic),
-    welcomeMessage: weddingTexts.welcome.invitationMessage,
-    invitationTitle: weddingTexts.invitation.title,
-    invitationLoveQuote: weddingTexts.invitation.loveQuote,
-    invitationMainMessage: weddingTexts.invitation.mainMessage,
-    invitationDateMessage: weddingTexts.invitation.dateMessage,
-    programTitle: weddingTexts.program.title,
-    ceremonyTitle: weddingTexts.program.ceremonyTitle,
-    receptionTitle: weddingTexts.program.receptionTitle,
-    programWelcomeMessage: weddingTexts.program.welcomeMessage,
-    guestbookTitle: weddingTexts.guestbook.title,
-    guestbookSubtitle: weddingTexts.guestbook.subtitle,
-    guestbookPlaceholder: weddingTexts.guestbook.placeholder,
-    guestbookSaveButton: weddingTexts.guestbook.saveButton,
-    preferencesTitle: weddingTexts.preferences.title,
-    preferencesSubtitle: weddingTexts.preferences.subtitle,
-    preferencesDescription: weddingTexts.preferences.description,
-    preferencesLimitation: weddingTexts.preferences.limitation,
-    preferencesAlcoholicTitle: weddingTexts.preferences.alcoholicTitle,
-    preferencesNonAlcoholicTitle: weddingTexts.preferences.nonAlcoholicTitle,
-    cancellationTitle: weddingTexts.cancellation.title,
-    cancellationDescription: weddingTexts.cancellation.description,
-    cancellationTimeLimit: weddingTexts.cancellation.timeLimit,
-    cancellationCancelButton: weddingTexts.cancellation.cancelButton,
-    cancellationModalTitle: weddingTexts.cancellation.modalTitle,
-    cancellationModalMessage: weddingTexts.cancellation.modalMessage,
-    cancellationKeepButton: weddingTexts.cancellation.keepButton,
-    cancellationConfirmButton: weddingTexts.cancellation.confirmButton,
-    cancellationSuccessMessage: weddingTexts.cancellation.successMessage
+    groom_name: weddingDetails.groomName,
+    bride_name: weddingDetails.brideName,
+    couple_photo: weddingDetails.couplePhoto,
+    wedding_day: weddingDetails.weddingDate.day,
+    wedding_month: weddingDetails.weddingDate.month,
+    wedding_year: weddingDetails.weddingDate.year,
+    wedding_day_of_week: weddingDetails.weddingDate.dayOfWeek,
+    wedding_time: weddingDetails.weddingDate.time,
+    ceremony_time: weddingDetails.ceremony.time,
+    ceremony_venue: weddingDetails.ceremony.venue,
+    ceremony_address: weddingDetails.ceremony.address,
+    reception_time: weddingDetails.reception.time,
+    reception_venue: weddingDetails.reception.venue,
+    reception_address: weddingDetails.reception.address,
+    alcoholic_drinks: JSON.stringify(drinkOptions.alcoholic),
+    non_alcoholic_drinks: JSON.stringify(drinkOptions.nonAlcoholic),
+    welcome_message: weddingTexts.welcome.invitationMessage,
+    invitation_title: weddingTexts.invitation.title,
+    invitation_love_quote: weddingTexts.invitation.loveQuote,
+    invitation_main_message: weddingTexts.invitation.mainMessage,
+    invitation_date_message: weddingTexts.invitation.dateMessage,
+    program_title: weddingTexts.program.title,
+    ceremony_title: weddingTexts.program.ceremonyTitle,
+    reception_title: weddingTexts.program.receptionTitle,
+    program_welcome_message: weddingTexts.program.welcomeMessage,
+    guestbook_title: weddingTexts.guestbook.title,
+    guestbook_subtitle: weddingTexts.guestbook.subtitle,
+    guestbook_placeholder: weddingTexts.guestbook.placeholder,
+    guestbook_save_button: weddingTexts.guestbook.saveButton,
+    preferences_title: weddingTexts.preferences.title,
+    preferences_subtitle: weddingTexts.preferences.subtitle,
+    preferences_description: weddingTexts.preferences.description,
+    preferences_limitation: weddingTexts.preferences.limitation,
+    preferences_alcoholic_title: weddingTexts.preferences.alcoholicTitle,
+    preferences_non_alcoholic_title: weddingTexts.preferences.nonAlcoholicTitle,
+    cancellation_title: weddingTexts.cancellation.title,
+    cancellation_description: weddingTexts.cancellation.description,
+    cancellation_time_limit: weddingTexts.cancellation.timeLimit,
+    cancellation_cancel_button: weddingTexts.cancellation.cancelButton,
+    cancellation_modal_title: weddingTexts.cancellation.modalTitle,
+    cancellation_modal_message: weddingTexts.cancellation.modalMessage,
+    cancellation_keep_button: weddingTexts.cancellation.keepButton,
+    cancellation_confirm_button: weddingTexts.cancellation.confirmButton,
+    cancellation_success_message: weddingTexts.cancellation.successMessage
   };
 }; 

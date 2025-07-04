@@ -25,3 +25,8 @@ Allow: /invitation/
 
 # Sitemap location
 Sitemap: https://loventy.org/sitemap.xml
+
+# Additional disallow rules
+Disallow: /me
+Disallow: /editor
+Disallow: /i/

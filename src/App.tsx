@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import CookieBanner from './components/CookieBanner';
+import CookieBannerV2 from './components/CookieBannerV2';
 import SeoHead from './components/SeoHead';
 
 // Layouts
@@ -76,7 +76,7 @@ function App() {
         <ConnectionErrorBanner />
         
         {/* Cookie Banner */}
-        <CookieBanner />
+        <CookieBannerV2 />
         
         <Routes>
           {/* Public Routes */}

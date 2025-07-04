@@ -20,21 +20,35 @@ const CookieBanner: React.FC = () => {
     advertising: false,
   });
   const [hasConsent, setHasConsent] = useState(false);
+  const [isTemporarilyClosed, setIsTemporarilyClosed] = useState(false);
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // Check if user has already made a choice
     const cookieConsent = Cookies.get('loventy_cookie_consent');
+    const temporarilyClosed = Cookies.get('loventy_banner_temporarily_closed');
     
     if (!cookieConsent) {
-      // If no choice has been made, show the banner after a short delay
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-      }, 1500);
-      
-      return () => clearTimeout(timer);
+      // If no choice has been made
+      if (temporarilyClosed === 'true') {
+        // If banner was temporarily closed, show floating button
+        setIsTemporarilyClosed(true);
+        setShowFloatingButton(true);
+      } else {
+        // Show the banner after a short delay
+        const timer = setTimeout(() => {
+          setIsOpen(true);
+        }, 1500);
+        
+        return () => clearTimeout(timer);
+      }
     } else {
       // If a choice has been made, set the preferences accordingly
       setHasConsent(true);
+      setShowFloatingButton(false);
+      // Ensure modal is closed if consent exists
+      setIsOpen(false);
       try {
         const savedPreferences = JSON.parse(cookieConsent);
         setPreferences(savedPreferences);
@@ -42,6 +56,9 @@ const CookieBanner: React.FC = () => {
         console.error('Error parsing cookie preferences:', error);
       }
     }
+    
+    // Mark as initialized
+    setIsInitialized(true);
   }, []);
 
   const handleAcceptAll = () => {
@@ -56,6 +73,7 @@ const CookieBanner: React.FC = () => {
     savePreferences(allAccepted);
     setIsOpen(false);
     setHasConsent(true);
+    setShowFloatingButton(false);
   };
 
   const handleAcceptSelected = () => {
@@ -63,6 +81,7 @@ const CookieBanner: React.FC = () => {
     setIsOpen(false);
     setShowPreferences(false);
     setHasConsent(true);
+    setShowFloatingButton(false);
   };
 
   const handleRejectAll = () => {
@@ -77,7 +96,18 @@ const CookieBanner: React.FC = () => {
     savePreferences(minimalPreferences);
     setIsOpen(false);
     setHasConsent(true);
+    setShowFloatingButton(false);
   };
+
+  const handleCloseModal = () => {
+    setIsOpen(false);
+    setIsTemporarilyClosed(true);
+    setShowFloatingButton(true);
+    // Save the temporarily closed state in a cookie (expires in 1 day)
+    Cookies.set('loventy_banner_temporarily_closed', 'true', { expires: 1 });
+  };
+
+
 
   const savePreferences = (prefs: CookiePreferences) => {
     // Save preferences for 1 year
@@ -121,24 +151,43 @@ const CookieBanner: React.FC = () => {
     setShowPreferences(true);
   };
 
-  const handleManageCookies = () => {
-    setIsOpen(true);
-  };
 
-  if (!isOpen && hasConsent) {
-    return (
-      <button 
-        onClick={handleManageCookies}
-        className="fixed bottom-4 right-4 z-50 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
-        aria-label="Gérer les cookies"
-      >
-        <Cookie className="h-5 w-5 text-[#D4A5A5]" />
-      </button>
-    );
+
+  // Ne rien afficher tant que l'initialisation n'est pas terminée
+  if (!isInitialized) {
+    return null;
   }
 
-  if (!isOpen && !hasConsent) {
-    return null;
+  // Si l'utilisateur a déjà donné son consentement
+  if (hasConsent) {
+    // Si le modal est ouvert, l'afficher (pour permettre la modification des préférences)
+    if (isOpen) {
+      // Continuer vers le rendu du modal
+    } else {
+      // Si le modal n'est pas ouvert et que l'utilisateur a déjà fait son choix, ne rien afficher
+      return null;
+    }
+  } else {
+    // Si l'utilisateur n'a pas encore donné son consentement
+    if (isTemporarilyClosed) {
+      // Si temporairement fermé, afficher le bouton flottant
+      if (showFloatingButton) {
+        return (
+          <button 
+            onClick={() => setIsOpen(true)}
+            className="fixed bottom-4 right-4 z-50 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+            aria-label="Gérer les cookies"
+          >
+            <Cookie className="h-5 w-5 text-[#D4A5A5]" />
+          </button>
+        );
+      }
+      return null;
+    }
+    // Sinon, afficher le modal
+    if (!isOpen) {
+      setIsOpen(true);
+    }
   }
 
   return (
@@ -306,15 +355,17 @@ const CookieBanner: React.FC = () => {
                 </button>
               </>
             )}
-            <button
-              type="button"
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-500"
-              onClick={() => setIsOpen(false)}
-            >
-              <span className="sr-only">Fermer</span>
-              <X className="h-5 w-5" />
-            </button>
           </div>
+          
+          {/* Bouton de fermeture */}
+          <button
+            type="button"
+            className="absolute top-3 right-3 text-gray-400 hover:text-gray-500"
+            onClick={handleCloseModal}
+          >
+            <span className="sr-only">Fermer</span>
+            <X className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </div>

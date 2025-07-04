@@ -9,7 +9,7 @@ import { Guest, WeddingData } from '../../lib/database';
 // Construction dynamique des sections à partir des données chargées
 function buildWeddingSections(weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) {
   return [
-    { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/section1.jpg') center/cover no-repeat" },
+    { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/section1') center/cover no-repeat" },
     { id: 1, title: 'Invitation', background: 'linear-gradient(135deg, #fff 0%, #f3e8ff 100%)' },
     { id: 2, title: 'Programme', background: 'linear-gradient(135deg, #f0fdfa 0%, #e0e7ff 100%)' },
     { id: 3, title: 'Livre d\'or', background: 'linear-gradient(135deg, #f0fdf4 0%, #fef9c3 100%)' },

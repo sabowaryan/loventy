@@ -35,7 +35,7 @@ import PlanLimitWarning from '../../components/PlanLimitWarning';
 import GuestList from '../../components/guests/GuestList';
 import GuestStats from '../../components/guests/GuestStats';
 import GuestFilters from '../../components/guests/GuestFilters';
-import AddGuestModal from '../../components/guests/AddGuestModal';
+import AddGuestModal from '../../components/guests/AddGuest';
 import ImportGuestsModal from '../../components/guests/ImportGuestsModal';
 import DeleteGuestModal from '../../components/guests/DeleteGuestModal';
 import EmailGuestsModal from '../../components/guests/EmailGuestsModal';

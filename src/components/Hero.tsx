@@ -310,7 +310,7 @@ const Hero: React.FC = () => {
       </div>
 
       {/* Import Google Fonts pour la calligraphie */}
-      <style jsx>{`
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
       `}</style>
     </section>

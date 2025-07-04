@@ -238,7 +238,7 @@ const InvitationPreview: React.FC<InvitationPreviewProps> = ({
       </div>
       
       {/* Custom CSS for heart shape */}
-      <style jsx>{`
+      <style >{`
         .heart-shape {
           position: relative;
           width: 100%;

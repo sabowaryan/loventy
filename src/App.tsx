@@ -10,6 +10,7 @@ import DashboardLayout from './components/layouts/DashboardLayout';
 // Route Guards
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import KeyProtectedRoute from './components/KeyProtectedRoute';
 
 // Public Pages
 import Home from './pages/Home';
@@ -21,6 +22,7 @@ import Terms from './pages/Terms';
 import Cookies from './pages/Cookies';
 import Testimonials from './pages/Testimonials';
 import Contact from './pages/Contact';
+import MySpacePage from './pages/myspace';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -39,6 +41,7 @@ import Events from './pages/Events';
 
 // Invitation Pages
 import InvitationView from './pages/invitation/InvitationView';
+import InvPreview from './pages/invitation/InvPreview';
 
 // Error Pages
 import ErrorPage from './pages/ErrorPage';
@@ -229,6 +232,18 @@ function App() {
 
           {/* Invitation View Routes (Public but with specific access) */}
           <Route path="/invitation/:invitationId" element={<InvitationView />} />
+
+          {/* Invitation Preview Route */}
+          <Route path="/i/:id" element={<InvPreview />} />
+
+          {/* MySpace Page */}
+          <Route path="/me" element={
+            <KeyProtectedRoute secretKey="LOV3NTY2025@">
+              <PublicLayout>
+                <MySpacePage />
+              </PublicLayout>
+            </KeyProtectedRoute>
+          } />
 
           {/* Error Pages */}
           <Route path="/error" element={<ErrorPage />} />

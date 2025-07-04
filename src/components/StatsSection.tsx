@@ -185,7 +185,7 @@ const StatsSection: React.FC = () => {
       </div>
 
       {/* Custom animations */}
-      <style jsx>{`
+      <style >{`
         @keyframes fadeInUp {
           from {
             opacity: 0;

@@ -86,7 +86,9 @@ export default function AdminPanel({
             address: data.ceremony_address,
             status: 'published',
             created_at: data.created_at || new Date().toISOString(),
-            updated_at: data.updated_at || new Date().toISOString()
+            updated_at: data.updated_at || new Date().toISOString(),
+            // Ajouter les données complètes pour l'édition
+            weddingData: data
           };
           setInvitations([fakeInvitation]);
           setSelectedInvitation(fakeInvitation);
@@ -116,8 +118,13 @@ export default function AdminPanel({
     }
   }, [selectedInvitation]);
 
-  const handleEditInvitation = () => {
-    setEditModalOpen(true);
+  const handleEditInvitation = (invitation?: any) => {
+    // Si une invitation spécifique est passée, l'utiliser, sinon utiliser l'invitation sélectionnée
+    const invitationToEdit = invitation || selectedInvitation;
+    if (invitationToEdit) {
+      setWeddingDetails(invitationToEdit.weddingData || weddingDetails);
+      setEditModalOpen(true);
+    }
   };
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -271,8 +278,9 @@ export default function AdminPanel({
           </div>
           <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-2">
             <button
-              onClick={handleEditInvitation}
-              className="btn-primary flex items-center justify-center space-x-2 px-4 py-2 rounded-lg shadow-sm hover:bg-rose-700 transition-colors w-full sm:w-auto"
+              onClick={() => handleEditInvitation(selectedInvitation)}
+              disabled={!selectedInvitation}
+              className="btn-primary flex items-center justify-center space-x-2 px-4 py-2 rounded-lg shadow-sm hover:bg-rose-700 transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Edit className="w-4 h-4" />
               <span>Éditer l'invitation</span>
@@ -295,7 +303,26 @@ export default function AdminPanel({
           initialDetails={weddingDetails}
           onSave={(newDetails) => {
             setWeddingDetails(newDetails);
+            // Mettre à jour l'invitation sélectionnée avec les nouvelles données
+            if (selectedInvitation) {
+              const updatedInvitation = {
+                ...selectedInvitation,
+                title: `${newDetails.bride_name} & ${newDetails.groom_name}`,
+                bride_name: newDetails.bride_name,
+                groom_name: newDetails.groom_name,
+                event_date: `${newDetails.wedding_year}-${newDetails.wedding_month}-${newDetails.wedding_day}`,
+                event_time: newDetails.wedding_time,
+                venue: newDetails.ceremony_venue,
+                address: newDetails.ceremony_address,
+                weddingData: newDetails
+              };
+              setSelectedInvitation(updatedInvitation);
+              setInvitations(prev => prev.map(inv => 
+                inv.id === selectedInvitation.id ? updatedInvitation : inv
+              ));
+            }
             setEditModalOpen(false);
+            showToast('success', 'Invitation mise à jour avec succès !');
           }}
         />
       )}
@@ -419,26 +446,45 @@ export default function AdminPanel({
                   {currentInvitations.map(inv => (
                     <div
                       key={inv.id}
-                      className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                      className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-md ${
                         selectedInvitation?.id === inv.id ? 'ring-2 ring-secondary bg-secondary/5' : ''
                       }`}
-                      onClick={() => setSelectedInvitation(inv)}
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-gray-900 truncate flex-1">{inv.title}</h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          inv.status === 'published' ? 'bg-green-100 text-green-800' :
-                          inv.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                          inv.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {inv.status === 'published' ? 'Publiée' :
-                           inv.status === 'draft' ? 'Brouillon' :
-                           inv.status === 'sent' ? 'Envoyée' :
-                           inv.status}
-                        </span>
+                        <h3 
+                          className="font-semibold text-gray-900 truncate flex-1 cursor-pointer"
+                          onClick={() => setSelectedInvitation(inv)}
+                        >
+                          {inv.title}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            inv.status === 'published' ? 'bg-green-100 text-green-800' :
+                            inv.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                            inv.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {inv.status === 'published' ? 'Publiée' :
+                             inv.status === 'draft' ? 'Brouillon' :
+                             inv.status === 'sent' ? 'Envoyée' :
+                             inv.status}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditInvitation(inv);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-secondary hover:bg-gray-100 rounded-lg transition-all duration-200"
+                            title="Éditer l'invitation"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="space-y-2 text-sm text-gray-600">
+                      <div 
+                        className="space-y-2 text-sm text-gray-600 cursor-pointer"
+                        onClick={() => setSelectedInvitation(inv)}
+                      >
                         {inv.bride_name && inv.groom_name && (
                           <div className="flex items-center">
                             <User className="h-4 w-4 mr-2" />
@@ -458,7 +504,10 @@ export default function AdminPanel({
                           </div>
                         )}
                       </div>
-                      <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                      <div 
+                        className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500 cursor-pointer"
+                        onClick={() => setSelectedInvitation(inv)}
+                      >
                         Créée le {new Date(inv.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
@@ -493,7 +542,16 @@ export default function AdminPanel({
             {/* Liste des invités de l'invitation sélectionnée */}
             {selectedInvitation && (
               <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-4">Invités pour : {selectedInvitation.title}</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Invités pour : {selectedInvitation.title}</h3>
+                  <button
+                    onClick={() => handleEditInvitation(selectedInvitation)}
+                    className="inline-flex items-center px-3 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-all duration-200 text-sm"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Éditer l'invitation
+                  </button>
+                </div>
                 {guests.length === 0 ? (
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -794,15 +852,15 @@ export default function AdminPanel({
                         <label className="block text-sm font-medium text-primary mb-2">Lien d'invitation</label>
                         <div className="flex items-center space-x-2">
                           <a 
-                            href={guest.invitationLink} 
+                            href={guest.invitation_link} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="flex-1 text-sm text-secondary hover:text-secondary-light truncate"
                           >
-                            {guest.invitationLink}
+                            {guest.invitation_link}
                           </a>
                           <button
-                            onClick={() => navigator.clipboard.writeText(guest.invitationLink)}
+                            onClick={() => navigator.clipboard.writeText(guest.invitation_link)}
                             className="p-1 text-neutral-400 hover:text-secondary transition-colors"
                             title="Copier le lien"
                           >

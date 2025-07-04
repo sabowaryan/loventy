@@ -32,14 +32,43 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
   const drinkInputRef = useRef<HTMLInputElement>(null);
   const { loadWeddingData } = useDatabase();
 
-  // Charger les données existantes depuis la base de données
+  // Charger les données existantes depuis la base de données ou utiliser les données passées
   const loadExistingData = async () => {
     try {
-      const existingData = await loadWeddingData();
-      if (existingData) {
-        setDetails(existingData.weddingDetails as unknown as WeddingData);
-        setAlcoholicDrinks(existingData.drinkOptions.alcoholic ?? ['Bière', 'Vin rouge', 'Vin blanc', 'Champagne', 'Whisky', 'Vodka']);
-        setNonAlcoholicDrinks(existingData.drinkOptions.nonAlcoholic ?? ['Eau', 'Jus de fruits', 'Soda', 'Café', 'Thé', 'Jus de gingembre']);
+      // Si on a des données initiales complètes, les utiliser
+      if (initialDetails && Object.keys(initialDetails).length > 0) {
+        setDetails(initialDetails);
+        
+        // Charger les boissons depuis les données initiales
+        if (initialDetails.alcoholic_drinks) {
+          try {
+            const alcoholic = JSON.parse(initialDetails.alcoholic_drinks);
+            if (Array.isArray(alcoholic)) {
+              setAlcoholicDrinks(alcoholic);
+            }
+          } catch (e) {
+            console.warn('Erreur lors du parsing des boissons alcoolisées:', e);
+          }
+        }
+        
+        if (initialDetails.non_alcoholic_drinks) {
+          try {
+            const nonAlcoholic = JSON.parse(initialDetails.non_alcoholic_drinks);
+            if (Array.isArray(nonAlcoholic)) {
+              setNonAlcoholicDrinks(nonAlcoholic);
+            }
+          } catch (e) {
+            console.warn('Erreur lors du parsing des boissons non-alcoolisées:', e);
+          }
+        }
+      } else {
+        // Sinon, charger depuis la base de données
+        const existingData = await loadWeddingData();
+        if (existingData) {
+          setDetails(existingData.weddingDetails as unknown as WeddingData);
+          setAlcoholicDrinks(existingData.drinkOptions.alcoholic ?? ['Bière', 'Vin rouge', 'Vin blanc', 'Champagne', 'Whisky', 'Vodka']);
+          setNonAlcoholicDrinks(existingData.drinkOptions.nonAlcoholic ?? ['Eau', 'Jus de fruits', 'Soda', 'Café', 'Thé', 'Jus de gingembre']);
+        }
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données existantes:', error);
@@ -87,7 +116,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
         non_alcoholic_drinks: JSON.stringify(nonAlcoholicDrinks)
       });
       onClose();
-      setToast('Données sauvegardées avec succès !');
+      setToast('Invitation mise à jour avec succès !');
       setTimeout(() => setToast(null), 2500);
     } catch (error) {
       setToast('Erreur lors de la sauvegarde: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));

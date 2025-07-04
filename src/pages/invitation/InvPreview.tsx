@@ -39,6 +39,9 @@ export default function InvPreview() {
 
   // Ajout d'un state pour feedback utilisateur
   const [toast, setToast] = useState<string | null>(null);
+  
+  // State pour le message du livre d'or
+  const [guestbookMessage, setGuestbookMessage] = useState('');
 
   // Charger les données de l'invitation et de l'invité
   useEffect(() => {
@@ -174,7 +177,6 @@ export default function InvPreview() {
   };
 
   // Handler pour envoyer un message dans le livre d'or
-  const [guestbookMessage, setGuestbookMessage] = useState('');
   const handleSendGuestbook = async () => {
     if (!guest || !guestbookMessage.trim()) return;
     try {

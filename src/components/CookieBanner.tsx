@@ -19,6 +19,7 @@ const CookieBanner: React.FC = () => {
     analytics: true,
     advertising: false,
   });
+  const [hasConsent, setHasConsent] = useState(false);
 
   useEffect(() => {
     // Check if user has already made a choice
@@ -33,6 +34,7 @@ const CookieBanner: React.FC = () => {
       return () => clearTimeout(timer);
     } else {
       // If a choice has been made, set the preferences accordingly
+      setHasConsent(true);
       try {
         const savedPreferences = JSON.parse(cookieConsent);
         setPreferences(savedPreferences);
@@ -53,12 +55,14 @@ const CookieBanner: React.FC = () => {
     setPreferences(allAccepted);
     savePreferences(allAccepted);
     setIsOpen(false);
+    setHasConsent(true);
   };
 
   const handleAcceptSelected = () => {
     savePreferences(preferences);
     setIsOpen(false);
     setShowPreferences(false);
+    setHasConsent(true);
   };
 
   const handleRejectAll = () => {
@@ -72,6 +76,7 @@ const CookieBanner: React.FC = () => {
     setPreferences(minimalPreferences);
     savePreferences(minimalPreferences);
     setIsOpen(false);
+    setHasConsent(true);
   };
 
   const savePreferences = (prefs: CookiePreferences) => {
@@ -120,7 +125,7 @@ const CookieBanner: React.FC = () => {
     setIsOpen(true);
   };
 
-  if (!isOpen) {
+  if (!isOpen && hasConsent) {
     return (
       <button 
         onClick={handleManageCookies}
@@ -130,6 +135,10 @@ const CookieBanner: React.FC = () => {
         <Cookie className="h-5 w-5 text-[#D4A5A5]" />
       </button>
     );
+  }
+
+  if (!isOpen && !hasConsent) {
+    return null;
   }
 
   return (

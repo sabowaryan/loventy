@@ -28,8 +28,8 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
       return;
     }
     const id = uuidv4();
-    const invitation_id = `/i/${id}`;
-    const additional_notes = getPersonalMessage(guestData.name, `https://loventy.org${invitation_id}`);
+    const invitation_id = `https://loventy.org/i/${id}`;
+    const additional_notes = getPersonalMessage(guestData.name, invitation_id);
     onAddGuest({
       id,
       name: guestData.name,
@@ -72,8 +72,8 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
   const handleAddCsvGuests = () => {
     csvGuests.forEach(guest => {
       const id = uuidv4();
-      const invitation_id = `/i/${id}`;
-      const additional_notes = getPersonalMessage(guest.name, `https://loventy.org${invitation_id}`);
+      const invitation_id = `https://loventy.org/i/${id}`;
+      const additional_notes = getPersonalMessage(guest.name, invitation_id);
       onAddGuest({
         id,
         name: guest.name,
@@ -88,8 +88,8 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
   };
 
   // Génération du lien et du message pour l'invité manuel
-  const previewLink = guestData.name && guestData.table_name ? `/i/${previewId}` : '';
-  const previewMessage = previewLink ? getPersonalMessage(guestData.name, `https://loventy.org${previewLink}`) : '';
+  const previewLink = guestData.name && guestData.table_name ? `https://loventy.org/i/${previewId}` : '';
+  const previewMessage = previewLink ? getPersonalMessage(guestData.name, previewLink) : '';
 
   // Génération du message élégant et professionnel
   function getPersonalMessage(name: string, link: string) {
@@ -187,8 +187,8 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ onClose, onAddGuest, invi
                 <div className="max-h-40 overflow-y-auto border rounded bg-gray-50 p-2 mb-2">
                   {csvGuests.map((guest, idx) => {
                     const id = uuidv4();
-                    const link = `/i/${id}`;
-                    const msg = getPersonalMessage(guest.name, `https://loventy.org${link}`);
+                    const link = `https://loventy.org/i/${id}`;
+                    const msg = getPersonalMessage(guest.name, link);
                     return (
                       <div key={idx} className="mb-2 border-b pb-1 last:border-b-0 last:pb-0">
                         <div className="font-semibold text-blue-700">{guest.name}</div>

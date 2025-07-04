@@ -3,8 +3,8 @@ const { createClient } = require('@supabase/supabase-js');
 const { create } = require('xmlbuilder2');
 
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY // Utilise la clé service côté serveur
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY // Utilise la clé service côté serveur
 );
 
 async function main() {

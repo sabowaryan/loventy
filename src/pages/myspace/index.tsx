@@ -9,31 +9,29 @@ export default function MySpacePage() {
   const [drinkOptions, setDrinkOptions] = useState<DrinkOptions | null>(null);
   const [weddingTexts, setWeddingTexts] = useState<WeddingTexts | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { loadWeddingData, isLoading: dbLoading } = useDatabase();
+  const { loadWeddingData } = useDatabase();
 
   useEffect(() => {
     const loadData = async () => {
-      if (!dbLoading) {
-        try {
-          const data = await loadWeddingData();
-          if (data) {
-            setWeddingDetails(data.weddingDetails);
-            setGuestInfo(data.guestInfo);
-            setDrinkOptions(data.drinkOptions);
-            setWeddingTexts(data.weddingTexts);
-          }
-        } catch (error) {
-          console.error('Erreur lors du chargement:', error);
-        } finally {
-          setIsLoading(false);
+      try {
+        const data = await loadWeddingData();
+        if (data) {
+          setWeddingDetails(data.weddingDetails);
+          setGuestInfo(data.guestInfo);
+          setDrinkOptions(data.drinkOptions);
+          setWeddingTexts(data.weddingTexts);
         }
+      } catch (error) {
+        console.error('Erreur lors du chargement:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadData();
-  }, [dbLoading, loadWeddingData]);
+  }, [loadWeddingData]);
 
-  if (isLoading || dbLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -73,10 +71,7 @@ export default function MySpacePage() {
 
   return (
     <AdminPanel
-      weddingDetails={weddingDetails}
-      guestInfo={guestInfo}
-      drinkOptions={drinkOptions}
-      weddingTexts={weddingTexts}
+      weddingDetails={weddingDetails as any}
       onSave={() => {}}
       onPreview={() => {}}
     />

@@ -132,7 +132,7 @@ const Pricing: React.FC = () => {
                   Invitations ce mois
                 </div>
                 <div className="text-xs text-gray-500">
-                  Limite: {formatLimit(limits.invitations)}
+                  Limite: {formatLimit((limits as any).invitations)}
                 </div>
               </div>
               <div className="text-center">
@@ -143,7 +143,7 @@ const Pricing: React.FC = () => {
                   Invités total
                 </div>
                 <div className="text-xs text-gray-500">
-                  Limite: {formatLimit(limits.guests)}
+                  Limite: {formatLimit((limits as any).guests)}
                 </div>
               </div>
               <div className="text-center">
@@ -154,7 +154,7 @@ const Pricing: React.FC = () => {
                   Emails envoyés
                 </div>
                 <div className="text-xs text-gray-500">
-                  Limite: {formatLimit(limits.emailsPerMonth)}
+                  Limite: {formatLimit((limits as any).emailsPerMonth)}
                 </div>
               </div>
               <div className="text-center">
@@ -165,7 +165,7 @@ const Pricing: React.FC = () => {
                   Stockage utilisé
                 </div>
                 <div className="text-xs text-gray-500">
-                  Limite: {formatLimit(limits.storage, ' MB')}
+                  Limite: {formatLimit((limits as any).storage, ' MB')}
                 </div>
               </div>
             </div>

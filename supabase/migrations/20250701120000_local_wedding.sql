@@ -1,7 +1,13 @@
--- Migration pour données locales Loventy (provisoire)
+-- Supprime les tables dans l'ordre pour respecter les contraintes FK
+DROP TABLE IF EXISTS public.local_guest_preferences CASCADE;
+DROP TABLE IF EXISTS public.local_guest_messages CASCADE;
+DROP TABLE IF EXISTS public.local_guests CASCADE;
+DROP TABLE IF EXISTS public.local_wedding_data CASCADE;
 
-CREATE TABLE IF NOT EXISTS local_wedding_data (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+-- Création des tables
+
+CREATE TABLE public.local_wedding_data (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   groom_name TEXT NOT NULL,
   bride_name TEXT NOT NULL,
   couple_photo TEXT,
@@ -44,60 +50,129 @@ CREATE TABLE IF NOT EXISTS local_wedding_data (
   cancellation_keep_button TEXT,
   cancellation_confirm_button TEXT,
   cancellation_success_message TEXT,
-  created_at TIMESTAMP DEFAULT now(),
-  updated_at TIMESTAMP DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Activer le RLS et autoriser lecture/écriture pour tous sur local_wedding_data
-ALTER TABLE public.local_wedding_data ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow anon read local_wedding_data" ON public.local_wedding_data FOR SELECT USING (true);
-CREATE POLICY "Allow anon insert local_wedding_data" ON public.local_wedding_data FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anon update local_wedding_data" ON public.local_wedding_data FOR UPDATE USING (true);
-CREATE POLICY "Allow anon delete local_wedding_data" ON public.local_wedding_data FOR DELETE USING (true);
-
-CREATE TABLE IF NOT EXISTS local_guests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  wedding_id uuid REFERENCES local_wedding_data(id),
+CREATE TABLE public.local_guests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  wedding_id UUID NOT NULL REFERENCES public.local_wedding_data(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   table_name TEXT NOT NULL,
   email TEXT,
   rsvp_status TEXT,
   invitation_link TEXT,
-  message_sender TEXT
+  message_sender TEXT,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Activer le RLS et autoriser lecture/écriture pour tous sur local_guests
-ALTER TABLE public.local_guests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow anon read local_guests" ON public.local_guests FOR SELECT USING (true);
-CREATE POLICY "Allow anon insert local_guests" ON public.local_guests FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anon update local_guests" ON public.local_guests FOR UPDATE USING (true);
-CREATE POLICY "Allow anon delete local_guests" ON public.local_guests FOR DELETE USING (true);
+CREATE INDEX idx_local_guests_wedding_id ON public.local_guests(wedding_id);
 
-CREATE TABLE IF NOT EXISTS local_guest_messages (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  guest_id uuid REFERENCES local_guests(id),
+CREATE TABLE public.local_guest_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  guest_id UUID NOT NULL REFERENCES public.local_guests(id) ON DELETE CASCADE,
   message TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Activer le RLS et autoriser lecture/écriture pour tous sur local_guest_messages
-ALTER TABLE public.local_guest_messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow anon read local_guest_messages" ON public.local_guest_messages FOR SELECT USING (true);
-CREATE POLICY "Allow anon insert local_guest_messages" ON public.local_guest_messages FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anon update local_guest_messages" ON public.local_guest_messages FOR UPDATE USING (true);
-CREATE POLICY "Allow anon delete local_guest_messages" ON public.local_guest_messages FOR DELETE USING (true);
+CREATE INDEX idx_local_guest_messages_guest_id ON public.local_guest_messages(guest_id);
 
-CREATE TABLE IF NOT EXISTS local_guest_preferences (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  guest_id uuid REFERENCES local_guests(id),
+CREATE TABLE public.local_guest_preferences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  guest_id UUID NOT NULL REFERENCES public.local_guests(id) ON DELETE CASCADE,
   alcoholic_drinks TEXT,
   non_alcoholic_drinks TEXT,
-  created_at TIMESTAMP DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- Activer le RLS et autoriser lecture/écriture pour tous sur local_guest_preferences
+CREATE INDEX idx_local_guest_preferences_guest_id ON public.local_guest_preferences(guest_id);
+
+-- Trigger fonction pour updated_at
+
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Triggers updated_at
+
+DROP TRIGGER IF EXISTS update_updated_at_trigger ON public.local_wedding_data;
+CREATE TRIGGER update_updated_at_trigger
+BEFORE UPDATE ON public.local_wedding_data
+FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_updated_at_trigger ON public.local_guests;
+CREATE TRIGGER update_updated_at_trigger
+BEFORE UPDATE ON public.local_guests
+FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_updated_at_trigger ON public.local_guest_preferences;
+CREATE TRIGGER update_updated_at_trigger
+BEFORE UPDATE ON public.local_guest_preferences
+FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
+
+-- Activer Row Level Security
+
+ALTER TABLE public.local_wedding_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.local_guests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.local_guest_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.local_guest_preferences ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow anon read local_guest_preferences" ON public.local_guest_preferences FOR SELECT USING (true);
+
+-- Policies RLS
+
+-- local_wedding_data
+DROP POLICY IF EXISTS "Allow anon select local_wedding_data" ON public.local_wedding_data;
+CREATE POLICY "Allow anon select local_wedding_data" ON public.local_wedding_data FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow anon insert local_wedding_data" ON public.local_wedding_data;
+CREATE POLICY "Allow anon insert local_wedding_data" ON public.local_wedding_data FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon update local_wedding_data" ON public.local_wedding_data;
+CREATE POLICY "Allow anon update local_wedding_data" ON public.local_wedding_data FOR UPDATE USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon delete local_wedding_data" ON public.local_wedding_data;
+CREATE POLICY "Allow anon delete local_wedding_data" ON public.local_wedding_data FOR DELETE USING (true);
+
+-- local_guests
+DROP POLICY IF EXISTS "Allow anon select local_guests" ON public.local_guests;
+CREATE POLICY "Allow anon select local_guests" ON public.local_guests FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow anon insert local_guests" ON public.local_guests;
+CREATE POLICY "Allow anon insert local_guests" ON public.local_guests FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon update local_guests" ON public.local_guests;
+CREATE POLICY "Allow anon update local_guests" ON public.local_guests FOR UPDATE USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon delete local_guests" ON public.local_guests;
+CREATE POLICY "Allow anon delete local_guests" ON public.local_guests FOR DELETE USING (true);
+
+-- local_guest_messages
+DROP POLICY IF EXISTS "Allow anon select local_guest_messages" ON public.local_guest_messages;
+CREATE POLICY "Allow anon select local_guest_messages" ON public.local_guest_messages FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow anon insert local_guest_messages" ON public.local_guest_messages;
+CREATE POLICY "Allow anon insert local_guest_messages" ON public.local_guest_messages FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon update local_guest_messages" ON public.local_guest_messages;
+CREATE POLICY "Allow anon update local_guest_messages" ON public.local_guest_messages FOR UPDATE USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon delete local_guest_messages" ON public.local_guest_messages;
+CREATE POLICY "Allow anon delete local_guest_messages" ON public.local_guest_messages FOR DELETE USING (true);
+
+-- local_guest_preferences
+DROP POLICY IF EXISTS "Allow anon select local_guest_preferences" ON public.local_guest_preferences;
+CREATE POLICY "Allow anon select local_guest_preferences" ON public.local_guest_preferences FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Allow anon insert local_guest_preferences" ON public.local_guest_preferences;
 CREATE POLICY "Allow anon insert local_guest_preferences" ON public.local_guest_preferences FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow anon update local_guest_preferences" ON public.local_guest_preferences FOR UPDATE USING (true);
-CREATE POLICY "Allow anon delete local_guest_preferences" ON public.local_guest_preferences FOR DELETE USING (true); 
+
+DROP POLICY IF EXISTS "Allow anon update local_guest_preferences" ON public.local_guest_preferences;
+CREATE POLICY "Allow anon update local_guest_preferences" ON public.local_guest_preferences FOR UPDATE USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow anon delete local_guest_preferences" ON public.local_guest_preferences;
+CREATE POLICY "Allow anon delete local_guest_preferences" ON public.local_guest_preferences FOR DELETE USING (true);

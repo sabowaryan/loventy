@@ -7,7 +7,7 @@ import LoventyLogo from '../../components/LoventyLogo';
 import { Guest, WeddingData } from '../../lib/database';
 
 // Construction dynamique des sections à partir des données chargées
-function buildWeddingSections(weddingDetails: WeddingData, weddingTexts: WeddingTexts) {
+function buildWeddingSections(weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) {
   return [
     { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/section1.jpg') center/cover no-repeat" },
     { id: 1, title: 'Invitation', background: 'linear-gradient(135deg, #fff 0%, #f3e8ff 100%)' },
@@ -22,7 +22,7 @@ export default function InvPreview() {
   const { id } = useParams<{ id: string }>();
   const [currentSection, setCurrentSection] = useState(0);
   const [guest, setGuest] = useState<Guest | null>(null);
-  const [weddingDetails, setWeddingDetails] = useState<WeddingData | null>(null);
+  const [weddingDetails, setWeddingDetails] = useState<WeddingDetails | null>(null);
   const [drinkOptions, setDrinkOptions] = useState<DrinkOptions | null>(null);
   const [weddingTexts, setWeddingTexts] = useState<WeddingTexts | null>(null);
   const [guestFound, setGuestFound] = useState<boolean | null>(null);
@@ -31,12 +31,8 @@ export default function InvPreview() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Section boissons : parser les listes globales
-  const alcoholicDrinks = weddingDetails?.alcoholic_drinks ? (() => {
-    try { return JSON.parse(weddingDetails.alcoholic_drinks); } catch { return []; }
-  })() : [];
-  const nonAlcoholicDrinks = weddingDetails?.non_alcoholic_drinks ? (() => {
-    try { return JSON.parse(weddingDetails.non_alcoholic_drinks); } catch { return []; }
-  })() : [];
+  const alcoholicDrinks = drinkOptions?.alcoholic || [];
+  const nonAlcoholicDrinks = drinkOptions?.nonAlcoholic || [];
   // State pour les choix de l'invité
   const [selectedAlcoholic, setSelectedAlcoholic] = useState<string[]>([]);
   const [selectedNonAlcoholic, setSelectedNonAlcoholic] = useState<string[]>([]);
@@ -50,9 +46,11 @@ export default function InvPreview() {
       setLoading(true);
       const data = await loadWeddingData();
       if (data) {
-        setWeddingDetails(data);
-        // Ici, adapte si tu veux charger drinkOptions et weddingTexts à partir de data
-        const allGuests = await fetchGuests(data.id ?? '');
+        setWeddingDetails(data.weddingDetails);
+        setDrinkOptions(data.drinkOptions);
+        setWeddingTexts(data.weddingTexts);
+        // Utilise l'id du weddingDetails pour fetchGuests
+        const allGuests = await fetchGuests(data.weddingDetails.id ?? '');
         const found = allGuests.find((g: Guest) => g.id === id);
         if (found) {
           setGuest(found);
@@ -207,8 +205,8 @@ export default function InvPreview() {
                 <div className="mb-4 sm:mb-6">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden border-2 sm:border-4 border-rose-200 shadow-xl">
                     <img 
-                      src={weddingDetails.couple_photo}
-                      alt={`${weddingDetails.groom_name} et ${weddingDetails.bride_name}`}
+                      src={weddingDetails.couplePhoto}
+                      alt={`${weddingDetails.groomName} et ${weddingDetails.brideName}`}
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
@@ -218,7 +216,7 @@ export default function InvPreview() {
                 <div className="mb-4 sm:mb-6">
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-800 mb-2 sm:mb-4" 
                       style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
-                    {weddingDetails.groom_name} <span className="text-rose-500 font-normal">&</span> {weddingDetails.bride_name}
+                    {weddingDetails.groomName} <span className="text-rose-500 font-normal">&</span> {weddingDetails.brideName}
                   </h1>
                   {/* Ligne décorative */}
                   <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-3 sm:mb-4">
@@ -235,27 +233,27 @@ export default function InvPreview() {
                 </div>
                 {/* Date et détails */}
                 <div className="space-y-2 sm:space-y-4">
-                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.wedding_month}</div>
+                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.weddingDate.month}</div>
                   <div className="flex items-center justify-center space-x-4 sm:space-x-6 md:space-x-8">
                     <div className="text-center">
-                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.wedding_day_of_week}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.weddingDate.dayOfWeek}</div>
                       <div className="w-8 sm:w-12 h-px bg-gray-300"></div>
                     </div>
                     <div className="text-4xl sm:text-5xl md:text-6xl font-light text-gray-800" 
                          style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
-                      {weddingDetails.wedding_day}
+                      {weddingDetails.weddingDate.day}
                     </div>
                     <div className="text-center">
-                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.wedding_time}</div>
+                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails.weddingDate.time}</div>
                       <div className="w-8 sm:w-12 h-px bg-gray-300"></div>
                     </div>
                   </div>
-                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.wedding_year}</div>
+                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails.weddingDate.year}</div>
                 </div>
                 {/* Lieu */}
                 <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
                   <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-                    {weddingDetails.ceremony_venue}, {weddingDetails.ceremony_address}
+                    {weddingDetails.ceremony.venue}, {weddingDetails.ceremony.address}
                   </p>
                 </div>
                 {/* Décoration florale */}
@@ -365,12 +363,12 @@ export default function InvPreview() {
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-rose-800">{weddingTexts.program.ceremonyTitle}</h3>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.ceremony_time}</p>
+                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.ceremony.time}</p>
                       <div className="flex items-center justify-center space-x-2 text-gray-600">
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-rose-500" />
-                        <span className="text-sm sm:text-base">{weddingDetails.ceremony_venue}</span>
+                        <span className="text-sm sm:text-base">{weddingDetails.ceremony.venue}</span>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.ceremony_address}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.ceremony.address}</p>
                     </div>
                   </div>
                   {/* Réception */}
@@ -380,12 +378,12 @@ export default function InvPreview() {
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-800">{weddingTexts.program.receptionTitle}</h3>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.reception_time}</p>
+                      <p className="text-base sm:text-lg text-gray-700">{weddingDetails.reception.time}</p>
                       <div className="flex items-center justify-center space-x-2 text-gray-600">
                         <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-                        <span className="text-sm sm:text-base">{weddingDetails.reception_venue}</span>
+                        <span className="text-sm sm:text-base">{weddingDetails.reception.venue}</span>
                       </div>
-                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.reception_address}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">{weddingDetails.reception.address}</p>
                     </div>
                   </div>
                 </div>

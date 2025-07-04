@@ -19,7 +19,9 @@ export const useDatabase = () => {
 
   const loadWeddingData = async () => {
     try {
-      return await getWeddingData();
+      const data = await getWeddingData();
+      if (!data) return null;
+      return convertDbToAppData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load wedding data');
       return null;

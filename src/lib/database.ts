@@ -81,7 +81,7 @@ export async function getWeddingData(): Promise<WeddingData | null> {
   const { data, error } = await supabase
     .from('local_wedding_data')
     .select('*')
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return data;
 }
@@ -170,4 +170,48 @@ export async function getGuestPreferences(guestId: string): Promise<GuestPrefere
     .single();
   if (error && error.code !== 'PGRST116') throw error;
   return data || null;
+}
+
+// Invitations CRUD
+export async function getInvitations(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('invitations')
+    .select(`
+      id,
+      title,
+      template_id,
+      bride_name,
+      groom_name,
+      event_date,
+      event_time,
+      venue,
+      address,
+      status,
+      created_at,
+      updated_at
+    `)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+// Get guests by invitation ID
+export async function getGuestsByInvitationId(invitationId: string): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('guests')
+    .select(`
+      id,
+      name,
+      email,
+      phone,
+      status,
+      response_message,
+      responded_at,
+      created_at,
+      updated_at
+    `)
+    .eq('invitation_id', invitationId)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return data || [];
 } 

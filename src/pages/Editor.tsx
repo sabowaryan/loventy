@@ -38,7 +38,8 @@ import {
 } from '../utils/designConstants';
 import InvitationPreview from '../components/invitation/InvitationPreview';
 import {
-  ExtendedInvitationData
+  ExtendedInvitationData,
+  InvitationDesignSettings
 } from '../types/models';
 
 // Import the new useHistory hook
@@ -111,7 +112,7 @@ const Editor: React.FC = () => {
     updateDesignSettings,
     saveDesignSettings,
     uploadImage
-  } = useInvitationDesign({ invitationId: templateId || '', initialDesignSettings: defaultDesignSettings });
+  } = useInvitationDesign({ invitationId: templateId || '', initialDesignSettings: defaultDesignSettings as Partial<InvitationDesignSettings> });
 
   // Replace useState with useHistory for localInvitationData
   const {
@@ -225,8 +226,8 @@ const Editor: React.FC = () => {
 
   const handleImageUpload = async (sectionId: string, imageType: 'background' | 'couple' | 'decorative', file: File) => {
     try {
-      const imageUrl = await uploadImage(sectionId, imageType, file);
-      return imageUrl;
+      const result = await uploadImage(sectionId, imageType, file);
+      return result.url;
     } catch (error) {
       console.error('Error uploading image:', error);
       throw error;

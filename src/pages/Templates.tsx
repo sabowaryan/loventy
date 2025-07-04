@@ -230,7 +230,7 @@ const Templates: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Invitations:</span>
                   <span className="font-medium">
-                    {limits.usage?.invitations || 0} / {limits.invitations === -1 ? '∞' : limits.invitations}
+                    {(limits.usage as any).invitations || 0} / {(limits as any).invitations === -1 ? '∞' : (limits as any).invitations}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">

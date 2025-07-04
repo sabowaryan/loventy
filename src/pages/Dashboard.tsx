@@ -196,7 +196,7 @@ const Dashboard: React.FC = () => {
             </div>
           </Link>
         ) : (
-          canCreateInvitations && canCreateInvitation && (
+          canCreateInvitations() && canCreateInvitation && (
             <Link
               to="/templates"
               className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-secondary hover:bg-secondary/5 transition-colors group"
@@ -225,7 +225,7 @@ const Dashboard: React.FC = () => {
           </div>
         </Link>
 
-        {canManageGuests && (
+        {canManageGuests() && (
           <Link
             to="/dashboard/guests"
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-secondary hover:bg-secondary/5 transition-colors group"
@@ -240,7 +240,7 @@ const Dashboard: React.FC = () => {
           </Link>
         )}
 
-        {canViewAnalytics && (
+        {canViewAnalytics() && (
           <Link
             to="/dashboard/analytics"
             className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:border-secondary hover:bg-secondary/5 transition-colors group"
@@ -328,7 +328,7 @@ const Dashboard: React.FC = () => {
                 Créer un événement
               </Link>
             ) : (
-              canCreateInvitations && canCreateInvitation && (
+              canCreateInvitations() && canCreateInvitation && (
                 <Link
                   to="/templates"
                   className="btn-accent"
@@ -400,7 +400,7 @@ const Dashboard: React.FC = () => {
                       <Eye className="h-4 w-4" />
                     </Link>
                     
-                    {canEditInvitations && (
+                    {canEditInvitations() && (
                       <Link
                         to={`/editor/${invitation.id}`}
                         className="p-2 text-gray-400 hover:text-secondary transition-colors rounded-lg hover:bg-white" 

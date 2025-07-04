@@ -101,7 +101,7 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
   
   // Cropping states
   const [imgSrc, setImgSrc] = useState('');
-  const imageRef = useRef<HTMLImageElement>(null);
+  const [imgElement, setImgElement] = useState<HTMLImageElement | null>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [cropperModalOpen, setCropperModalOpen] = useState(false);
@@ -124,17 +124,17 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
   };
 
   const updateSectionDesign = useCallback((sectionId: typeof activeSection, property: keyof SectionDesign | Partial<SectionDesign>, value?: any) => {
-    onDesignChange(prev => ({
-      ...prev,
+    onDesignChange({
+      ...designSettings,
       sections: {
-        ...prev.sections,
+        ...designSettings.sections,
         [sectionId]: {
-          ...prev.sections[sectionId],
+          ...designSettings.sections[sectionId],
           ...(typeof property === 'object' ? property : { [property]: value })
         }
       }
-    }));
-  }, [onDesignChange]);
+    });
+  }, [onDesignChange, designSettings]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, sectionId: typeof activeSection, imageType: 'background' | 'couple' | 'decorative') => {
     const file = e.target.files?.[0];
@@ -151,9 +151,9 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
   };
 
   const handleApplyCrop = async () => {
-    if (completedCrop && imageRef.current && selectedFileForCrop && currentImageType) {
+    if (completedCrop && imgElement && selectedFileForCrop && currentImageType) {
       try {
-        const croppedBlob = await getCroppedImg(imageRef.current, completedCrop);
+        const croppedBlob = await getCroppedImg(imgElement, completedCrop);
         const croppedFile = new File([croppedBlob], selectedFileForCrop.name, { type: selectedFileForCrop.type });
         
         const { url, width, height } = await onImageUpload(
@@ -260,11 +260,15 @@ const SectionDesignEditor: React.FC<DesignControlsProps> = ({
                   onComplete={c => setCompletedCrop(c)}
                   aspect={aspect}
                 >
-                  <img ref={imageRef} alt="Source" src={imgSrc} onLoad={(e) => {
-                    imageRef.current = e.currentTarget;
-                    const { width, height } = e.currentTarget;
-                    setCrop(centerAspectCrop(width, height, aspect));
-                  }} />
+                  <img
+                    ref={setImgElement}
+                    alt="Source"
+                    src={imgSrc}
+                    onLoad={(e) => {
+                      const { width, height } = e.currentTarget;
+                      setCrop(centerAspectCrop(width, height, aspect));
+                    }}
+                  />
                 </ReactCrop>
               )}
             </div>

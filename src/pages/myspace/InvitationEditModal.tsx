@@ -37,22 +37,9 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
     try {
       const existingData = await loadWeddingData();
       if (existingData) {
-        setDetails(existingData);
-        // Initialiser les boissons à partir de la BDD si elles existent
-        if (existingData.alcoholic_drinks) {
-          try {
-            setAlcoholicDrinks(JSON.parse(existingData.alcoholic_drinks));
-          } catch {
-            setAlcoholicDrinks(['Bière', 'Vin rouge', 'Vin blanc', 'Champagne', 'Whisky', 'Vodka']);
-          }
-        }
-        if (existingData.non_alcoholic_drinks) {
-          try {
-            setNonAlcoholicDrinks(JSON.parse(existingData.non_alcoholic_drinks));
-          } catch {
-            setNonAlcoholicDrinks(['Eau', 'Jus de fruits', 'Soda', 'Café', 'Thé', 'Jus de gingembre']);
-          }
-        }
+        setDetails(existingData.weddingDetails as unknown as WeddingData);
+        setAlcoholicDrinks(existingData.drinkOptions.alcoholic ?? ['Bière', 'Vin rouge', 'Vin blanc', 'Champagne', 'Whisky', 'Vodka']);
+        setNonAlcoholicDrinks(existingData.drinkOptions.nonAlcoholic ?? ['Eau', 'Jus de fruits', 'Soda', 'Café', 'Thé', 'Jus de gingembre']);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données existantes:', error);

@@ -5,6 +5,10 @@ Allow: /
 
 # Disallow admin and private areas
 Disallow: /dashboard/
+Disallow: /me
+Disallow: /editor
+Disallow: /i/
+Disallow: /invitation/
 Disallow: /auth/
 Disallow: /error/
 Disallow: /500
@@ -21,12 +25,8 @@ Allow: /terms
 Allow: /cookies
 
 # Allow public invitation views
-Allow: /invitation/
 
 # Sitemap location
 Sitemap: https://loventy.org/sitemap.xml
-
 # Additional disallow rules
-Disallow: /me
-Disallow: /editor
-Disallow: /i/
+

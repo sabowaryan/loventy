@@ -8,7 +8,7 @@ import {
   deleteGuest,
   addGuestMessage,
   getGuestMessages,
- 
+  saveGuestPreferences as saveGuestPreferencesDb,
   getGuestPreferences,
 } from '../lib/database';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../data/weddingData';
@@ -73,18 +73,18 @@ export const useDatabase = () => {
     }
   };
 
-  const saveGuestMessage = useCallback(async (guestName: string, message: string) => {
+  const saveGuestMessage = useCallback(async (guestId: string, message: string) => {
     try {
-      await addGuestMessage(guestName, message);
+      await addGuestMessage(guestId, message);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save guest message');
       throw err;
     }
   }, []);
 
-  const saveGuestPreferences = useCallback(async (guestName: string, alcoholicDrinks: string[], nonAlcoholicDrinks: string[]) => {
+  const saveGuestPreferences = useCallback(async (guestId: string, alcoholicDrinks: string[], nonAlcoholicDrinks: string[]) => {
     try {
-      await saveGuestPreferences(guestName, alcoholicDrinks, nonAlcoholicDrinks);
+      await saveGuestPreferencesDb(guestId, JSON.stringify(alcoholicDrinks), JSON.stringify(nonAlcoholicDrinks));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save guest preferences');
       throw err;

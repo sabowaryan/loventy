@@ -37,7 +37,11 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
     try {
       // Si on a des données initiales complètes, les utiliser
       if (initialDetails && Object.keys(initialDetails).length > 0) {
-        setDetails(initialDetails);
+        // S'assurer qu'aucune valeur n'est null en remplaçant par des chaînes vides
+        const sanitizedDetails = Object.fromEntries(
+          Object.entries(initialDetails).map(([key, value]) => [key, value ?? ''])
+        ) as WeddingData;
+        setDetails(sanitizedDetails);
         
         // Charger les boissons depuis les données initiales
         if (initialDetails.alcoholic_drinks) {
@@ -65,7 +69,11 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
         // Sinon, charger depuis la base de données
         const existingData = await loadWeddingData();
         if (existingData) {
-          setDetails(existingData.weddingDetails as unknown as WeddingData);
+          // S'assurer qu'aucune valeur n'est null
+          const sanitizedDetails = Object.fromEntries(
+            Object.entries(existingData.weddingDetails).map(([key, value]) => [key, value ?? ''])
+          ) as WeddingData;
+          setDetails(sanitizedDetails);
           setAlcoholicDrinks(existingData.drinkOptions.alcoholic ?? ['Bière', 'Vin rouge', 'Vin blanc', 'Champagne', 'Whisky', 'Vodka']);
           setNonAlcoholicDrinks(existingData.drinkOptions.nonAlcoholic ?? ['Eau', 'Jus de fruits', 'Soda', 'Café', 'Thé', 'Jus de gingembre']);
         }
@@ -83,7 +91,11 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
       firstInputRef.current.focus();
     }
     if (open) {
-      setDetails(initialDetails);
+      // S'assurer qu'aucune valeur n'est null lors de l'initialisation
+      const sanitizedInitialDetails = Object.fromEntries(
+        Object.entries(initialDetails).map(([key, value]) => [key, value ?? ''])
+      ) as WeddingData;
+      setDetails(sanitizedInitialDetails);
       setStep(0);
       loadExistingData();
     }
@@ -206,7 +218,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                     <input
                       ref={firstInputRef}
                       type="text"
-                      value={details.groom_name}
+                      value={details.groom_name ?? ''}
                       onChange={e => setDetails(prev => ({ ...prev, groom_name: e.target.value }))}
                       className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                       required
@@ -216,7 +228,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                     <label className="form-label mb-1">Nom de la mariée</label>
                     <input
                       type="text"
-                      value={details.bride_name}
+                      value={details.bride_name ?? ''}
                       onChange={e => setDetails(prev => ({ ...prev, bride_name: e.target.value }))}
                       className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                       required
@@ -227,7 +239,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                   <label className="form-label mb-1">Photo du couple (URL)</label>
                   <input
                     type="url"
-                    value={details.couple_photo}
+                    value={details.couple_photo ?? ''}
                     onChange={e => setDetails(prev => ({ ...prev, couple_photo: e.target.value }))}
                     className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                     placeholder="https://..."
@@ -247,7 +259,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Jour</label>
                       <input
                         type="text"
-                        value={details.wedding_day}
+                        value={details.wedding_day ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, wedding_day: e.target.value }))}
                         className="form-input w-full px-2 sm:px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="09"
@@ -257,7 +269,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Mois</label>
                       <input
                         type="text"
-                        value={details.wedding_month}
+                        value={details.wedding_month ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, wedding_month: e.target.value }))}
                         className="form-input w-full px-2 sm:px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="NOVEMBRE"
@@ -267,7 +279,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Année</label>
                       <input
                         type="text"
-                        value={details.wedding_year}
+                        value={details.wedding_year ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, wedding_year: e.target.value }))}
                         className="form-input w-full px-2 sm:px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="2024"
@@ -277,7 +289,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Jour semaine</label>
                       <input
                         type="text"
-                        value={details.wedding_day_of_week}
+                        value={details.wedding_day_of_week ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, wedding_day_of_week: e.target.value }))}
                         className="form-input w-full px-2 sm:px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="SAMEDI"
@@ -287,7 +299,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Heure</label>
                       <input
                         type="text"
-                        value={details.wedding_time}
+                        value={details.wedding_time ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, wedding_time: e.target.value }))}
                         className="form-input w-full px-2 sm:px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="15:30"
@@ -305,7 +317,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                         <label className="form-label mb-1 text-xs sm:text-sm">Heure</label>
                         <input
                           type="text"
-                          value={details.ceremony_time}
+                          value={details.ceremony_time ?? ''}
                           onChange={e => setDetails(prev => ({ ...prev, ceremony_time: e.target.value }))}
                           className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                           placeholder="15h30"
@@ -315,7 +327,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                         <label className="form-label mb-1 text-xs sm:text-sm">Lieu</label>
                         <input
                           type="text"
-                          value={details.ceremony_venue}
+                          value={details.ceremony_venue ?? ''}
                           onChange={e => setDetails(prev => ({ ...prev, ceremony_venue: e.target.value }))}
                           className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                           placeholder="Église ciel ouvert"
@@ -326,7 +338,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Adresse</label>
                       <input
                         type="text"
-                        value={details.ceremony_address}
+                        value={details.ceremony_address ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, ceremony_address: e.target.value }))}
                         className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="Av. KONGAWI n°12, Q/Kinsuka-pecheur, C/Ngaliema"
@@ -344,7 +356,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                         <label className="form-label mb-1 text-xs sm:text-sm">Heure</label>
                         <input
                           type="text"
-                          value={details.reception_time}
+                          value={details.reception_time ?? ''}
                           onChange={e => setDetails(prev => ({ ...prev, reception_time: e.target.value }))}
                           className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                           placeholder="20h00"
@@ -354,7 +366,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                         <label className="form-label mb-1 text-xs sm:text-sm">Lieu</label>
                         <input
                           type="text"
-                          value={details.reception_venue}
+                          value={details.reception_venue ?? ''}
                           onChange={e => setDetails(prev => ({ ...prev, reception_venue: e.target.value }))}
                           className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                           placeholder="Salle de fête food market"
@@ -365,7 +377,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Adresse</label>
                       <input
                         type="text"
-                        value={details.reception_address}
+                        value={details.reception_address ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, reception_address: e.target.value }))}
                         className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         placeholder="Av.Nguma, Réf. église Catholique saint Luc"
@@ -383,7 +395,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                   <label className="form-label mb-1">Message d'accueil</label>
                   <input
                     type="text"
-                    value={details.welcome_message}
+                    value={details.welcome_message ?? ''}
                     onChange={e => setDetails(prev => ({ ...prev, welcome_message: e.target.value }))}
                     className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                   />
@@ -392,7 +404,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                   <label className="form-label mb-1">Titre de l'invitation</label>
                   <input
                     type="text"
-                    value={details.invitation_title}
+                    value={details.invitation_title ?? ''}
                     onChange={e => setDetails(prev => ({ ...prev, invitation_title: e.target.value }))}
                     className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                   />
@@ -400,7 +412,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                 <div>
                   <label className="form-label mb-1">Citation d'amour</label>
                   <textarea
-                    value={details.invitation_love_quote}
+                    value={details.invitation_love_quote ?? ''}
                     onChange={e => setDetails(prev => ({ ...prev, invitation_love_quote: e.target.value }))}
                     className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                     rows={3}
@@ -409,7 +421,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                 <div>
                   <label className="form-label mb-1">Message principal</label>
                   <textarea
-                    value={details.invitation_main_message}
+                    value={details.invitation_main_message ?? ''}
                     onChange={e => setDetails(prev => ({ ...prev, invitation_main_message: e.target.value }))}
                     className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                     rows={3}
@@ -419,7 +431,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                   <label className="form-label mb-1">Message de date</label>
                   <input
                     type="text"
-                    value={details.invitation_date_message}
+                    value={details.invitation_date_message ?? ''}
                     onChange={e => setDetails(prev => ({ ...prev, invitation_date_message: e.target.value }))}
                     className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                   />
@@ -438,7 +450,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Titre</label>
                       <input
                         type="text"
-                        value={details.preferences_title}
+                        value={details.preferences_title ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, preferences_title: e.target.value }))}
                         className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                       />
@@ -447,7 +459,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Sous-titre</label>
                       <input
                         type="text"
-                        value={details.preferences_subtitle}
+                        value={details.preferences_subtitle ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, preferences_subtitle: e.target.value }))}
                         className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                       />
@@ -455,7 +467,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                     <div>
                       <label className="form-label mb-1 text-xs sm:text-sm">Description</label>
                       <textarea
-                        value={details.preferences_description}
+                        value={details.preferences_description ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, preferences_description: e.target.value }))}
                         className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                         rows={2}
@@ -465,7 +477,7 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                       <label className="form-label mb-1 text-xs sm:text-sm">Limitation</label>
                       <input
                         type="text"
-                        value={details.preferences_limitation}
+                        value={details.preferences_limitation ?? ''}
                         onChange={e => setDetails(prev => ({ ...prev, preferences_limitation: e.target.value }))}
                         className="form-input w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
                       />

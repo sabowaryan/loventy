@@ -87,17 +87,39 @@ export async function getWeddingData(): Promise<WeddingData | null> {
 }
 
 export async function saveWeddingData(data: WeddingData): Promise<void> {
-  if (data.id) {
-    const { error } = await supabase
-      .from('local_wedding_data')
-      .update({ ...data, updated_at: new Date().toISOString() })
-      .eq('id', data.id);
-    if (error) throw error;
-  } else {
-    const { error } = await supabase
-      .from('local_wedding_data')
-      .insert([{ ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]);
-    if (error) throw error;
+  try {
+    // Nettoyer les données en remplaçant les valeurs null par des chaînes vides
+    const cleanData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, value ?? ''])
+    ) as WeddingData;
+
+    if (cleanData.id) {
+      console.log('Updating wedding data with ID:', cleanData.id);
+      const { error } = await supabase
+        .from('local_wedding_data')
+        .update({ ...cleanData, updated_at: new Date().toISOString() })
+        .eq('id', cleanData.id);
+      
+      if (error) {
+        console.error('Error updating wedding data:', error);
+        throw error;
+      }
+      console.log('Wedding data updated successfully');
+    } else {
+      console.log('Creating new wedding data');
+      const { error } = await supabase
+        .from('local_wedding_data')
+        .insert([{ ...cleanData, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }]);
+      
+      if (error) {
+        console.error('Error creating wedding data:', error);
+        throw error;
+      }
+      console.log('Wedding data created successfully');
+    }
+  } catch (error) {
+    console.error('Error in saveWeddingData:', error);
+    throw error;
   }
 }
 

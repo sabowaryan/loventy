@@ -50,6 +50,8 @@ CREATE TABLE public.local_wedding_data (
   cancellation_keep_button TEXT,
   cancellation_confirm_button TEXT,
   cancellation_success_message TEXT,
+  alcoholic_drinks TEXT,
+  non_alcoholic_drinks TEXT,
   created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );

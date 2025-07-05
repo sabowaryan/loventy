@@ -10,6 +10,8 @@ import {
   getGuestMessages,
   saveGuestPreferences as saveGuestPreferencesDb,
   getGuestPreferences,
+  uploadCouplePhoto,
+  deleteCouplePhoto,
 } from '../lib/database';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../data/weddingData';
 import type { WeddingData } from '../lib/database';
@@ -91,6 +93,24 @@ export const useDatabase = () => {
     }
   }, []);
 
+  const uploadImage = useCallback(async (file: File): Promise<string> => {
+    try {
+      return await uploadCouplePhoto(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload image');
+      throw err;
+    }
+  }, []);
+
+  const deleteImage = useCallback(async (imageUrl: string): Promise<void> => {
+    try {
+      await deleteCouplePhoto(imageUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete image');
+      throw err;
+    }
+  }, []);
+
   return {
     error,
     loadWeddingData,
@@ -103,6 +123,8 @@ export const useDatabase = () => {
     saveGuestPreferences,
     getGuestMessages,
     getGuestPreferences,
+    uploadImage,
+    deleteImage,
   };
 };
 

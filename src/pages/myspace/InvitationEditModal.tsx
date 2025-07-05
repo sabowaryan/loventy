@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { WeddingData } from '../../lib/database';
 import { useDatabase } from '../../hooks/useDatabase';
 import { saveWeddingData } from '../../lib/database';
+import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface InvitationEditModalProps {
   open: boolean;
@@ -28,9 +29,13 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
   const [newDrinkName, setNewDrinkName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
   const drinkInputRef = useRef<HTMLInputElement>(null);
-  const { loadWeddingData } = useDatabase();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { loadWeddingData, uploadImage, deleteImage } = useDatabase();
 
   // Charger les données existantes depuis la base de données ou utiliser les données passées
   const loadExistingData = async () => {
@@ -182,6 +187,71 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
     }
   };
 
+  // Fonctions pour le téléversement d'images
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Vérifier le type de fichier
+      if (!file.type.startsWith('image/')) {
+        setToast('Veuillez sélectionner un fichier image valide');
+        setTimeout(() => setToast(null), 3000);
+        return;
+      }
+      
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setToast('L\'image doit faire moins de 5MB');
+        setTimeout(() => setToast(null), 3000);
+        return;
+      }
+
+      setSelectedFile(file);
+      
+      // Créer un aperçu
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadImage = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadImage(selectedFile);
+      setDetails(prev => ({ ...prev, couple_photo: imageUrl }));
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setToast('Image téléversée avec succès !');
+      setTimeout(() => setToast(null), 3000);
+    } catch (error) {
+      setToast('Erreur lors du téléversement de l\'image');
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (details.couple_photo && details.couple_photo.startsWith('http')) {
+      try {
+        await deleteImage(details.couple_photo);
+      } catch (error) {
+        console.error('Erreur lors de la suppression de l\'image:', error);
+      }
+    }
+    setDetails(prev => ({ ...prev, couple_photo: '' }));
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
+
+  const handleFileInputClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -236,14 +306,97 @@ const InvitationEditModal: React.FC<InvitationEditModalProps> = ({ open, onClose
                   </div>
                 </div>
                 <div>
-                  <label className="form-label mb-1">Photo du couple (URL)</label>
+                  <label className="form-label mb-1">Photo du couple</label>
+                  
+                  {/* Input file caché */}
                   <input
-                    type="url"
-                    value={details.couple_photo ?? ''}
-                    onChange={e => setDetails(prev => ({ ...prev, couple_photo: e.target.value }))}
-                    className="form-input w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary"
-                    placeholder="https://..."
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
                   />
+                  
+                  {/* Aperçu de l'image actuelle */}
+                  {details.couple_photo && !selectedFile && (
+                    <div className="mb-4">
+                      <div className="relative inline-block">
+                        <img
+                          src={details.couple_photo}
+                          alt="Photo du couple"
+                          className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveImage}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Supprimer l'image"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Aperçu de la nouvelle image sélectionnée */}
+                  {previewUrl && (
+                    <div className="mb-4">
+                      <div className="relative inline-block">
+                        <img
+                          src={previewUrl}
+                          alt="Aperçu de la nouvelle image"
+                          className="w-32 h-32 object-cover rounded-lg border-2 border-blue-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedFile(null);
+                            setPreviewUrl(null);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                          title="Annuler la sélection"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleUploadImage}
+                        disabled={isUploading}
+                        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      >
+                        {isUploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Téléversement...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            <span>Téléverser l'image</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Bouton pour sélectionner une image */}
+                  {!selectedFile && (
+                    <button
+                      type="button"
+                      onClick={handleFileInputClick}
+                      className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <ImageIcon className="w-5 h-5 text-gray-400" />
+                      <span className="text-gray-600">
+                        {details.couple_photo ? 'Changer l\'image' : 'Sélectionner une image'}
+                      </span>
+                    </button>
+                  )}
+                  
+                  <p className="text-xs text-gray-500 mt-2">
+                    Formats acceptés : JPG, PNG, GIF. Taille maximale : 5MB
+                  </p>
                 </div>
               </div>
             )}

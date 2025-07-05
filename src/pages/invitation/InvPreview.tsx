@@ -9,7 +9,7 @@ import { Guest, WeddingData } from '../../lib/database';
 // Construction dynamique des sections à partir des données chargées
 function buildWeddingSections(weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) {
   return [
-    { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/section1') center/cover no-repeat" },
+    { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/fond1.jpg') center/cover no-repeat" },
     { id: 1, title: 'Invitation', background: 'linear-gradient(135deg, #fff 0%, #f3e8ff 100%)' },
     { id: 2, title: 'Programme', background: 'linear-gradient(135deg, #f0fdfa 0%, #e0e7ff 100%)' },
     { id: 3, title: 'Livre d\'or', background: 'linear-gradient(135deg, #f0fdf4 0%, #fef9c3 100%)' },
@@ -201,6 +201,7 @@ export default function InvPreview() {
             className="min-w-full h-full bg-cover bg-center bg-fixed relative overflow-hidden"
             style={{ backgroundImage: weddingSections[0].background }}
           >
+            <div className="absolute inset-0 bg-white/30"></div>
             <div className="relative z-10 h-full flex items-center justify-center p-4">
               <div className="bg-white/95 /*backdrop-blur-sm*/ rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
                 {/* Photo du couple en cercle */}
@@ -229,7 +230,18 @@ export default function InvPreview() {
                 </div>
                 {/* Message d'invitation */}
                 <div className="mb-4 sm:mb-6">
-                  <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 sm:mb-4 leading-relaxed">
+                  <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 sm:mb-4 leading-relaxed px-4 sm:px-6"
+                     style={{ 
+                       fontFamily: 'Dancing Script, cursive', 
+                       fontSize: 'clamp(1rem, 4vw, 1.5rem)', 
+                       fontWeight: 500,
+                       lineHeight: '1.6',
+                       wordWrap: 'break-word',
+                       overflowWrap: 'break-word',
+                       hyphens: 'auto',
+                       maxWidth: '100%',
+                       textAlign: 'center'
+                     }}>
                     {weddingTexts.welcome.invitationMessage}
                   </p>
                 </div>
@@ -293,6 +305,7 @@ export default function InvPreview() {
                         transform: 'skew(-2deg)',
                         transformOrigin: 'center'
                       }}>
+                        Cher(e)
                     {guest?.name ?? ''}
                   </h3>
                   <div className="flex items-center justify-center space-x-3 sm:space-x-4 mb-6">
@@ -319,7 +332,7 @@ export default function InvPreview() {
                   {/* Information de table */}
                   <div className="py-4 sm:py-6 px-4 sm:px-6 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl sm:rounded-2xl border border-rose-200">
                     <p className="text-sm sm:text-base text-gray-600">
-                      Vous serez placé(e) à la <span className="font-medium text-rose-700">{guest?.table_name ?? ''}</span>
+                      Vous serez placé(e) à la Table <span className="font-medium text-rose-700">{guest?.table_name ?? ''}</span>
                     </p>
                   </div>
                   
@@ -592,10 +605,10 @@ export default function InvPreview() {
           <button
             key={section.id}
             onClick={() => goToSection(index)}
-            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 shadow-lg ${
               currentSection === index 
-                ? 'bg-white scale-125 shadow-lg' 
-                : 'bg-white/50 hover:bg-white/75'
+                ? 'bg-white scale-125 shadow-xl ring-2 ring-rose-300' 
+                : 'bg-white/80 hover:bg-white hover:scale-110'
             }`}
             title={section.title}
           />
@@ -604,18 +617,18 @@ export default function InvPreview() {
       {/* Navigation Arrows */}
       <button
         onClick={prevSection}
-        className="fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-8 h-8 sm:w-12 sm:h-12 bg-rose-100/90 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-rose-200 transition-all duration-300 shadow-lg border border-rose-200"
+        className="fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
       >
-        <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
       <button
         onClick={nextSection}
-        className="fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-8 h-8 sm:w-12 sm:h-12 bg-rose-100/90 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-rose-200 transition-all duration-300 shadow-lg border border-rose-200"
+        className="fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
       >
-        <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
       {/* Section Indicator */}
-      <div className="fixed bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-50 bg-white/20 backdrop-blur-sm rounded-full px-3 py-2 sm:px-6 sm:py-3 text-white text-sm sm:text-base font-medium">
+      <div className="fixed bottom-20 sm:bottom-24 left-1/2 transform -translate-x-1/2 z-50 bg-white/95 backdrop-blur-sm rounded-full px-4 py-2 sm:px-6 sm:py-3 text-gray-800 text-sm sm:text-base font-medium shadow-xl border border-rose-200">
         {currentSection + 1} / {weddingSections.length} - {weddingSections[currentSection].title}
       </div>
       {/* Section courante uniquement */}

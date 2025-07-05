@@ -236,4 +236,59 @@ export async function getGuestsByInvitationId(invitationId: string): Promise<any
     .order('name', { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+// Fonction pour téléverser une image vers Supabase Storage
+export async function uploadCouplePhoto(file: File): Promise<string> {
+  try {
+    // Générer un nom de fichier unique
+    const fileExt = file.name.split('.').pop();
+    const fileName = `couple_photo_${Date.now()}.${fileExt}`;
+    const filePath = `couple_photos/${fileName}`;
+
+    // Téléverser le fichier vers le bucket local_wedding_media
+    const { data, error } = await supabase.storage
+      .from('local_wedding_media')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Erreur lors du téléversement:', error);
+      throw error;
+    }
+
+    // Obtenir l'URL publique du fichier
+    const { data: urlData } = supabase.storage
+      .from('local_wedding_media')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Erreur lors du téléversement de l\'image:', error);
+    throw error;
+  }
+}
+
+// Fonction pour supprimer une image du bucket
+export async function deleteCouplePhoto(imageUrl: string): Promise<void> {
+  try {
+    // Extraire le chemin du fichier depuis l'URL
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    const filePath = `couple_photos/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from('local_wedding_media')
+      .remove([filePath]);
+
+    if (error) {
+      console.error('Erreur lors de la suppression:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Erreur lors de la suppression de l\'image:', error);
+    throw error;
+  }
 } 

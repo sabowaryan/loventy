@@ -291,4 +291,13 @@ export async function deleteCouplePhoto(imageUrl: string): Promise<void> {
     console.error('Erreur lors de la suppression de l\'image:', error);
     throw error;
   }
+}
+
+export async function getAllLocalWeddings(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('local_wedding_data')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 } 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Clock, Edit3, Calendar, MapPin, User, Wine,MailIcon, MessageSquare, Plus, Trash2, Download, Upload, Database, Edit, Clipboard, CheckCircle, X, Search, ArrowUp, ArrowDown } from 'lucide-react';
+import { Clock, Edit3, MapPin, User, Wine, MailIcon, MessageSquare, Plus, Trash2, Edit, Clipboard, CheckCircle, X, Search, ArrowUp, ArrowDown, ArrowLeft } from 'lucide-react';
 import { WeddingData } from '../../lib/database';
 import {
   getGuests,
@@ -8,8 +8,8 @@ import {
   deleteGuest,
   getGuestPreferences,
   getGuestMessages,
-  getWeddingData,
-  getGuestsByInvitationId
+  getAllLocalWeddings,
+  saveWeddingData
 } from '../../lib/database';
 import InvitationEditModal from './InvitationEditModal';
 import AddGuestModal from '../../components/guests/AddGuestModal';
@@ -44,6 +44,9 @@ export default function AdminPanel({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const guestsPerPage = 12; // 3 colonnes x 4 rangées par défaut
   
+  // État pour la stat cliquée
+  const [clickedStat, setClickedStat] = useState<'all' | 'confirmed' | 'pending' | 'declined' | null>(null);
+  
   const [selectedGuest, setSelectedGuest] = useState<any | null>(null);
   const [guestPreferences, setGuestPreferences] = useState<{ alcoholic_drinks?: string; non_alcoholic_drinks?: string } | null>(null);
   const [guestMessages, setGuestMessages] = useState<Array<{ message: string; created_at?: string }> | null>(null);
@@ -55,6 +58,25 @@ export default function AdminPanel({
   const [currentInvPage, setCurrentInvPage] = useState(1);
   const invitationsPerPage = 6;
   const [selectedInvitation, setSelectedInvitation] = useState<any | null>(null);
+
+  // Onglets
+  const mainTabs = [
+    { id: 'invitation', label: 'Invitation', icon: MailIcon },
+  ];
+  const [activeMainTab, setActiveMainTab] = useState('invitation');
+
+  // Ajout de l'état pour les sous-onglets de l'invité sélectionné
+  const [activeGuestSubTab, setActiveGuestSubTab] = useState<'livreor' | 'preferences'>('livreor');
+
+  // Ajout de l'état pour le modal de suppression
+  const [guestToDelete, setGuestToDelete] = useState<any | null>(null);
+  
+  // Ajout de l'état pour l'invitation à éditer
+  const [invitationToEdit, setInvitationToEdit] = useState<any | null>(null);
+
+  // Ajout de l'état pour la pagination du livre d'or
+  const [currentMsgPage, setCurrentMsgPage] = useState(1);
+  const messagesPerPage = 5;
 
   useEffect(() => {
     const fetchGuests = async () => {
@@ -69,39 +91,17 @@ export default function AdminPanel({
   }, [refreshTrigger, weddingDetails.id]);
 
   useEffect(() => {
-    // Charger les données de mariage au montage (système local)
-    const fetchWeddingData = async () => {
+    const fetchInvitations = async () => {
       try {
-        const data = await getWeddingData();
-        if (data) {
-          // Créer une invitation factice basée sur les données de mariage
-          const fakeInvitation = {
-            id: data.id || '1',
-            title: `${data.bride_name} & ${data.groom_name}`,
-            bride_name: data.bride_name,
-            groom_name: data.groom_name,
-            event_date: `${data.wedding_year}-${data.wedding_month}-${data.wedding_day}`,
-            event_time: data.wedding_time,
-            venue: data.ceremony_venue,
-            address: data.ceremony_address,
-            status: 'published',
-            created_at: data.created_at || new Date().toISOString(),
-            updated_at: data.updated_at || new Date().toISOString(),
-            // Ajouter les données complètes pour l'édition
-            weddingData: data
-          };
-          setInvitations([fakeInvitation]);
-          setSelectedInvitation(fakeInvitation);
-        } else {
-          setInvitations([]);
-        }
+        const data = await getAllLocalWeddings();
+        setInvitations(data);
+        setSelectedInvitation(null); // aucune sélection par défaut
       } catch (e) {
-        console.error('Erreur lors du chargement des données de mariage:', e);
         setInvitations([]);
       }
     };
-    fetchWeddingData();
-  }, []);
+    fetchInvitations();
+  }, [refreshTrigger]);
 
   // Pagination invitations
   const totalInvPages = Math.ceil(invitations.length / invitationsPerPage);
@@ -118,6 +118,34 @@ export default function AdminPanel({
     }
   }, [selectedInvitation]);
 
+  // Ajout d'un effet pour charger dynamiquement les messages et préférences de l'invité sélectionné
+  useEffect(() => {
+    if (selectedGuest) {
+      setGuestMessages(null);
+      setGuestPreferences(null);
+      (async () => {
+        const [msgs, prefs] = await Promise.all([
+          getGuestMessages(selectedGuest.id),
+          getGuestPreferences(selectedGuest.id)
+        ]);
+        setGuestMessages(msgs);
+        setGuestPreferences(prefs);
+      })();
+    } else {
+      setGuestMessages(null);
+      setGuestPreferences(null);
+    }
+  }, [selectedGuest]);
+
+  // Réinitialiser la page à 1 quand l'invité ou les messages changent
+  useEffect(() => {
+    setCurrentMsgPage(1);
+  }, [selectedGuest, guestMessages]);
+
+  // Pagination des messages
+  const totalMsgPages = guestMessages ? Math.ceil(guestMessages.length / messagesPerPage) : 1;
+  const currentMessages = guestMessages ? guestMessages.slice((currentMsgPage - 1) * messagesPerPage, currentMsgPage * messagesPerPage) : [];
+
   const handleEditInvitation = (invitation?: any) => {
     // Si une invitation spécifique est passée, l'utiliser, sinon utiliser l'invitation sélectionnée
     const invitationToEdit = invitation || selectedInvitation;
@@ -133,7 +161,6 @@ export default function AdminPanel({
   };
 
   const handleDeleteGuest = async (id: string) => {
-    if (!window.confirm("Supprimer cet invité ? Cette action est irréversible.")) return;
     try {
       await deleteGuest(id);
       setRefreshTrigger(prev => prev + 1); // Déclencher le rechargement
@@ -141,6 +168,7 @@ export default function AdminPanel({
     } catch (e) {
       showToast('error', "Erreur lors de la suppression de l'invité.");
     }
+    setGuestToDelete(null);
   };
 
   const handleCopyMessage = (id: string, message: string) => {
@@ -245,6 +273,57 @@ export default function AdminPanel({
   const handleFilterChange = (status: string) => {
     setFilterStatus(status);
     setCurrentPage(1); // Retour à la première page lors d'un changement de filtre
+    // Mettre à jour la stat cliquée
+    if (status === 'all') {
+      setClickedStat('all');
+    } else if (status === 'confirmed') {
+      setClickedStat('confirmed');
+    } else if (status === 'pending') {
+      setClickedStat('pending');
+    } else if (status === 'declined') {
+      setClickedStat('declined');
+    }
+  };
+  
+  // Fonction pour gérer le clic sur une stat
+  const handleStatClick = (stat: 'all' | 'confirmed' | 'pending' | 'declined') => {
+    setClickedStat(stat);
+    if (stat === 'all') {
+      setFilterStatus('all');
+    } else {
+      setFilterStatus(stat);
+    }
+    setCurrentPage(1); // Retour à la première page
+    
+    // Scroll automatique vers le contenu après un court délai pour laisser le temps au filtre de s'appliquer
+    setTimeout(() => {
+      const guestsTable = document.getElementById('guests-table');
+      if (guestsTable) {
+        // Calculer dynamiquement la position exacte
+        const header = document.querySelector('header') as HTMLElement;
+        const statsSection = document.querySelector('.mb-8') as HTMLElement; // Section des stats
+        const controlsSection = document.querySelector('.bg-white.rounded-xl.shadow-sm.border.border-gray-100.p-6.mb-6') as HTMLElement; // Section des contrôles
+        
+        let offset = 20; // Marge de base
+        
+        if (header) {
+          offset += header.offsetHeight;
+        }
+        if (statsSection) {
+          offset += statsSection.offsetHeight;
+        }
+        if (controlsSection) {
+          offset += controlsSection.offsetHeight;
+        }
+        
+        const elementTop = guestsTable.offsetTop - offset;
+        
+        window.scrollTo({
+          top: Math.max(0, elementTop), // Éviter les valeurs négatives
+          behavior: 'smooth'
+        });
+      }
+    }, 100);
   };
 
   const handleSortChange = (field: string) => {
@@ -256,16 +335,6 @@ export default function AdminPanel({
     }
     setCurrentPage(1);
   };
-
-  // Onglets
-  const tabs = [
-    { id: 'invitations', label: 'Invitations', icon: MailIcon },
-    { id: 'guest', label: 'Invités', icon: User },
-    { id: 'couple', label: 'Couple', icon: User },
-    { id: 'events', label: 'Événements', icon: Calendar },
-    { id: 'drinks', label: 'Boissons', icon: Wine },
-    { id: 'texts', label: 'Textes', icon: MessageSquare }
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -299,30 +368,22 @@ export default function AdminPanel({
       {editModalOpen && (
         <InvitationEditModal
           open={editModalOpen}
-          onClose={() => setEditModalOpen(false)}
-          initialDetails={weddingDetails}
-          onSave={(newDetails) => {
-            setWeddingDetails(newDetails);
-            // Mettre à jour l'invitation sélectionnée avec les nouvelles données
-            if (selectedInvitation) {
-              const updatedInvitation = {
-                ...selectedInvitation,
-                title: `${newDetails.bride_name} & ${newDetails.groom_name}`,
-                bride_name: newDetails.bride_name,
-                groom_name: newDetails.groom_name,
-                event_date: `${newDetails.wedding_year}-${newDetails.wedding_month}-${newDetails.wedding_day}`,
-                event_time: newDetails.wedding_time,
-                venue: newDetails.ceremony_venue,
-                address: newDetails.ceremony_address,
-                weddingData: newDetails
-              };
-              setSelectedInvitation(updatedInvitation);
-              setInvitations(prev => prev.map(inv => 
-                inv.id === selectedInvitation.id ? updatedInvitation : inv
-              ));
+          onClose={() => {
+            setEditModalOpen(false);
+            setInvitationToEdit(null);
+          }}
+          initialDetails={invitationToEdit}
+          onSave={async (newDetails) => {
+            if (!newDetails.id) {
+              await saveWeddingData(newDetails);
+              showToast('success', 'Invitation créée avec succès !');
+            } else {
+              await saveWeddingData(newDetails);
+              showToast('success', 'Invitation mise à jour avec succès !');
             }
             setEditModalOpen(false);
-            showToast('success', 'Invitation mise à jour avec succès !');
+            setRefreshTrigger(prev => prev + 1);
+            setSelectedInvitation(null);
           }}
         />
       )}
@@ -384,14 +445,18 @@ export default function AdminPanel({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100 animate-fade-in">
             <h3 className="text-lg font-semibold mb-4 text-green-700">Messages de {selectedGuest.name}</h3>
-            <ul className="space-y-2">
-              {guestMessages && guestMessages.length > 0 ? guestMessages.map((msg, idx) => (
-                <li key={idx} className="bg-green-50 border border-green-200 rounded p-2 text-sm">
-                  <div>{msg.message}</div>
-                  {msg.created_at && <div className="text-xs text-gray-400 mt-1">{new Date(msg.created_at).toLocaleString()}</div>}
-                </li>
-              )) : <li className="text-gray-500 text-sm">Aucun message</li>}
-            </ul>
+            {!guestMessages ? (
+              <div className="text-gray-400 italic">Chargement...</div>
+            ) : (
+              <ul className="space-y-2">
+                {guestMessages.length > 0 ? guestMessages.map((msg, idx) => (
+                  <li key={idx} className="bg-green-50 border border-green-200 rounded p-2 text-sm">
+                    <div>{msg.message}</div>
+                    {msg.created_at && <div className="text-xs text-gray-400 mt-1">{new Date(msg.created_at).toLocaleString()}</div>}
+                  </li>
+                )) : <li className="text-gray-500 text-sm">Aucun message</li>}
+              </ul>
+            )}
             <button onClick={() => setShowMsgModal(false)} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Fermer</button>
           </div>
         </div>
@@ -407,24 +472,43 @@ export default function AdminPanel({
         <div className="text-center text-gray-400 italic py-8 text-base sm:text-lg">
           Sélectionnez une action ci-dessus pour commencer.
         </div>
-        {/* Onglets */}
-        <div className="flex space-x-2 mb-4">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`px-4 py-2 rounded ${activeTab === tab.id ? 'bg-secondary text-white' : 'bg-gray-100 text-gray-700'}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <tab.icon className="inline-block mr-2" />
-              {tab.label}
-            </button>
-          ))}
+        {/* Onglets principaux */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-6">
+          <div className="flex space-x-1">
+            {mainTabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activeMainTab === tab.id 
+                    ? 'bg-secondary text-white shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  setActiveMainTab(tab.id);
+                  // Réinitialiser la sélection si on clique sur l'onglet Invitation depuis l'onglet Invités
+                  if (tab.id === 'invitation' && selectedInvitation) {
+                    setSelectedInvitation(null);
+                    setSelectedGuest(null);
+                  }
+                }}
+              >
+                <tab.icon className="w-4 h-4 mr-2" />
+                {tab.label}
+                {/* Indicateur de sous-navigation */}
+                {activeMainTab === tab.id && selectedInvitation && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-white/20 rounded-full">
+                    Invités
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Contenu de l'onglet Invitations */}
-        {activeTab === 'invitations' && (
+        {/* Affichage de la liste des invitations locales si aucune invitation sélectionnée */}
+        {activeMainTab === 'invitation' && !selectedInvitation && (
           <div>
-            <h2 className="text-xl font-bold mb-4">Mes invitations</h2>
+            <h2 className="text-xl font-bold mb-6">Mes invitations</h2>
             {invitations.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
@@ -433,7 +517,7 @@ export default function AdminPanel({
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune invitation pour l'instant</h3>
                 <p className="text-gray-500 mb-6">Commencez par créer votre première invitation</p>
                 <button
-                  onClick={() => window.location.href = '/templates'}
+                  onClick={() => { setEditModalOpen(true); setSelectedInvitation(null); }}
                   className="inline-flex items-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -441,218 +525,187 @@ export default function AdminPanel({
                 </button>
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {currentInvitations.map(inv => (
-                    <div
-                      key={inv.id}
-                      className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-all duration-200 hover:shadow-md ${
-                        selectedInvitation?.id === inv.id ? 'ring-2 ring-secondary bg-secondary/5' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 
-                          className="font-semibold text-gray-900 truncate flex-1 cursor-pointer"
-                          onClick={() => setSelectedInvitation(inv)}
-                        >
-                          {inv.title}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            inv.status === 'published' ? 'bg-green-100 text-green-800' :
-                            inv.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
-                            inv.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {inv.status === 'published' ? 'Publiée' :
-                             inv.status === 'draft' ? 'Brouillon' :
-                             inv.status === 'sent' ? 'Envoyée' :
-                             inv.status}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditInvitation(inv);
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-secondary hover:bg-gray-100 rounded-lg transition-all duration-200"
-                            title="Éditer l'invitation"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                      <div 
-                        className="space-y-2 text-sm text-gray-600 cursor-pointer"
-                        onClick={() => setSelectedInvitation(inv)}
-                      >
-                        {inv.bride_name && inv.groom_name && (
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2" />
-                            <span>{inv.bride_name} & {inv.groom_name}</span>
-                          </div>
-                        )}
-                        {inv.event_date && (
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            <span>{new Date(inv.event_date).toLocaleDateString('fr-FR')}</span>
-                          </div>
-                        )}
-                        {inv.venue && (
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-2" />
-                            <span className="truncate">{inv.venue}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div 
-                        className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500 cursor-pointer"
-                        onClick={() => setSelectedInvitation(inv)}
-                      >
-                        Créée le {new Date(inv.created_at).toLocaleDateString('fr-FR')}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Pagination */}
-                {totalInvPages > 1 && (
-                  <div className="flex justify-center mt-6 space-x-2">
-                    <button 
-                      onClick={() => setCurrentInvPage(p => Math.max(1, p - 1))} 
-                      disabled={currentInvPage === 1}
-                      className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Précédent
-                    </button>
-                    <span className="px-3 py-2 text-sm text-gray-600">
-                      {currentInvPage} / {totalInvPages}
-                    </span>
-                    <button 
-                      onClick={() => setCurrentInvPage(p => Math.min(totalInvPages, p + 1))} 
-                      disabled={currentInvPage === totalInvPages}
-                      className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Suivant
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-            
-            {/* Liste des invités de l'invitation sélectionnée */}
-            {selectedInvitation && (
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Invités pour : {selectedInvitation.title}</h3>
-                  <button
-                    onClick={() => handleEditInvitation(selectedInvitation)}
-                    className="inline-flex items-center px-3 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-all duration-200 text-sm"
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {invitations.map(inv => (
+                  <div 
+                    key={inv.id} 
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
+                    onClick={() => setSelectedInvitation(inv)}
                   >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Éditer l'invitation
-                  </button>
-                </div>
-                {guests.length === 0 ? (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <User className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-2">Aucun invité pour cette invitation</h4>
-                    <p className="text-gray-500 mb-4">Ajoutez des invités pour commencer à gérer vos RSVP</p>
-                    <button
-                      onClick={() => setAddGuestModalOpen(true)}
-                      className="inline-flex items-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-all duration-200"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Ajouter un invité
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {guests.map(guest => (
-                      <div key={guest.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                        <div className="font-medium text-gray-900">{guest.name}</div>
-                        <div className="text-sm text-gray-500">{guest.email}</div>
-                        <div className="mt-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            guest.rsvp_status === 'confirmed' 
-                              ? 'bg-green-100 text-green-800' 
-                              : guest.rsvp_status === 'declined' 
-                              ? 'bg-red-100 text-red-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {guest.rsvp_status === 'confirmed' ? 'Confirmé' : 
-                             guest.rsvp_status === 'declined' ? 'Annulé' : 'En attente'}
-                          </span>
+                    {/* Photo du couple */}
+                    <div className="h-48 bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center relative">
+                      {inv.couple_photo ? (
+                        <img 
+                          src={inv.couple_photo} 
+                          alt={`${inv.groom_name || ''} et ${inv.bride_name || ''}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-gray-400">
+                          <User className="h-12 w-12 mb-2" />
+                          <span className="text-sm">Photo du couple</span>
                         </div>
+                      )}
+                      {/* Bouton éditer en overlay */}
+                      <button
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setInvitationToEdit(inv);
+                          setEditModalOpen(true); 
+                        }}
+                        className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-all duration-200"
+                        title="Éditer l'invitation"
+                      >
+                        <Edit className="h-4 w-4 text-gray-600" />
+                      </button>
+                    </div>
+                    {/* Informations de l'invitation */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-gray-900 mb-2">
+                        Mariage de {inv.groom_name || 'Prénom'} et de {inv.bride_name || 'Prénom'}
+                      </h3>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        {inv.wedding_year && inv.wedding_month && inv.wedding_day && (
+                          <div className="flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{inv.wedding_day}/{inv.wedding_month}/{inv.wedding_year}</span>
+                          </div>
+                        )}
+                        {(inv.ceremony_venue || inv.reception_venue) && (
+                          <div className="flex items-center">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            <span className="truncate">{inv.ceremony_venue || inv.reception_venue}</span>
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
         )}
-                {/* Liste des invités et contrôles : affiché uniquement si onglet 'guest' */}
-        {activeTab === 'guest' && (
-        <div className="mb-8">
-          {/* Statistiques des invités - visible uniquement dans l'onglet Invités */}
-          <div className="mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <User className="h-6 w-6 text-blue-600" />
+        {/* Affichage de la liste des invités de l'invitation sélectionnée */}
+        {activeMainTab === 'invitation' && selectedInvitation && !selectedGuest && (
+          <div>
+            {/* Indicateur de navigation */}
+            <div className="flex items-center mb-4 text-sm text-gray-600">
+              <button
+                onClick={() => setSelectedInvitation(null)}
+                className="flex items-center text-secondary hover:text-secondary-light transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Retour aux invitations
+              </button>
+              <span className="mx-2">/</span>
+              <span className="font-medium text-gray-900">
+                Mariage de {selectedInvitation.groom_name || 'Prénom'} et de {selectedInvitation.bride_name || 'Prénom'}
+              </span>
+              <span className="mx-2">/</span>
+              <span className="text-secondary font-medium">Invités</span>
+            </div>
+            <h2 className="text-xl font-bold mb-6">Invités pour : Mariage de {selectedInvitation.groom_name || 'Prénom'} et de {selectedInvitation.bride_name || 'Prénom'}</h2>
+            {/* Statistiques des invités */}
+            <div className="mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button 
+                  onClick={() => handleStatClick('all')}
+                  className={`bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md cursor-pointer p-6 ${
+                    clickedStat === 'all' 
+                      ? 'border-blue-300 bg-blue-50 shadow-md' 
+                      : 'border-gray-100 hover:border-blue-200'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-lg transition-colors ${
+                      clickedStat === 'all' ? 'bg-blue-200' : 'bg-blue-100'
+                    }`}>
+                      <User className={`h-6 w-6 transition-colors ${
+                        clickedStat === 'all' ? 'text-blue-700' : 'text-blue-600'
+                      }`} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total</p>
+                      <p className={`text-2xl font-bold transition-colors ${
+                        clickedStat === 'all' ? 'text-blue-700' : 'text-gray-900'
+                      }`}>{guests.length}</p>
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total</p>
-                    <p className="text-2xl font-bold text-gray-900">{guests.length}</p>
+                </button>
+                <button 
+                  onClick={() => handleStatClick('confirmed')}
+                  className={`bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md cursor-pointer p-6 ${
+                    clickedStat === 'confirmed' 
+                      ? 'border-green-300 bg-green-50 shadow-md' 
+                      : 'border-gray-100 hover:border-green-200'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-lg transition-colors ${
+                      clickedStat === 'confirmed' ? 'bg-green-200' : 'bg-green-100'
+                    }`}>
+                      <CheckCircle className={`h-6 w-6 transition-colors ${
+                        clickedStat === 'confirmed' ? 'text-green-700' : 'text-green-600'
+                      }`} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Confirmés</p>
+                      <p className={`text-2xl font-bold transition-colors ${
+                        clickedStat === 'confirmed' ? 'text-green-700' : 'text-gray-900'
+                      }`}>{guests.filter(g => g.rsvp_status === 'confirmed').length}</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center">
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
+                </button>
+                <button 
+                  onClick={() => handleStatClick('pending')}
+                  className={`bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md cursor-pointer p-6 ${
+                    clickedStat === 'pending' 
+                      ? 'border-yellow-300 bg-yellow-50 shadow-md' 
+                      : 'border-gray-100 hover:border-yellow-200'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-lg transition-colors ${
+                      clickedStat === 'pending' ? 'bg-yellow-200' : 'bg-yellow-100'
+                    }`}>
+                      <Clock className={`h-6 w-6 transition-colors ${
+                        clickedStat === 'pending' ? 'text-yellow-700' : 'text-yellow-600'
+                      }`} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">En attente</p>
+                      <p className={`text-2xl font-bold transition-colors ${
+                        clickedStat === 'pending' ? 'text-yellow-700' : 'text-gray-900'
+                      }`}>{guests.filter(g => g.rsvp_status === 'pending').length}</p>
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Confirmés</p>
-                    <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvp_status === 'confirmed').length}</p>
+                </button>
+                <button 
+                  onClick={() => handleStatClick('declined')}
+                  className={`bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md cursor-pointer p-6 ${
+                    clickedStat === 'declined' 
+                      ? 'border-red-300 bg-red-50 shadow-md' 
+                      : 'border-gray-100 hover:border-red-200'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-3 rounded-lg transition-colors ${
+                      clickedStat === 'declined' ? 'bg-red-200' : 'bg-red-100'
+                    }`}>
+                      <X className={`h-6 w-6 transition-colors ${
+                        clickedStat === 'declined' ? 'text-red-700' : 'text-red-600'
+                      }`} />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Annulés</p>
+                      <p className={`text-2xl font-bold transition-colors ${
+                        clickedStat === 'declined' ? 'text-red-700' : 'text-gray-900'
+                      }`}>{guests.filter(g => g.rsvp_status === 'declined').length}</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center">
-                  <div className="p-3 bg-yellow-100 rounded-lg">
-                    <Clock className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">En attente</p>
-                    <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvp_status === 'pending').length}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center">
-                  <div className="p-3 bg-red-100 rounded-lg">
-                    <X className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Annulés</p>
-                    <p className="text-2xl font-bold text-gray-900">{guests.filter(g => g.rsvp_status === 'declined').length}</p>
-                  </div>
-                </div>
+                </button>
               </div>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 font-serif">Liste des invités</h2>
-            <div className="text-sm text-gray-500">
-              {filteredGuests.length} invité{filteredGuests.length > 1 ? 's' : ''} sur {guests.length} total
-            </div>
-          </div>
-
             {/* Contrôles de recherche et filtrage */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -670,7 +723,6 @@ export default function AdminPanel({
                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                   </div>
                 </div>
-
                 {/* Filtre par statut */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
@@ -684,8 +736,14 @@ export default function AdminPanel({
                     <option value="confirmed">Confirmés</option>
                     <option value="declined">Annulés</option>
                   </select>
+                  {/* Indicateur visuel si une stat est sélectionnée */}
+                  {clickedStat && clickedStat !== 'all' && (
+                    <div className="mt-2 flex items-center text-xs text-gray-500">
+                      <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                      Filtre actif : {clickedStat === 'confirmed' ? 'Confirmés' : clickedStat === 'pending' ? 'En attente' : 'Annulés'}
+                    </div>
+                  )}
                 </div>
-
                 {/* Tri */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Trier par</label>
@@ -700,7 +758,6 @@ export default function AdminPanel({
                     <option value="email">Email</option>
                   </select>
                 </div>
-
                 {/* Ordre de tri */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Ordre</label>
@@ -723,14 +780,15 @@ export default function AdminPanel({
                 </div>
               </div>
             </div>
-            
+            {/* Tableau des invités filtré, trié, paginé */}
+            <div id="guests-table">
             {guests.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                   <User className="h-8 w-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun invité pour l'instant</h3>
-                <p className="text-gray-500 mb-6">Commencez par ajouter vos premiers invités</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun invité pour cette invitation</h3>
+                <p className="text-gray-500 mb-4">Ajoutez des invités pour commencer à gérer vos RSVP</p>
                 <button
                   onClick={() => setAddGuestModalOpen(true)}
                   className="inline-flex items-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-all duration-200"
@@ -752,6 +810,7 @@ export default function AdminPanel({
                   onClick={() => {
                     setSearchTerm('');
                     setFilterStatus('all');
+                    setClickedStat(null);
                   }}
                   className="inline-flex items-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-light transition-all duration-200"
                 >
@@ -759,161 +818,68 @@ export default function AdminPanel({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {currentGuests.map(guest => (
-                  <div key={guest.id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 overflow-hidden">
-                    {/* En-tête de la carte */}
-                    <div className="p-4 sm:p-6 border-b border-accent-dark">
-                      {/* Nom de l'invité - Pleine largeur */}
-                      <div className="mb-3">
-                        <h3 className="text-base sm:text-lg font-semibold text-primary break-words">
-                          {guest.name}
-                        </h3>
-                      </div>
-                      
-                      {/* Informations et boutons sur la même ligne */}
-                      <div className="flex items-start justify-between gap-3">
-                        {/* Informations de l'invité */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center text-sm text-neutral-600 mb-1">
-                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                            <span className="truncate">{guest.table_name}</span>
-                          </div>
-                          {guest.email && (
-                            <div className="flex items-center text-sm text-neutral-600">
-                              <MailIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                              <span className="truncate">{guest.email}</span>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {/* Boutons d'action */}
-                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <table className="min-w-full bg-white rounded-xl shadow-sm border border-gray-100">
+                <thead>
+                  <tr>
+                    <th className="px-2 sm:px-4 py-2 text-left">Nom</th>
+                    <th className="px-2 sm:px-4 py-2 text-left">Statut</th>
+                    <th className="px-2 sm:px-4 py-2 text-left">Copier ce message</th>
+                    <th className="px-2 sm:px-4 py-2 text-center sm:text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentGuests.map(guest => (
+                    <tr key={guest.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedGuest(guest)}>
+                      <td className="px-2 sm:px-4 py-2 text-sm sm:text-base">{guest.name}</td>
+                      <td className="px-2 sm:px-4 py-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          guest.rsvp_status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                          guest.rsvp_status === 'declined' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {guest.rsvp_status === 'confirmed' ? 'Confirmé' :
+                           guest.rsvp_status === 'declined' ? 'Annulé' : 'En attente'}
+                        </span>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2">
+                        <button
+                          onClick={e => { e.stopPropagation(); handleCopyMessage(guest.id, guest.message_sender || ''); }}
+                          className="flex items-center justify-center sm:justify-start gap-1 sm:gap-2 p-2 sm:p-1.5 text-gray-400 hover:text-secondary hover:bg-gray-100 rounded-lg transition-all duration-200 w-full sm:w-auto"
+                          title="Copier le message"
+                        >
+                          <Clipboard className="h-4 w-4 sm:h-4 sm:w-4" />
+                          <span className="text-xs sm:text-xs">
+                            {copiedId === guest.id ? (
+                              <span className="text-green-600">Copié !</span>
+                            ) : (
+                              <span className="text-gray-400">Copier</span>
+                            )}
+                          </span>
+                        </button>
+                      </td>
+                      <td className="px-2 sm:px-4 py-2" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-center sm:justify-start space-x-1 sm:space-x-2">
                           <button
                             onClick={() => handleEditGuest(guest)}
-                            className="p-1.5 sm:p-2 text-neutral-400 hover:text-secondary hover:bg-accent rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-1"
+                            className="p-2 sm:p-1.5 text-gray-400 hover:text-secondary hover:bg-gray-100 rounded-lg transition-all duration-200"
                             title="Éditer l'invité"
                           >
-                            <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <Edit className="h-5 w-5 sm:h-4 sm:w-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteGuest(guest.id)}
-                            className="p-1.5 sm:p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                            onClick={() => setGuestToDelete(guest)}
+                            className="p-2 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                             title="Supprimer l'invité"
                           >
-                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          </button>
-                          <button
-                            onClick={async () => {
-                              setSelectedGuest(guest);
-                              const prefs = await getGuestPreferences(guest.id);
-                              setGuestPreferences(prefs);
-                              setShowPrefModal(true);
-                            }}
-                            className="p-1.5 sm:p-2 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-                            title="Voir préférences"
-                          >
-                            <Wine className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          </button>
-                          <button
-                            onClick={async () => {
-                              setSelectedGuest(guest);
-                              const msgs = await getGuestMessages(guest.id);
-                              setGuestMessages(msgs);
-                              setShowMsgModal(true);
-                            }}
-                            className="p-1.5 sm:p-2 text-neutral-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
-                            title="Voir messages"
-                          >
-                            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
                           </button>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Corps de la carte */}
-                    <div className="p-4 sm:p-6">
-                      {/* Statut RSVP */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-primary mb-2">Statut RSVP</label>
-                        <select
-                          value={guest.rsvp_status || 'pending'}
-                          onChange={e => handleStatusChange(guest.id, e.target.value)}
-                          className="w-full px-3 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200"
-                        >
-                          <option value="pending">En attente</option>
-                          <option value="confirmed">Confirmé</option>
-                          <option value="declined">Annulé</option>
-                        </select>
-                      </div>
-
-                      {/* Lien d'invitation */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-primary mb-2">Lien d'invitation</label>
-                        <div className="flex items-center space-x-2">
-                          <a 
-                            href={guest.invitation_link} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="flex-1 text-sm text-secondary hover:text-secondary-light truncate"
-                          >
-                            {guest.invitation_link}
-                          </a>
-                          <button
-                            onClick={() => navigator.clipboard.writeText(guest.invitation_link)}
-                            className="p-1 text-neutral-400 hover:text-secondary transition-colors"
-                            title="Copier le lien"
-                          >
-                            <Clipboard className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Message personnalisé */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-primary mb-2">Message personnalisé</label>
-                        <button
-                          onClick={() => handleCopyMessage(guest.id, guest.messageSender || guest.additional_notes || '')}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent border border-accent-dark rounded-lg hover:bg-accent-dark text-primary text-sm transition-all duration-200"
-                        >
-                          <Clipboard className="h-4 w-4" />
-                          {copiedId === guest.id ? 'Copié !' : 'Copier le message'}
-                        </button>
-                      </div>
-
-                      {/* Indicateur de statut visuel */}
-                      <div className="flex items-center justify-center">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          guest.rsvp_status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800 border border-green-200' 
-                            : guest.rsvp_status === 'declined' 
-                            ? 'bg-red-100 text-red-800 border border-red-200' 
-                            : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                        }`}>
-                          {guest.rsvp_status === 'confirmed' ? (
-                            <>
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Confirmé
-                            </>
-                          ) : guest.rsvp_status === 'declined' ? (
-                            <>
-                              <X className="h-3 w-3 mr-1" />
-                              Annulé
-                            </>
-                          ) : (
-                            <>
-                              <Clock className="h-3 w-3 mr-1" />
-                              En attente
-                            </>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
-
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="mt-8 flex items-center justify-between">
@@ -928,7 +894,6 @@ export default function AdminPanel({
                   >
                     Précédent
                   </button>
-                  
                   {/* Pages numérotées */}
                   <div className="flex items-center space-x-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -942,7 +907,6 @@ export default function AdminPanel({
                       } else {
                         pageNum = currentPage - 2 + i;
                       }
-                      
                       return (
                         <button
                           key={pageNum}
@@ -958,7 +922,6 @@ export default function AdminPanel({
                       );
                     })}
                   </div>
-                  
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -969,6 +932,201 @@ export default function AdminPanel({
                 </div>
               </div>
             )}
+            </div>
+          </div>
+        )}
+        {/* Affichage des sous-onglets Livres d'or et Préférences pour l'invité sélectionné */}
+        {activeMainTab === 'invitation' && selectedInvitation && selectedGuest && (
+          <div>
+            {/* Indicateur de navigation */}
+            <div className="flex items-center mb-4 text-sm text-gray-600">
+              <button
+                onClick={() => setSelectedInvitation(null)}
+                className="flex items-center text-secondary hover:text-secondary-light transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Retour aux invitations
+              </button>
+              <span className="mx-2">/</span>
+              <span className="font-medium text-gray-900">
+                Mariage de {selectedInvitation.groom_name || 'Prénom'} et de {selectedInvitation.bride_name || 'Prénom'}
+              </span>
+              <span className="mx-2">/</span>
+              <button
+                onClick={() => setSelectedGuest(null)}
+                className="flex items-center text-secondary hover:text-secondary-light transition-colors"
+              >
+                Invités
+              </button>
+              <span className="mx-2">/</span>
+              <span className="text-secondary font-medium">{selectedGuest.name}</span>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-2 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-1">
+                  <button
+                    className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                      activeGuestSubTab === 'livreor' 
+                        ? 'bg-green-100 text-green-700 border border-green-200' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setActiveGuestSubTab('livreor')}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Livres d'or
+                  </button>
+                  <button
+                    className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                      activeGuestSubTab === 'preferences' 
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setActiveGuestSubTab('preferences')}
+                  >
+                    <Wine className="w-4 h-4 mr-2" />
+                    Préférences
+                  </button>
+                </div>
+                                  <button
+                    className="flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 font-medium"
+                    onClick={() => setSelectedGuest(null)}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Retour à la liste
+                  </button>
+              </div>
+            </div>
+            {activeGuestSubTab === 'livreor' && (
+              <div>
+                <div className="flex items-center mb-4">
+                  <MessageSquare className="h-5 w-5 text-green-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-green-700">Livre d'or de {selectedGuest.name}</h3>
+                  <span className="ml-3 px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 font-medium">{guestMessages ? guestMessages.length : 0} message{guestMessages && guestMessages.length > 1 ? 's' : ''}</span>
+                </div>
+                {!guestMessages ? (
+                  <div className="text-gray-400 italic">Chargement...</div>
+                ) : guestMessages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <MessageSquare className="h-10 w-10 text-gray-300 mb-3" />
+                    <div className="text-gray-500 text-base">Aucun message pour cet invité</div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      {currentMessages.map((msg, idx) => (
+                        <div key={idx} className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+                          <MessageSquare className="h-6 w-6 text-green-400 mt-1" />
+                          <div className="flex-1">
+                            <div className="text-gray-800 text-sm mb-1">{msg.message}</div>
+                            {msg.created_at && (
+                              <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">{new Date(msg.created_at).toLocaleString()}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Pagination des messages */}
+                    {totalMsgPages > 1 && (
+                      <div className="flex items-center justify-between mt-6">
+                        <button
+                          onClick={() => setCurrentMsgPage(currentMsgPage - 1)}
+                          disabled={currentMsgPage === 1}
+                          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Précédent
+                        </button>
+                        <div className="text-sm text-gray-500">
+                          Page {currentMsgPage} / {totalMsgPages}
+                        </div>
+                        <button
+                          onClick={() => setCurrentMsgPage(currentMsgPage + 1)}
+                          disabled={currentMsgPage === totalMsgPages}
+                          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Suivant
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            {activeGuestSubTab === 'preferences' && (
+              <div>
+                <div className="flex items-center mb-4">
+                  <Wine className="h-5 w-5 text-blue-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-blue-700">Préférences de {selectedGuest.name}</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Boissons alcoolisées */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex flex-col items-start shadow-sm w-full">
+                    <div className="flex items-center mb-2">
+                      <Wine className="h-5 w-5 text-blue-400 mr-2" />
+                      <span className="font-semibold text-blue-800">Boissons alcoolisées</span>
+                      <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">
+                        {guestPreferences && guestPreferences.alcoholic_drinks ? JSON.parse(guestPreferences.alcoholic_drinks).length : 0} choix
+                      </span>
+                    </div>
+                    <ul className="list-disc ml-6 mt-1 text-sm">
+                      {guestPreferences && guestPreferences.alcoholic_drinks && JSON.parse(guestPreferences.alcoholic_drinks).length > 0 ? (
+                        JSON.parse(guestPreferences.alcoholic_drinks).map((drink: string, idx: number) => (
+                          <li key={idx}>{drink}</li>
+                        ))
+                      ) : (
+                        <li className="text-gray-400 italic">Aucune préférence renseignée</li>
+                      )}
+                    </ul>
+                  </div>
+                  {/* Boissons non-alcoolisées */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex flex-col items-start shadow-sm w-full">
+                    <div className="flex items-center mb-2">
+                      <Wine className="h-5 w-5 text-blue-400 mr-2" />
+                      <span className="font-semibold text-blue-800">Boissons non-alcoolisées</span>
+                      <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 font-medium">
+                        {guestPreferences && guestPreferences.non_alcoholic_drinks ? JSON.parse(guestPreferences.non_alcoholic_drinks).length : 0} choix
+                      </span>
+                    </div>
+                    <ul className="list-disc ml-6 mt-1 text-sm">
+                      {guestPreferences && guestPreferences.non_alcoholic_drinks && JSON.parse(guestPreferences.non_alcoholic_drinks).length > 0 ? (
+                        JSON.parse(guestPreferences.non_alcoholic_drinks).map((drink: string, idx: number) => (
+                          <li key={idx}>{drink}</li>
+                        ))
+                      ) : (
+                        <li className="text-gray-400 italic">Aucune préférence renseignée</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Modal de confirmation de suppression */}
+        {guestToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 border border-gray-100 animate-fade-in">
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4">
+                  <X className="h-12 w-12 text-red-500 mx-auto" />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-gray-900">Supprimer l'invité ?</h3>
+                <p className="mb-4 text-gray-600">Êtes-vous sûr de vouloir supprimer <span className="font-semibold">{guestToDelete.name}</span> ?<br/>Cette action est <span className="text-red-600 font-semibold">irréversible</span>.</p>
+                <div className="flex w-full gap-3 mt-2">
+                  <button
+                    className="flex-1 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    onClick={() => setGuestToDelete(null)}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-semibold"
+                    onClick={() => handleDeleteGuest(guestToDelete.id)}
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>

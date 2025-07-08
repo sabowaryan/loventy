@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight, User, Hash, CheckCircle } from 'lucide-react';
+import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight, User, Hash, CheckCircle, Download, Printer } from 'lucide-react';
 import { useDatabase } from '../../hooks/useDatabase';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../../data/weddingData';
 import LoventyLogo from '../../components/LoventyLogo';
 import SeoHead from '../../components/SeoHead';
 import { Guest, WeddingData } from '../../lib/database';
+import html2canvas from 'html2canvas';
+import JSZip from 'jszip';
 
 // Import des images de fond
 import fond1 from '../../assets/wedding/fond/fond1.jpg';
@@ -37,7 +39,9 @@ const InvPreview = React.memo(() => {
   const [guestFound, setGuestFound] = useState<boolean | null>(null);
   const { loadWeddingData, fetchGuests, saveGuestPreferences, updateExistingGuest, saveGuestMessage } = useDatabase();
   const [loading, setLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   
   // Section boissons : parser les listes globales
   const alcoholicDrinks = useMemo(() => drinkOptions?.alcoholic || [], [drinkOptions?.alcoholic]);
@@ -125,18 +129,123 @@ const InvPreview = React.memo(() => {
     console.warn('Erreur de chargement de l\'image de fond, utilisation du fallback');
   }, []);
 
+  // Fonction pour générer et télécharger les images des sections
+  const handleGenerateImages = useCallback(async () => {
+    if (!weddingDetails || !guest) {
+      setToast('Données manquantes pour la génération');
+      setTimeout(() => setToast(null), 2000);
+      return;
+    }
+
+    setIsGenerating(true);
+    setToast('Génération des images en cours...');
+    
+    try {
+      const zip = new JSZip();
+      const sectionsToCapture = [0, 1, 2]; // Sections à capturer
+      const sectionNames = ['Accueil', 'Invitation', 'Programme'];
+      
+      // Sauvegarder la section courante
+      const currentSectionBackup = currentSection;
+      
+      for (let i = 0; i < sectionsToCapture.length; i++) {
+        const sectionIndex = sectionsToCapture[i];
+        const sectionName = sectionNames[i];
+        
+        // Changer temporairement vers la section à capturer
+        setCurrentSection(sectionIndex);
+        
+        // Attendre que le DOM soit mis à jour
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Capturer la section
+        const sectionElement = sectionRefs.current[sectionIndex];
+        if (sectionElement) {
+          const canvas = await html2canvas(sectionElement, {
+            scale: 2, // Qualité plus élevée
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            width: sectionElement.scrollWidth,
+            height: sectionElement.scrollHeight,
+            scrollX: 0,
+            scrollY: 0
+          });
+          
+          // Convertir en blob et ajouter au ZIP
+          canvas.toBlob((blob) => {
+            if (blob) {
+              zip.file(`${sectionName}_${weddingDetails.groomName}_${weddingDetails.brideName}.png`, blob);
+            }
+          }, 'image/png', 0.9);
+        }
+      }
+      
+      // Restaurer la section courante
+      setCurrentSection(currentSectionBackup);
+      
+      // Attendre un peu pour que toutes les images soient ajoutées au ZIP
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Générer et télécharger le ZIP
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invitation_${weddingDetails.groomName}_${weddingDetails.brideName}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      setToast('Images générées et téléchargées !');
+      setTimeout(() => setToast(null), 3000);
+      
+    } catch (error) {
+      console.error('Erreur lors de la génération des images:', error);
+      setToast('Erreur lors de la génération des images');
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [weddingDetails, guest, currentSection]);
+
   // Fonction pour rendre dynamiquement la section courante
   const renderSection = useCallback((index: number) => {
+    // Vérifier que weddingSections est disponible
+    if (!weddingSections || !weddingSections.length) {
+      return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement...</p>
+          </div>
+        </div>
+      );
+    }
+    
     // Ajout d'un guard pour les sections qui nécessitent guest
     if ((index === 1 || index === 2) && !guest) return null;
+    
+    // Vérifier que l'index est valide
+    if (index < 0 || index >= weddingSections.length) {
+      return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600">Section non trouvée</p>
+          </div>
+        </div>
+      );
+    }
     
     switch (index) {
       case 0:
         return (
           <div 
+            ref={(el) => sectionRefs.current[0] = el}
             className="relative overflow-hidden"
             style={{
-              backgroundImage: `url(${weddingSections[0]?.backgroundImage})`,
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -303,9 +412,10 @@ const InvPreview = React.memo(() => {
       case 1:
         return (
           <div 
+            ref={(el) => sectionRefs.current[1] = el}
             className="relative overflow-hidden"
             style={{
-              backgroundImage: `url(${weddingSections[1]?.backgroundImage})`,
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -453,9 +563,10 @@ const InvPreview = React.memo(() => {
       case 2:
         return (
           <div 
+            ref={(el) => sectionRefs.current[2] = el}
             className="relative overflow-hidden"
             style={{
-              backgroundImage: `url(${weddingSections[2]?.backgroundImage})`,
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -511,6 +622,30 @@ const InvPreview = React.memo(() => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Bouton d'impression */}
+                <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-gray-200">
+                  <button
+                    onClick={handleGenerateImages}
+                    disabled={isGenerating || !weddingDetails || !guest}
+                    className="inline-flex items-center justify-center space-x-2 px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-xl hover:from-rose-700 hover:to-pink-700 transition-all duration-300 text-sm sm:text-base font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                        <span>Génération en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>Télécharger l'invitation</span>
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
+                    Télécharge les sections Accueil, Invitation et Programme
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -520,7 +655,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: `url(${weddingSections[3]?.backgroundImage})`,
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -573,7 +708,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-y-auto sm:overflow-hidden"
             style={{
-              backgroundImage: `url(${weddingSections[4]?.backgroundImage})`,
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -608,38 +743,76 @@ const InvPreview = React.memo(() => {
                   <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-r from-red-50 to-rose-50 rounded-lg sm:rounded-xl md:rounded-2xl border border-red-200 shadow-sm">
                     <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-red-800 mb-3 sm:mb-4">
                       {weddingTexts?.preferences.alcoholicTitle}
+                      <span className="ml-2 text-sm font-normal text-red-600">
+                        ({selectedAlcoholic.length}/2)
+                      </span>
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-48 sm:max-h-none overflow-y-auto">
-                      {alcoholicDrinks.map((drink: string, index: number) => (
-                        <label key={index} className="flex items-center space-x-2 p-2 sm:p-3 bg-white rounded border hover:bg-red-50 cursor-pointer transition-colors">
-                          <input
-                            type="checkbox"
-                            className="text-red-600 focus:ring-red-500"
-                            checked={selectedAlcoholic.includes(drink)}
-                            onChange={e => setSelectedAlcoholic(sel => e.target.checked ? [...sel, drink] : sel.filter(d => d !== drink))}
-                          />
-                          <span className="text-xs sm:text-sm md:text-base text-gray-700">{drink}</span>
-                        </label>
-                      ))}
+                      {alcoholicDrinks.map((drink: string, index: number) => {
+                        const isSelected = selectedAlcoholic.includes(drink);
+                        const isDisabled = !isSelected && selectedAlcoholic.length >= 2;
+                        return (
+                          <label 
+                            key={index} 
+                            className={`flex items-center space-x-2 p-2 sm:p-3 bg-white rounded border transition-colors ${
+                              isDisabled 
+                                ? 'opacity-50 cursor-not-allowed bg-gray-50' 
+                                : 'hover:bg-red-50 cursor-pointer'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="text-red-600 focus:ring-red-500"
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={e => setSelectedAlcoholic(sel => e.target.checked ? [...sel, drink] : sel.filter(d => d !== drink))}
+                            />
+                            <span className={`text-xs sm:text-sm md:text-base ${
+                              isDisabled ? 'text-gray-400' : 'text-gray-700'
+                            }`}>
+                              {drink}
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                   {/* Boissons non-alcoolisées */}
                   <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg sm:rounded-xl md:rounded-2xl border border-blue-200 shadow-sm">
                     <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-blue-800 mb-3 sm:mb-4">
                       {weddingTexts?.preferences.nonAlcoholicTitle}
+                      <span className="ml-2 text-sm font-normal text-blue-600">
+                        ({selectedNonAlcoholic.length}/2)
+                      </span>
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-48 sm:max-h-none overflow-y-auto">
-                      {nonAlcoholicDrinks.map((drink: string, index: number) => (
-                        <label key={index} className="flex items-center space-x-2 p-2 sm:p-3 bg-white rounded border hover:bg-blue-50 cursor-pointer transition-colors">
-                          <input
-                            type="checkbox"
-                            className="text-blue-600 focus:ring-blue-500"
-                            checked={selectedNonAlcoholic.includes(drink)}
-                            onChange={e => setSelectedNonAlcoholic(sel => e.target.checked ? [...sel, drink] : sel.filter(d => d !== drink))}
-                          />
-                          <span className="text-xs sm:text-sm md:text-base text-gray-700">{drink}</span>
-                        </label>
-                      ))}
+                      {nonAlcoholicDrinks.map((drink: string, index: number) => {
+                        const isSelected = selectedNonAlcoholic.includes(drink);
+                        const isDisabled = !isSelected && selectedNonAlcoholic.length >= 2;
+                        return (
+                          <label 
+                            key={index} 
+                            className={`flex items-center space-x-2 p-2 sm:p-3 bg-white rounded border transition-colors ${
+                              isDisabled 
+                                ? 'opacity-50 cursor-not-allowed bg-gray-50' 
+                                : 'hover:bg-blue-50 cursor-pointer'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="text-blue-600 focus:ring-blue-500"
+                              checked={isSelected}
+                              disabled={isDisabled}
+                              onChange={e => setSelectedNonAlcoholic(sel => e.target.checked ? [...sel, drink] : sel.filter(d => d !== drink))}
+                            />
+                            <span className={`text-xs sm:text-sm md:text-base ${
+                              isDisabled ? 'text-gray-400' : 'text-gray-700'
+                            }`}>
+                              {drink}
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -659,7 +832,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: `url(${weddingSections[5]?.backgroundImage})`,
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -782,12 +955,18 @@ const InvPreview = React.memo(() => {
   }, [id]); // Suppression des dépendances loadWeddingData et fetchGuests qui causent la boucle
 
   const nextSection = useCallback(() => {
-    if (!weddingSections || !weddingSections.length) return;
+    if (!weddingSections || !weddingSections.length) {
+      console.warn('weddingSections non disponible pour la navigation');
+      return;
+    }
     setCurrentSection(prev => (prev + 1) % weddingSections.length);
   }, [weddingSections]);
   
   const prevSection = useCallback(() => {
-    if (!weddingSections || !weddingSections.length) return;
+    if (!weddingSections || !weddingSections.length) {
+      console.warn('weddingSections non disponible pour la navigation');
+      return;
+    }
     setCurrentSection(prev => (prev - 1 + weddingSections.length) % weddingSections.length);
   }, [weddingSections]);
 
@@ -853,9 +1032,17 @@ const InvPreview = React.memo(() => {
   }, [nextSection, prevSection]);
 
   const goToSection = useCallback((index: number) => {
+    if (!weddingSections || !weddingSections.length) {
+      console.warn('weddingSections non disponible pour la navigation');
+      return;
+    }
+    if (index < 0 || index >= weddingSections.length) {
+      console.warn(`Index de section invalide: ${index}`);
+      return;
+    }
     if (index === currentSection) return;
     setCurrentSection(index);
-  }, [currentSection]);
+  }, [currentSection, weddingSections]);
 
   // Loader tant que les données ne sont pas chargées
   if (loading) {
@@ -927,33 +1114,39 @@ const InvPreview = React.memo(() => {
         }}
       />
       {/* Navigation Dots */}
-      <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 z-50 flex space-x-2 sm:space-x-3">
-        {weddingSections.map((section, index) => (
-          <button
-            key={section.id}
-            onClick={() => goToSection(index)}
-            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 shadow-lg ${
-              currentSection === index 
-                ? 'bg-white scale-125 shadow-xl ring-2 ring-rose-300' 
-                : 'bg-white/80 hover:bg-white hover:scale-110'
-            }`}
-            title={section.title}
-          />
-        ))}
-      </div>
+      {weddingSections && weddingSections.length > 0 && (
+        <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 z-50 flex space-x-2 sm:space-x-3">
+          {weddingSections.map((section, index) => (
+            <button
+              key={section.id}
+              onClick={() => goToSection(index)}
+              className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 shadow-lg ${
+                currentSection === index 
+                  ? 'bg-white scale-125 shadow-xl ring-2 ring-rose-300' 
+                  : 'bg-white/80 hover:bg-white hover:scale-110'
+              }`}
+              title={section.title}
+            />
+          ))}
+        </div>
+      )}
       {/* Navigation Arrows */}
-      <button
-        onClick={prevSection}
-        className="fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
-      >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-      </button>
-      <button
-        onClick={nextSection}
-        className="fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
-      >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-      </button>
+      {weddingSections && weddingSections.length > 0 && (
+        <>
+          <button
+            onClick={prevSection}
+            className="fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+          <button
+            onClick={nextSection}
+            className="fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        </>
+      )}
       {/* Section courante uniquement */}
       {renderSection(currentSection)}
       {/* Footer Loventy */}

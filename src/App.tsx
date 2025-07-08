@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import CookieBannerV2 from './components/CookieBannerV2';
 import SeoHead from './components/SeoHead';
+import ScrollToTop from './components/ScrollToTop';
 
 // Layouts
 import PublicLayout from './components/layouts/PublicLayout';
@@ -71,6 +72,7 @@ const AppWithSeo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <AppWithSeo>
         {/* Global connection error banner */}
         <ConnectionErrorBanner />

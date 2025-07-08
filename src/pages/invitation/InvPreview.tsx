@@ -11,11 +11,11 @@ import { Guest, WeddingData } from '../../lib/database';
 const buildWeddingSections = (weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) => {
   return [
     { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/fond1.jpg') center/cover no-repeat" },
-    { id: 1, title: 'Invitation', background: 'linear-gradient(135deg, #fff 0%, #f3e8ff 100%)' },
-    { id: 2, title: 'Programme', background: 'linear-gradient(135deg, #f0fdfa 0%, #e0e7ff 100%)' },
-    { id: 3, title: 'Livre d\'or', background: 'linear-gradient(135deg, #f0fdf4 0%, #fef9c3 100%)' },
-    { id: 4, title: 'Boissons', background: 'linear-gradient(135deg, #f0f9ff 0%, #f3e8ff 100%)' },
-    { id: 5, title: 'Annulation', background: 'linear-gradient(135deg, #fff7ed 0%, #ffe4e6 100%)' },
+    { id: 1, title: 'Invitation', background: "url('/images/wedding/fond/fond2.jpg') center/cover no-repeat" },
+    { id: 2, title: 'Programme', background: "url('/images/wedding/fond/fond3.jpg') center/cover no-repeat" },
+    { id: 3, title: 'Livre d\'or', background: "url('/images/wedding/fond/fond4.jpg') center/cover no-repeat" },
+    { id: 4, title: 'Boissons', background: "url('/images/wedding/fond/fond5.jpg') center/cover no-repeat" },
+    { id: 5, title: 'Annulation', background: "url('images/wedding/fond/fond6.jpg') center/cover no-repeat" },
   ];
 };
 
@@ -31,12 +31,6 @@ const InvPreview = React.memo(() => {
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // État pour tester le chargement de l'image de fond
-  const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
-  
-  // Lazy loading conditionnel pour l'image de fond
-  const [shouldLoadImage, setShouldLoadImage] = useState(false);
-
   // Section boissons : parser les listes globales
   const alcoholicDrinks = useMemo(() => drinkOptions?.alcoholic || [], [drinkOptions?.alcoholic]);
   const nonAlcoholicDrinks = useMemo(() => drinkOptions?.nonAlcoholic || [], [drinkOptions?.nonAlcoholic]);
@@ -56,86 +50,6 @@ const InvPreview = React.memo(() => {
     if (!weddingDetails || !weddingTexts) return [];
     return buildWeddingSections(weddingDetails, weddingTexts);
   }, [weddingDetails, weddingTexts]);
-
-  // Image de fond statique simplifiée avec fallback
-  const backgroundStyle = useMemo(() => {
-    // Fallback vers un gradient élégant si l'image ne charge pas
-    const fallbackGradient = 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 25%, #fbcfe8 50%, #f9a8d4 75%, #ec4899 100%)';
-    
-    // Détection du support WebP pour une meilleure performance
-    const supportsWebP = (() => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-      } catch {
-        return false;
-      }
-    })();
-    
-    if (backgroundImageLoaded) {
-      const imageUrl = supportsWebP 
-        ? '/images/wedding/fond/fond1.webp' 
-        : '/images/wedding/fond/fond1.jpg';
-      
-      return {
-        backgroundImage: `url('${imageUrl}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        // Suppression de backgroundAttachment: 'fixed' pour un meilleur contrôle
-        width: '100%',
-        height: '100%',
-        minHeight: '100vh'
-      };
-    }
-    
-    return {
-      background: fallbackGradient,
-      width: '100%',
-      height: '100%',
-      minHeight: '100vh'
-    };
-  }, [backgroundImageLoaded]);
-
-  // Lazy loading conditionnel pour l'image de fond
-  useEffect(() => {
-    const timer = setTimeout(() => setShouldLoadImage(true), 200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Test de chargement de l'image de fond avec lazy loading
-  useEffect(() => {
-    if (!shouldLoadImage) return;
-    
-    // Détection du support WebP
-    const supportsWebP = (() => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
-      } catch {
-        return false;
-      }
-    })();
-    
-    const imageUrl = supportsWebP 
-      ? '/images/wedding/fond/fond1.webp' 
-      : '/images/wedding/fond/fond1.jpg';
-    
-    const img = new Image();
-    img.onload = () => {
-      console.log('Image de fond chargée avec succès:', imageUrl);
-      setBackgroundImageLoaded(true);
-    };
-    img.onerror = () => {
-      console.warn('Erreur lors du chargement de l\'image de fond, utilisation du fallback');
-      setBackgroundImageLoaded(false);
-    };
-    img.src = imageUrl;
-  }, [shouldLoadImage]);
 
   // Titre dynamique pour le SEO
   const pageTitle = useMemo(() => {
@@ -214,7 +128,13 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              ...backgroundStyle,
+              backgroundImage: weddingSections[0]?.background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
               position: 'relative',
               display: 'flex',
               alignItems: 'center',
@@ -224,7 +144,70 @@ const InvPreview = React.memo(() => {
             {/* Overlay pour améliorer la lisibilité */}
             <div className="absolute inset-0 bg-black/20"></div>
             <div className="relative z-10 flex items-center justify-center p-4 w-full">
-              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20 relative">
+                {/* Décorations - Rubans élégants dans les coins */}
+                <div className="absolute top-2 left-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-r from-rose-300 to-transparent transform rotate-45 origin-left"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-b from-rose-300 to-transparent transform -rotate-45 origin-top"></div>
+                </div>
+                <div className="absolute top-2 right-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-l from-rose-300 to-transparent transform -rotate-45 origin-right"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-b from-rose-300 to-transparent transform rotate-45 origin-top"></div>
+                </div>
+                <div className="absolute bottom-2 left-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-r from-rose-300 to-transparent transform -rotate-45 origin-left"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-t from-rose-300 to-transparent transform rotate-45 origin-bottom"></div>
+                </div>
+                <div className="absolute bottom-2 right-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-l from-rose-300 to-transparent transform rotate-45 origin-right"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-t from-rose-300 to-transparent transform -rotate-45 origin-bottom"></div>
+                </div>
+
+                {/* Décorations - Éléments romantiques (cœurs ailés) */}
+                <div className="absolute top-3 left-3 w-5 h-5">
+                  <div className="w-3 h-3 bg-rose-300 rounded-full transform rotate-45 relative">
+                    <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="absolute top-3 right-3 w-5 h-5">
+                  <div className="w-3 h-3 bg-rose-300 rounded-full transform rotate-45 relative">
+                    <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                  </div>
+                </div>
+
+                {/* Décorations - Étoiles scintillantes */}
+                <div className="absolute top-4 left-1/4 w-3 h-3">
+                  <div className="w-3 h-3 bg-yellow-300 transform rotate-45 relative animate-pulse">
+                    <div className="absolute inset-0 bg-yellow-200 transform rotate-45"></div>
+                  </div>
+                </div>
+                <div className="absolute top-4 right-1/4 w-2 h-2">
+                  <div className="w-2 h-2 bg-yellow-300 transform rotate-45 relative animate-pulse delay-100">
+                    <div className="absolute inset-0 bg-yellow-200 transform rotate-45"></div>
+                  </div>
+                </div>
+
+                {/* Décorations - Bulles de champagne flottantes */}
+                <div className="absolute top-6 left-6 w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                <div className="absolute top-8 right-8 w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse delay-200"></div>
+                <div className="absolute bottom-6 left-8 w-1 h-1 bg-white/50 rounded-full animate-pulse delay-300"></div>
+                <div className="absolute bottom-8 right-6 w-1.5 h-1.5 bg-white/30 rounded-full animate-pulse delay-150"></div>
+
+                {/* Décorations - Petites clés d'amour */}
+                <div className="absolute bottom-3 left-3 w-5 h-6">
+                  <div className="w-3 h-3 border border-rose-300 rounded-full"></div>
+                  <div className="w-0.5 h-3 bg-rose-300 mx-auto mt-0.5"></div>
+                  <div className="w-2 h-0.5 bg-rose-300 mx-auto mt-0.5"></div>
+                </div>
+                <div className="absolute bottom-3 right-3 w-5 h-6">
+                  <div className="w-3 h-3 border border-rose-300 rounded-full"></div>
+                  <div className="w-0.5 h-3 bg-rose-300 mx-auto mt-0.5"></div>
+                  <div className="w-2 h-0.5 bg-rose-300 mx-auto mt-0.5"></div>
+                </div>
+
+                {/* Contenu principal de la carte */}
                 {/* Photo du couple en cercle */}
                 <div className="mb-4 sm:mb-6">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden border-2 sm:border-4 border-rose-200 shadow-xl">
@@ -312,16 +295,93 @@ const InvPreview = React.memo(() => {
       case 1:
         return (
           <div 
-            className="min-w-full min-h-full bg-cover bg-center bg-fixed flex items-start sm:items-center justify-center py-6 sm:py-8 md:py-0"
-            style={{ backgroundImage: weddingSections[1]?.background }}
+            className="relative overflow-hidden"
+            style={{
+              backgroundImage: weddingSections[1]?.background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <div className="absolute inset-0 bg-white/90"></div>
-            <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 md:px-8 text-center w-full">
-              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
-                {weddingTexts?.invitation.title}
-              </h2>
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl md:rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl">
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 flex items-center justify-center p-4 w-full">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20 relative">
+                {/* Décorations - Rubans élégants dans les coins */}
+                <div className="absolute top-2 left-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-r from-rose-300 to-transparent transform rotate-45 origin-left"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-b from-rose-300 to-transparent transform -rotate-45 origin-top"></div>
+                </div>
+                <div className="absolute top-2 right-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-l from-rose-300 to-transparent transform -rotate-45 origin-right"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-b from-rose-300 to-transparent transform rotate-45 origin-top"></div>
+                </div>
+                <div className="absolute bottom-2 left-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-r from-rose-300 to-transparent transform -rotate-45 origin-left"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-t from-rose-300 to-transparent transform rotate-45 origin-bottom"></div>
+                </div>
+                <div className="absolute bottom-2 right-2 w-8 h-8">
+                  <div className="w-6 h-0.5 bg-gradient-to-l from-rose-300 to-transparent transform rotate-45 origin-right"></div>
+                  <div className="w-0.5 h-6 bg-gradient-to-t from-rose-300 to-transparent transform -rotate-45 origin-bottom"></div>
+                </div>
+
+                {/* Décorations - Éléments romantiques (cœurs ailés) */}
+                <div className="absolute top-3 left-3 w-5 h-5">
+                  <div className="w-3 h-3 bg-rose-300 rounded-full transform rotate-45 relative">
+                    <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="absolute top-3 right-3 w-5 h-5">
+                  <div className="w-3 h-3 bg-rose-300 rounded-full transform rotate-45 relative">
+                    <div className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-rose-200 rounded-full"></div>
+                  </div>
+                </div>
+
+                {/* Décorations - Étoiles scintillantes */}
+                <div className="absolute top-4 left-1/4 w-3 h-3">
+                  <div className="w-3 h-3 bg-yellow-300 transform rotate-45 relative animate-pulse">
+                    <div className="absolute inset-0 bg-yellow-200 transform rotate-45"></div>
+                  </div>
+                </div>
+                <div className="absolute top-4 right-1/4 w-2 h-2">
+                  <div className="w-2 h-2 bg-yellow-300 transform rotate-45 relative animate-pulse delay-100">
+                    <div className="absolute inset-0 bg-yellow-200 transform rotate-45"></div>
+                  </div>
+                </div>
+
+                {/* Décorations - Bulles de champagne flottantes */}
+                <div className="absolute top-6 left-6 w-2 h-2 bg-white/60 rounded-full animate-pulse"></div>
+                <div className="absolute top-8 right-8 w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse delay-200"></div>
+                <div className="absolute bottom-6 left-8 w-1 h-1 bg-white/50 rounded-full animate-pulse delay-300"></div>
+                <div className="absolute bottom-8 right-6 w-1.5 h-1.5 bg-white/30 rounded-full animate-pulse delay-150"></div>
+
+                {/* Décorations - Petites clés d'amour */}
+                <div className="absolute bottom-3 left-3 w-5 h-6">
+                  <div className="w-3 h-3 border border-rose-300 rounded-full"></div>
+                  <div className="w-0.5 h-3 bg-rose-300 mx-auto mt-0.5"></div>
+                  <div className="w-2 h-0.5 bg-rose-300 mx-auto mt-0.5"></div>
+                </div>
+                <div className="absolute bottom-3 right-3 w-5 h-6">
+                  <div className="w-3 h-3 border border-rose-300 rounded-full"></div>
+                  <div className="w-0.5 h-3 bg-rose-300 mx-auto mt-0.5"></div>
+                  <div className="w-2 h-0.5 bg-rose-300 mx-auto mt-0.5"></div>
+                </div>
+
+                {/* Contenu principal de la carte */}
+                <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
+                  {weddingTexts?.invitation.title}
+                </h2>
+                
                 {/* Nom de l'invité avec décoration */}
                 <div className="mb-4 sm:mb-6 md:mb-8">
                   <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-light text-gray-800 mb-2 sm:mb-3 md:mb-4 italic tracking-wide" 
@@ -385,16 +445,29 @@ const InvPreview = React.memo(() => {
       case 2:
         return (
           <div 
-            className="min-w-full min-h-full bg-cover bg-center bg-fixed flex items-start sm:items-center justify-center py-8 sm:py-0"
-            style={{ backgroundImage: weddingSections[2]?.background }}
+            className="relative overflow-hidden"
+            style={{
+              backgroundImage: weddingSections[2]?.background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <div className="absolute inset-0 bg-white/90"></div>
-            <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-8 text-center w-full">
-              <div className="w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-6 sm:mb-8"></div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-6 sm:mb-8">
-                {weddingTexts?.program.title}
-              </h2>
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl">
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 flex items-center justify-center p-4 w-full">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
+                <div className="w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-6 sm:mb-8"></div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-6 sm:mb-8">
+                  {weddingTexts?.program.title}
+                </h2>
                 <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-700 italic leading-relaxed mb-6 sm:mb-8">
                   {weddingTexts?.program.welcomeMessage}
                 </p>
@@ -437,16 +510,29 @@ const InvPreview = React.memo(() => {
       case 3:
         return (
           <div 
-            className="min-w-full min-h-full bg-cover bg-center bg-fixed flex items-start sm:items-center justify-center py-6 sm:py-8 md:py-0"
-            style={{ backgroundImage: weddingSections[3]?.background }}
+            className="relative overflow-hidden"
+            style={{
+              backgroundImage: weddingSections[3]?.background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <div className="absolute inset-0 bg-white/90"></div>
-            <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 md:px-8 text-center w-full">
-              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
-                {weddingTexts?.guestbook.title}
-              </h2>
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl md:rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl">
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 flex items-center justify-center p-4 w-full">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
+                <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
+                  {weddingTexts?.guestbook.title}
+                </h2>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-gray-700 italic leading-relaxed mb-4 sm:mb-6">
                   {weddingTexts?.guestbook.subtitle}
                 </p>
@@ -477,16 +563,29 @@ const InvPreview = React.memo(() => {
       case 4:
         return (
           <div 
-            className="min-w-full min-h-full bg-cover bg-center bg-fixed flex items-start sm:items-center justify-center py-6 sm:py-8 md:py-0"
-            style={{ backgroundImage: weddingSections[4]?.background }}
+            className="relative overflow-y-auto sm:overflow-hidden"
+            style={{
+              backgroundImage: weddingSections[4]?.background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <div className="absolute inset-0 bg-white/90"></div>
-            <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 md:px-8 text-center w-full">
-              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
-                {weddingTexts?.preferences.title}
-              </h2>
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl md:rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl">
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 flex items-center justify-center p-4 w-full sm:min-h-screen">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20 my-8 sm:my-0">
+                <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
+                  {weddingTexts?.preferences.title}
+                </h2>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-gray-700 italic leading-relaxed mb-4 sm:mb-6">
                   {weddingTexts?.preferences.subtitle}
                 </p>
@@ -502,7 +601,7 @@ const InvPreview = React.memo(() => {
                     <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-red-800 mb-3 sm:mb-4">
                       {weddingTexts?.preferences.alcoholicTitle}
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-48 sm:max-h-none overflow-y-auto">
                       {alcoholicDrinks.map((drink: string, index: number) => (
                         <label key={index} className="flex items-center space-x-2 p-2 sm:p-3 bg-white rounded border hover:bg-red-50 cursor-pointer transition-colors">
                           <input
@@ -521,7 +620,7 @@ const InvPreview = React.memo(() => {
                     <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-blue-800 mb-3 sm:mb-4">
                       {weddingTexts?.preferences.nonAlcoholicTitle}
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 max-h-48 sm:max-h-none overflow-y-auto">
                       {nonAlcoholicDrinks.map((drink: string, index: number) => (
                         <label key={index} className="flex items-center space-x-2 p-2 sm:p-3 bg-white rounded border hover:bg-blue-50 cursor-pointer transition-colors">
                           <input
@@ -550,16 +649,29 @@ const InvPreview = React.memo(() => {
       case 5:
         return (
           <div 
-            className="min-w-full min-h-full bg-cover bg-center bg-fixed flex items-start sm:items-center justify-center py-6 sm:py-8 md:py-0"
-            style={{ backgroundImage: weddingSections[5]?.background }}
+            className="relative overflow-hidden"
+            style={{
+              backgroundImage: weddingSections[5]?.background,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
-            <div className="absolute inset-0 bg-white/90"></div>
-            <div className="relative z-10 max-w-4xl mx-auto px-3 sm:px-6 md:px-8 text-center w-full">
-              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
-                {weddingTexts?.cancellation.title}
-              </h2>
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl md:rounded-2xl lg:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl">
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 flex items-center justify-center p-4 w-full">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
+                <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8"></div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 md:mb-8">
+                  {weddingTexts?.cancellation.title}
+                </h2>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-gray-700 italic leading-relaxed mb-4 sm:mb-6">
                   {weddingTexts?.cancellation.description}
                 </p>
@@ -597,7 +709,7 @@ const InvPreview = React.memo(() => {
       default:
         return null;
     }
-  }, [weddingDetails, weddingTexts, guest, weddingSections, alcoholicDrinks, nonAlcoholicDrinks, selectedAlcoholic, selectedNonAlcoholic, guestbookMessage, handleSendGuestbook, handleSavePreferences, handleRsvp, backgroundStyle, handleBackgroundImageError]);
+  }, [weddingDetails, weddingTexts, guest, weddingSections, alcoholicDrinks, nonAlcoholicDrinks, selectedAlcoholic, selectedNonAlcoholic, guestbookMessage, handleSendGuestbook, handleSavePreferences, handleRsvp, handleBackgroundImageError]);
 
   // Charger les données de l'invitation et de l'invité
   useEffect(() => {
@@ -690,17 +802,25 @@ const InvPreview = React.memo(() => {
     let endX = 0;
     let isSwiping = false;
     let isThrottled = false;
+    let hasMoved = false;
     
     const handleTouchStart = (e: TouchEvent) => {
       if (isThrottled) return;
       startX = e.touches[0].clientX;
       endX = startX;
       isSwiping = true;
+      hasMoved = false;
     };
     
     const handleTouchMove = (e: TouchEvent) => {
       if (!isSwiping || isThrottled) return;
       endX = e.touches[0].clientX;
+      
+      // Vérifier s'il y a eu un mouvement significatif
+      const diff = Math.abs(endX - startX);
+      if (diff > 5) {
+        hasMoved = true;
+      }
     };
     
     const handleTouchEnd = () => {
@@ -710,7 +830,8 @@ const InvPreview = React.memo(() => {
       const diff = startX - endX;
       const threshold = 50;
       
-      if (Math.abs(diff) > threshold) {
+      // S'assurer qu'il y a eu un mouvement ET que le seuil est atteint
+      if (hasMoved && Math.abs(diff) > threshold) {
         isThrottled = true;
         setTimeout(() => { isThrottled = false; }, 300);
         
@@ -796,7 +917,7 @@ const InvPreview = React.memo(() => {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen sm:h-auto sm:min-h-screen sm:overflow-y-auto overflow-hidden">
+    <div ref={containerRef} className="relative h-screen sm:h-auto sm:min-h-screen sm:overflow-y-auto">
       {/* SEO Head avec titre et description dynamiques */}
       <SeoHead 
         overrides={{

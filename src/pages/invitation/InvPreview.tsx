@@ -129,7 +129,7 @@ const InvPreview = React.memo(() => {
     console.warn('Erreur de chargement de l\'image de fond, utilisation du fallback');
   }, []);
 
-  // Fonction pour générer et télécharger les images des sections
+  // Fonction pour générer et télécharger une image combinée des sections
   const handleGenerateImages = useCallback(async () => {
     if (!weddingDetails || !guest) {
       setToast('Données manquantes pour la génération');
@@ -138,31 +138,25 @@ const InvPreview = React.memo(() => {
     }
 
     setIsGenerating(true);
-    setToast('Génération des images en cours...');
-    
+    setToast('Génération de l\'image en cours...');
+
     try {
-      const zip = new JSZip();
-      const sectionsToCapture = [0, 1, 2]; // Sections à capturer
-      const sectionNames = ['Accueil', 'Invitation', 'Programme'];
-      
-      // Sauvegarder la section courante
+      const sectionsToCapture = [0, 1, 2];
       const currentSectionBackup = currentSection;
-      
+      const canvases: HTMLCanvasElement[] = [];
+
+      // Capturer chaque section
       for (let i = 0; i < sectionsToCapture.length; i++) {
         const sectionIndex = sectionsToCapture[i];
-        const sectionName = sectionNames[i];
-        
-        // Changer temporairement vers la section à capturer
+
         setCurrentSection(sectionIndex);
-        
-        // Attendre que le DOM soit mis à jour
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Capturer la section
+        // Attendre le rendu React + DOM
+        await new Promise(resolve => setTimeout(resolve, 400));
+
         const sectionElement = sectionRefs.current[sectionIndex];
         if (sectionElement) {
           const canvas = await html2canvas(sectionElement, {
-            scale: 2, // Qualité plus élevée
+            scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: null,
@@ -171,39 +165,90 @@ const InvPreview = React.memo(() => {
             scrollX: 0,
             scrollY: 0
           });
+          canvases.push(canvas);
+        }
+      }
+
+      setCurrentSection(currentSectionBackup);
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Créer le canvas combiné
+      if (canvases.length > 0) {
+        const maxWidth = Math.max(...canvases.map(canvas => canvas.width));
+        const totalHeight = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
+        
+        const combinedCanvas = document.createElement('canvas');
+        const ctx = combinedCanvas.getContext('2d');
+        
+        if (ctx) {
+          combinedCanvas.width = maxWidth;
+          combinedCanvas.height = totalHeight;
           
-          // Convertir en blob et ajouter au ZIP
-          canvas.toBlob((blob) => {
+          // Remplir le fond avec un dégradé élégant
+          const gradient = ctx.createLinearGradient(0, 0, 0, totalHeight);
+          gradient.addColorStop(0, '#fdf2f8'); // rose-50
+          gradient.addColorStop(1, '#fce7f3'); // rose-100
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, maxWidth, totalHeight);
+          
+          // Dessiner chaque section
+          let currentY = 0;
+          canvases.forEach((canvas, index) => {
+            const x = (maxWidth - canvas.width) / 2; // Centrer horizontalement
+            ctx.drawImage(canvas, x, currentY);
+            
+            // Ajouter un séparateur élégant entre les sections (sauf après la dernière)
+            if (index < canvases.length - 1) {
+              currentY += canvas.height;
+              const separatorHeight = 40;
+              
+              // Dégradé de séparation
+              const separatorGradient = ctx.createLinearGradient(0, currentY, 0, currentY + separatorHeight);
+              separatorGradient.addColorStop(0, 'rgba(244, 114, 182, 0.1)'); // rose-400 avec transparence
+              separatorGradient.addColorStop(0.5, 'rgba(244, 114, 182, 0.2)');
+              separatorGradient.addColorStop(1, 'rgba(244, 114, 182, 0.1)');
+              
+              ctx.fillStyle = separatorGradient;
+              ctx.fillRect(0, currentY, maxWidth, separatorHeight);
+              
+              // Ligne décorative
+              ctx.strokeStyle = 'rgba(244, 114, 182, 0.3)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([10, 5]);
+              ctx.beginPath();
+              ctx.moveTo(maxWidth * 0.2, currentY + separatorHeight / 2);
+              ctx.lineTo(maxWidth * 0.8, currentY + separatorHeight / 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              
+              currentY += separatorHeight;
+            } else {
+              currentY += canvas.height;
+            }
+          });
+          
+          // Convertir en blob et télécharger
+          combinedCanvas.toBlob((blob) => {
             if (blob) {
-              zip.file(`${sectionName}_${weddingDetails.groomName}_${weddingDetails.brideName}.png`, blob);
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `Invitation_${weddingDetails.groomName}_${weddingDetails.brideName}.png`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+              
+              setToast('Image combinée générée et téléchargée !');
+              setTimeout(() => setToast(null), 3000);
             }
           }, 'image/png', 0.9);
         }
       }
-      
-      // Restaurer la section courante
-      setCurrentSection(currentSectionBackup);
-      
-      // Attendre un peu pour que toutes les images soient ajoutées au ZIP
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Générer et télécharger le ZIP
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(zipBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Invitation_${weddingDetails.groomName}_${weddingDetails.brideName}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      setToast('Images générées et téléchargées !');
-      setTimeout(() => setToast(null), 3000);
-      
+
     } catch (error) {
-      console.error('Erreur lors de la génération des images:', error);
-      setToast('Erreur lors de la génération des images');
+      console.error('Erreur lors de la génération de l\'image:', error);
+      setToast('Erreur lors de la génération de l\'image');
       setTimeout(() => setToast(null), 3000);
     } finally {
       setIsGenerating(false);
@@ -344,24 +389,24 @@ const InvPreview = React.memo(() => {
                 </div>
                 {/* Noms des mariés */}
                 <div className="mb-4 sm:mb-6">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-800 mb-2 sm:mb-4" 
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 mb-2 sm:mb-4 drop-shadow-sm" 
                       style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
-                    {weddingDetails?.groomName} <span className="text-rose-500 font-normal">&</span> {weddingDetails?.brideName}
+                    {weddingDetails?.groomName} <span className="text-rose-600 font-normal drop-shadow-sm">&</span> {weddingDetails?.brideName}
                   </h1>
                   {/* Ligne décorative */}
                   <div className="flex items-center justify-center space-x-2 sm:space-x-4 mb-3 sm:mb-4">
-                    <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-rose-300 to-transparent"></div>
-                    <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-rose-400 fill-rose-400" />
-                    <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-rose-300 to-transparent"></div>
+                    <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent"></div>
+                    <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-rose-500 fill-rose-500 drop-shadow-sm" />
+                    <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent"></div>
                   </div>
                 </div>
                 {/* Message d'invitation */}
                 <div className="mb-4 sm:mb-6">
-                  <p className="text-sm sm:text-base md:text-lg text-gray-700 mb-2 sm:mb-4 leading-relaxed px-4 sm:px-6"
+                  <p className="text-sm sm:text-base md:text-lg text-gray-800 mb-2 sm:mb-4 leading-relaxed px-4 sm:px-6 drop-shadow-sm"
                      style={{ 
                        fontFamily: 'Dancing Script, cursive', 
                        fontSize: 'clamp(1rem, 4vw, 1.5rem)', 
-                       fontWeight: 500,
+                       fontWeight: 600,
                        lineHeight: '1.6',
                        wordWrap: 'break-word',
                        overflowWrap: 'break-word',
@@ -374,26 +419,26 @@ const InvPreview = React.memo(() => {
                 </div>
                 {/* Date et détails */}
                 <div className="space-y-2 sm:space-y-4">
-                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails?.weddingDate.month}</div>
+                  <div className="text-gray-700 text-sm sm:text-base font-semibold drop-shadow-sm">{weddingDetails?.weddingDate.month}</div>
                   <div className="flex items-center justify-center space-x-4 sm:space-x-6 md:space-x-8">
                     <div className="text-center">
-                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails?.weddingDate.dayOfWeek}</div>
-                      <div className="w-8 sm:w-12 h-px bg-gray-300"></div>
+                      <div className="text-xs sm:text-sm text-gray-600 mb-1 drop-shadow-sm font-medium">{weddingDetails?.weddingDate.dayOfWeek}</div>
+                      <div className="w-8 sm:w-12 h-px bg-gray-400"></div>
                     </div>
-                    <div className="text-4xl sm:text-5xl md:text-6xl font-light text-gray-800" 
+                    <div className="text-4xl sm:text-5xl md:text-6xl font-light text-gray-900 drop-shadow-sm" 
                          style={{ fontFamily: 'Playfair Display, Georgia, serif' }}>
                       {weddingDetails?.weddingDate.day}
                     </div>
                     <div className="text-center">
-                      <div className="text-xs sm:text-sm text-gray-500 mb-1">{weddingDetails?.weddingDate.time}</div>
-                      <div className="w-8 sm:w-12 h-px bg-gray-300"></div>
+                      <div className="text-xs sm:text-sm text-gray-600 mb-1 drop-shadow-sm font-medium">{weddingDetails?.weddingDate.time}</div>
+                      <div className="w-8 sm:w-12 h-px bg-gray-400"></div>
                     </div>
                   </div>
-                  <div className="text-gray-600 text-sm sm:text-base font-medium">{weddingDetails?.weddingDate.year}</div>
+                  <div className="text-gray-700 text-sm sm:text-base font-semibold drop-shadow-sm">{weddingDetails?.weddingDate.year}</div>
                 </div>
                 {/* Lieu */}
-                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-200">
-                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed break-words">
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-300">
+                  <p className="text-gray-700 text-xs sm:text-sm leading-relaxed break-words font-medium drop-shadow-sm">
                     {weddingDetails?.ceremony.venue}
                     <br />
                     {weddingDetails?.ceremony.address}
@@ -637,13 +682,13 @@ const InvPreview = React.memo(() => {
                       </>
                     ) : (
                       <>
-                        <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                        <span>Télécharger l'invitation</span>
+                        <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>Télécharger l'image complète</span>
                       </>
                     )}
                   </button>
                   <p className="text-xs sm:text-sm text-gray-500 mt-2 sm:mt-3">
-                    Télécharge les sections Accueil, Invitation et Programme
+                    Combine les sections Accueil, Invitation et Programme en une seule image
                   </p>
                 </div>
               </div>

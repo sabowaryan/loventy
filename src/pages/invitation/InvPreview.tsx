@@ -7,15 +7,23 @@ import LoventyLogo from '../../components/LoventyLogo';
 import SeoHead from '../../components/SeoHead';
 import { Guest, WeddingData } from '../../lib/database';
 
+// Import des images de fond
+import fond1 from '../../assets/wedding/fond/fond1.jpg';
+import fond2 from '../../assets/wedding/fond/fond2.jpg';
+import fond3 from '../../assets/wedding/fond/fond3.jpg';
+import fond4 from '../../assets/wedding/fond/fond4.jpg';
+import fond5 from '../../assets/wedding/fond/fond5.jpg';
+import fond6 from '../../assets/wedding/fond/fond6.jpg';
+
 // Construction dynamique des sections à partir des données chargées
 const buildWeddingSections = (weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) => {
   return [
-    { id: 0, title: 'Accueil', background: "url('/images/wedding/fond/fond1.jpg') center/cover no-repeat" },
-    { id: 1, title: 'Invitation', background: "url('/images/wedding/fond/fond2.jpg') center/cover no-repeat" },
-    { id: 2, title: 'Programme', background: "url('/images/wedding/fond/fond3.jpg') center/cover no-repeat" },
-    { id: 3, title: 'Livre d\'or', background: "url('/images/wedding/fond/fond4.jpg') center/cover no-repeat" },
-    { id: 4, title: 'Boissons', background: "url('/images/wedding/fond/fond5.jpg') center/cover no-repeat" },
-    { id: 5, title: 'Annulation', background: "url('images/wedding/fond/fond6.jpg') center/cover no-repeat" },
+    { id: 0, title: 'Accueil', backgroundImage: fond1 },
+    { id: 1, title: 'Invitation', backgroundImage: fond2 },
+    { id: 2, title: 'Programme', backgroundImage: fond3 },
+    { id: 3, title: 'Livre d\'or', backgroundImage: fond4 },
+    { id: 4, title: 'Boissons', backgroundImage: fond5 },
+    { id: 5, title: 'Annulation', backgroundImage: fond6 },
   ];
 };
 
@@ -128,7 +136,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: weddingSections[0]?.background,
+              backgroundImage: `url(${weddingSections[0]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -297,7 +305,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: weddingSections[1]?.background,
+              backgroundImage: `url(${weddingSections[1]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -447,7 +455,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: weddingSections[2]?.background,
+              backgroundImage: `url(${weddingSections[2]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -512,7 +520,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: weddingSections[3]?.background,
+              backgroundImage: `url(${weddingSections[3]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -565,7 +573,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-y-auto sm:overflow-hidden"
             style={{
-              backgroundImage: weddingSections[4]?.background,
+              backgroundImage: `url(${weddingSections[4]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -651,7 +659,7 @@ const InvPreview = React.memo(() => {
           <div 
             className="relative overflow-hidden"
             style={{
-              backgroundImage: weddingSections[5]?.background,
+              backgroundImage: `url(${weddingSections[5]?.backgroundImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
@@ -718,21 +726,17 @@ const InvPreview = React.memo(() => {
     
     const loadData = async () => {
       if (!id || hasLoaded) {
-        console.log('InvPreview: Pas d\'ID fourni ou déjà chargé');
         return;
       }
       
-      console.log('InvPreview: Début du chargement pour ID:', id);
+
       setLoading(true);
       hasLoaded = true;
       
       try {
-        console.log('InvPreview: Chargement des données de mariage...');
         const data = await loadWeddingData();
-        console.log('InvPreview: Données de mariage chargées:', !!data);
         
         if (!isMounted) {
-          console.log('InvPreview: Composant démonté, arrêt du chargement');
           return;
         }
         
@@ -741,15 +745,12 @@ const InvPreview = React.memo(() => {
           setDrinkOptions(data.drinkOptions);
           setWeddingTexts(data.weddingTexts);
           
-          console.log('InvPreview: Chargement des invités...');
           // Utilise l'id du weddingDetails pour fetchGuests
           const allGuests = await fetchGuests(data.weddingDetails.id ?? '');
-          console.log('InvPreview: Invités chargés:', allGuests.length);
           
           if (!isMounted) return;
           
           const found = allGuests.find((g: Guest) => g.id === id);
-          console.log('InvPreview: Invité trouvé:', !!found, 'ID recherché:', id);
           
           if (found) {
             setGuest(found);
@@ -759,7 +760,6 @@ const InvPreview = React.memo(() => {
             setGuestFound(false);
           }
         } else {
-          console.log('InvPreview: Aucune donnée de mariage trouvée');
           setGuestFound(false);
         }
       } catch (error) {
@@ -769,7 +769,6 @@ const InvPreview = React.memo(() => {
         }
       } finally {
         if (isMounted) {
-          console.log('InvPreview: Fin du chargement, loading = false');
           setLoading(false);
         }
       }
@@ -778,7 +777,6 @@ const InvPreview = React.memo(() => {
     loadData();
     
     return () => {
-      console.log('InvPreview: Nettoyage du composant');
       isMounted = false;
     };
   }, [id]); // Suppression des dépendances loadWeddingData et fetchGuests qui causent la boucle

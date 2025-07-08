@@ -224,7 +224,7 @@ const InvPreview = React.memo(() => {
             {/* Overlay pour améliorer la lisibilité */}
             <div className="absolute inset-0 bg-black/20"></div>
             <div className="relative z-10 flex items-center justify-center p-4 w-full">
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
+              <div className="bg-white/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/20">
                 {/* Photo du couple en cercle */}
                 <div className="mb-4 sm:mb-6">
                   <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden border-2 sm:border-4 border-rose-200 shadow-xl">

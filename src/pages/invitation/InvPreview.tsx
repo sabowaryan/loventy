@@ -1016,6 +1016,7 @@ const InvPreview = React.memo(() => {
   }, [weddingSections]);
 
   // Gestion du swipe mobile avec throttling
+  const [isSectionReady, setIsSectionReady] = useState(true);
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -1027,7 +1028,7 @@ const InvPreview = React.memo(() => {
     let hasMoved = false;
     
     const handleTouchStart = (e: TouchEvent) => {
-      if (isThrottled) return;
+      if (isThrottled || !isSectionReady) return;
       startX = e.touches[0].clientX;
       endX = startX;
       isSwiping = true;
@@ -1035,9 +1036,8 @@ const InvPreview = React.memo(() => {
     };
     
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isSwiping || isThrottled) return;
+      if (!isSwiping || isThrottled || !isSectionReady) return;
       endX = e.touches[0].clientX;
-      
       // Vérifier s'il y a eu un mouvement significatif
       const diff = Math.abs(endX - startX);
       if (diff > 5) {
@@ -1046,21 +1046,26 @@ const InvPreview = React.memo(() => {
     };
     
     const handleTouchEnd = () => {
-      if (!isSwiping || isThrottled) return;
+      if (!isSwiping || isThrottled || !isSectionReady) return;
       isSwiping = false;
-      
       const diff = startX - endX;
       const threshold = 50;
-      
-      // S'assurer qu'il y a eu un mouvement ET que le seuil est atteint
       if (hasMoved && Math.abs(diff) > threshold) {
         isThrottled = true;
+        setIsSectionReady(false); // Bloque la navigation
         setTimeout(() => { isThrottled = false; }, 300);
-        
         if (diff > 0) {
-          nextSection();
+          setCurrentSection(prev => {
+            const next = (prev + 1) % weddingSections.length;
+            setTimeout(() => setIsSectionReady(true), 100);
+            return next;
+          });
         } else {
-          prevSection();
+          setCurrentSection(prev => {
+            const next = (prev - 1 + weddingSections.length) % weddingSections.length;
+            setTimeout(() => setIsSectionReady(true), 100);
+            return next;
+          });
         }
       }
     };
@@ -1074,7 +1079,7 @@ const InvPreview = React.memo(() => {
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [nextSection, prevSection]);
+  }, [nextSection, prevSection, weddingSections, currentSection, isSectionReady]);
 
   const goToSection = useCallback((index: number) => {
     if (!weddingSections || !weddingSections.length) {
@@ -1179,14 +1184,32 @@ const InvPreview = React.memo(() => {
       {weddingSections && weddingSections.length > 0 && (
         <>
           <button
-            onClick={prevSection}
-            className="fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
+            onClick={() => {
+              if (!isSectionReady) return;
+              setIsSectionReady(false);
+              setCurrentSection(prev => {
+                const next = (prev - 1 + weddingSections.length) % weddingSections.length;
+                setTimeout(() => setIsSectionReady(true), 100);
+                return next;
+              });
+            }}
+            disabled={!isSectionReady}
+            className={`fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200 ${!isSectionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
           <button
-            onClick={nextSection}
-            className="fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
+            onClick={() => {
+              if (!isSectionReady) return;
+              setIsSectionReady(false);
+              setCurrentSection(prev => {
+                const next = (prev + 1) % weddingSections.length;
+                setTimeout(() => setIsSectionReady(true), 100);
+                return next;
+              });
+            }}
+            disabled={!isSectionReady}
+            className={`fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200 ${!isSectionReady ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>

@@ -33,6 +33,9 @@ const InvPreview = React.memo(() => {
   
   // État pour tester le chargement de l'image de fond
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
+  
+  // Lazy loading conditionnel pour l'image de fond
+  const [shouldLoadImage, setShouldLoadImage] = useState(false);
 
   // Section boissons : parser les listes globales
   const alcoholicDrinks = useMemo(() => drinkOptions?.alcoholic || [], [drinkOptions?.alcoholic]);
@@ -59,9 +62,25 @@ const InvPreview = React.memo(() => {
     // Fallback vers un gradient élégant si l'image ne charge pas
     const fallbackGradient = 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 25%, #fbcfe8 50%, #f9a8d4 75%, #ec4899 100%)';
     
+    // Détection du support WebP pour une meilleure performance
+    const supportsWebP = (() => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+      } catch {
+        return false;
+      }
+    })();
+    
     if (backgroundImageLoaded) {
+      const imageUrl = supportsWebP 
+        ? '/images/wedding/fond/fond1.webp' 
+        : '/images/wedding/fond/fond1.jpg';
+      
       return {
-        backgroundImage: "url('/images/wedding/fond/fond1.jpg')",
+        backgroundImage: `url('${imageUrl}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -80,19 +99,43 @@ const InvPreview = React.memo(() => {
     };
   }, [backgroundImageLoaded]);
 
-  // Test de chargement de l'image de fond
+  // Lazy loading conditionnel pour l'image de fond
   useEffect(() => {
+    const timer = setTimeout(() => setShouldLoadImage(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Test de chargement de l'image de fond avec lazy loading
+  useEffect(() => {
+    if (!shouldLoadImage) return;
+    
+    // Détection du support WebP
+    const supportsWebP = (() => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+      } catch {
+        return false;
+      }
+    })();
+    
+    const imageUrl = supportsWebP 
+      ? '/images/wedding/fond/fond1.webp' 
+      : '/images/wedding/fond/fond1.jpg';
+    
     const img = new Image();
     img.onload = () => {
-      console.log('Image de fond chargée avec succès');
+      console.log('Image de fond chargée avec succès:', imageUrl);
       setBackgroundImageLoaded(true);
     };
     img.onerror = () => {
       console.warn('Erreur lors du chargement de l\'image de fond, utilisation du fallback');
       setBackgroundImageLoaded(false);
     };
-    img.src = '/images/wedding/fond/fond1.jpg';
-  }, []);
+    img.src = imageUrl;
+  }, [shouldLoadImage]);
 
   // Titre dynamique pour le SEO
   const pageTitle = useMemo(() => {
@@ -189,6 +232,10 @@ const InvPreview = React.memo(() => {
                       src={weddingDetails?.couplePhoto}
                       alt={`${weddingDetails?.groomName} et ${weddingDetails?.brideName}`}
                       className="w-full h-full object-cover"
+                      style={{
+                        objectPosition: 'center top',
+                        objectFit: 'cover'
+                      }}
                       loading="lazy"
                       decoding="async"
                       onError={handleBackgroundImageError}

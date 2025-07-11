@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight, User, Hash, CheckCircle, Download, Printer } from 'lucide-react';
+import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight, User, Hash, CheckCircle } from 'lucide-react';
 import { useDatabase } from '../../hooks/useDatabase';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../../data/weddingData';
 import LoventyLogo from '../../components/LoventyLogo';
 import SeoHead from '../../components/SeoHead';
 import { Guest, WeddingData } from '../../lib/database';
-import html2canvas from 'html2canvas';
-import JSZip from 'jszip';
 
 // Import des images de fond
 import fond1 from '../../assets/wedding/fond/fond1.jpg';
@@ -40,7 +38,6 @@ const InvPreview = React.memo(() => {
   const [guestFound, setGuestFound] = useState<boolean | null>(null);
   const { loadWeddingData, fetchGuests, saveGuestPreferences, updateExistingGuest, saveGuestMessage } = useDatabase();
   const [loading, setLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   
@@ -129,91 +126,6 @@ const InvPreview = React.memo(() => {
   const handleBackgroundImageError = useCallback(() => {
     console.warn('Erreur de chargement de l\'image de fond, utilisation du fallback');
   }, []);
-
-  // Fonction pour générer et télécharger une image combinée des sections
-  const handleGenerateImages = useCallback(async () => {
-    if (!weddingDetails || !guest) {
-      setToast('Données manquantes pour la génération');
-      setTimeout(() => setToast(null), 2000);
-      return;
-    }
-
-    setIsGenerating(true);
-    setToast('Génération de l\'image en cours...');
-
-    try {
-      // Créer un conteneur temporaire pour les sections à capturer
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '100%';
-      tempContainer.style.height = 'auto';
-      tempContainer.style.overflow = 'visible';
-      tempContainer.style.display = 'flex';
-      tempContainer.style.flexDirection = 'row';
-      tempContainer.style.alignItems = 'stretch';
-      document.body.appendChild(tempContainer);
-
-      // Ajouter les sections 0 et 1 au conteneur temporaire
-      const sectionsToCapture = [0, 1];
-      sectionsToCapture.forEach(index => {
-        const sectionElement = sectionRefs.current[index];
-        if (sectionElement) {
-          const clone = sectionElement.cloneNode(true) as HTMLElement;
-          clone.style.position = 'relative';
-          clone.style.width = '50%';
-          clone.style.height = '100vh';
-          clone.style.minHeight = '100vh';
-          clone.style.flex = '1';
-          tempContainer.appendChild(clone);
-        }
-      });
-
-      // Attendre que les éléments soient rendus
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capturer l'ensemble du conteneur temporaire
-      const canvas = await html2canvas(tempContainer, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        width: tempContainer.scrollWidth,
-        height: tempContainer.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
-        logging: false
-      });
-
-      // Nettoyer le conteneur temporaire
-      document.body.removeChild(tempContainer);
-
-      // Convertir en blob et télécharger
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `Invitation_${weddingDetails.groomName}_${weddingDetails.brideName}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-          
-          setToast('Image unifiée générée et téléchargée !');
-          setTimeout(() => setToast(null), 3000);
-        }
-      }, 'image/png', 0.9);
-
-    } catch (error) {
-      console.error('Erreur lors de la génération de l\'image:', error);
-      setToast('Erreur lors de la génération de l\'image');
-      setTimeout(() => setToast(null), 3000);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [weddingDetails, guest]);
 
   // Fonction pour rendre dynamiquement la section courante
   const renderSection = useCallback((index: number) => {
@@ -400,7 +312,7 @@ const InvPreview = React.memo(() => {
                 {/* Nom de l'invité avec table */}
               <div className="mb-6 sm:mb-8 md:mb-10 text-center animate-slide-down"
                    style={{ animation: 'slideDown 2.5s ease-out' }}>
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-light text-white mb-3 sm:mb-4 md:mb-5 italic tracking-wide drop-shadow-2xl" 
+                <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-white mb-3 sm:mb-4 md:mb-5 italic tracking-wide drop-shadow-2xl" 
                       style={{ 
                         fontFamily: 'Crimson Text, Georgia, serif',
                         fontStyle: 'italic',
@@ -413,7 +325,7 @@ const InvPreview = React.memo(() => {
                       Cher(e) {guest?.name ?? ''}
                   </h3>
                 {/* Information de table directement sous le nom */}
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white drop-shadow-2xl font-medium mb-3 sm:mb-4 md:mb-5"
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-2xl font-semibold mb-3 sm:mb-4 md:mb-5"
                    style={{ 
                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                      fontFamily: 'Crimson Text, Georgia, serif'
@@ -430,7 +342,7 @@ const InvPreview = React.memo(() => {
                 {/* Message d'invitation personnalisé */}
               <div className="mb-6 sm:mb-8 md:mb-10 text-center animate-fade-in-up"
                    style={{ animation: 'fadeInUp 3s ease-out' }}>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-white italic leading-relaxed mb-4 sm:mb-5 md:mb-6 drop-shadow-2xl max-w-2xl mx-auto animate-typewriter"
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white italic leading-relaxed mb-4 sm:mb-5 md:mb-6 drop-shadow-2xl max-w-3xl mx-auto animate-typewriter font-medium"
                    style={{ 
                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                      animation: 'typewriter 4s steps(40, end)'
@@ -444,7 +356,7 @@ const InvPreview = React.memo(() => {
                 {/* Programme des cérémonies */}
               <div className="mb-6 sm:mb-8 md:mb-10 text-center animate-fade-in-up"
                    style={{ animation: 'fadeInUp 4s ease-out' }}>
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white mb-4 sm:mb-6 drop-shadow-2xl animate-slide-in-left"
+                <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6 drop-shadow-2xl animate-slide-in-left"
                     style={{ 
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                       animation: 'slideInLeft 4.5s ease-out'
@@ -457,18 +369,18 @@ const InvPreview = React.memo(() => {
                        style={{ animation: 'slideInLeft 5s ease-out' }}>
                     <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
                       <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      <h4 className="text-sm sm:text-base md:text-lg font-bold text-white drop-shadow-lg"
-                          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingTexts?.program.ceremonyTitle}</h4>
+                                            <h4 className="text-base sm:text-lg md:text-xl font-bold text-white drop-shadow-lg"
+                           style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingTexts?.program.ceremonyTitle}</h4>
                     </div>
                     <div className="space-y-1 sm:space-y-2">
-                      <p className="text-xs sm:text-sm md:text-base text-white drop-shadow-lg"
+                      <p className="text-sm sm:text-base md:text-lg text-white drop-shadow-lg font-semibold"
                          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.ceremony.time}</p>
                       <div className="flex items-center justify-center space-x-2 text-white">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                        <span className="text-xs sm:text-sm drop-shadow-lg"
+                        <span className="text-sm sm:text-base drop-shadow-lg font-medium"
                               style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.ceremony.venue}</span>
                       </div>
-                      <p className="text-xs text-yellow-100 drop-shadow-lg"
+                      <p className="text-sm text-yellow-100 drop-shadow-lg font-medium"
                          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.ceremony.address}</p>
                     </div>
                   </div>
@@ -478,47 +390,25 @@ const InvPreview = React.memo(() => {
                        style={{ animation: 'slideInRight 5.5s ease-out' }}>
                     <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
                       <Wine className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      <h4 className="text-sm sm:text-base md:text-lg font-bold text-white drop-shadow-lg"
-                          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingTexts?.program.receptionTitle}</h4>
+                                            <h4 className="text-base sm:text-lg md:text-xl font-bold text-white drop-shadow-lg"
+                           style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingTexts?.program.receptionTitle}</h4>
                     </div>
                     <div className="space-y-1 sm:space-y-2">
-                      <p className="text-xs sm:text-sm md:text-base text-white drop-shadow-lg"
+                      <p className="text-sm sm:text-base md:text-lg text-white drop-shadow-lg font-semibold"
                          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.reception.time}</p>
                       <div className="flex items-center justify-center space-x-2 text-white">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                        <span className="text-xs sm:text-sm drop-shadow-lg"
+                        <span className="text-sm sm:text-base drop-shadow-lg font-medium"
                               style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.reception.venue}</span>
                       </div>
-                      <p className="text-xs text-yellow-100 drop-shadow-lg"
+                      <p className="text-sm text-yellow-100 drop-shadow-lg font-medium"
                          style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.reception.address}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Bouton de génération d'image */}
-              <div className="text-center animate-fade-in-up"
-                   style={{ animation: 'fadeInUp 6s ease-out' }}>
-                <button
-                  onClick={handleGenerateImages}
-                  disabled={isGenerating || !weddingDetails || !guest}
-                  className="inline-flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-300 text-sm sm:text-base font-medium border border-white/30 hover:border-white/50 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 animate-pulse"
-                  style={{ animation: 'pulse 2s ease-in-out infinite' }}
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
-                      <span>Génération en cours...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                      <span>Télécharger l'invitation</span>
-                    </>
-                  )}
-                </button>
-
-              </div>
+              
             </div>
           </div>
         );
@@ -557,7 +447,7 @@ const InvPreview = React.memo(() => {
                     }}>
                   {weddingTexts?.cancellation.title}
                 </h2>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl text-white italic leading-relaxed mb-4 sm:mb-6 drop-shadow-lg animate-fade-in-up"
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white italic leading-relaxed mb-4 sm:mb-6 drop-shadow-lg animate-fade-in-up font-medium"
                    style={{ 
                      textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                      animation: 'fadeInUp 3.5s ease-out'
@@ -571,7 +461,7 @@ const InvPreview = React.memo(() => {
                     <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white drop-shadow-lg"
                         style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>Confirmation de présence</h3>
                   </div>
-                  <p className="text-xs sm:text-sm md:text-base lg:text-lg text-yellow-100 mb-4 sm:mb-6 drop-shadow-lg"
+                  <p className="text-sm sm:text-base md:text-lg lg:text-xl text-yellow-100 mb-4 sm:mb-6 drop-shadow-lg font-semibold"
                      style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                     {weddingTexts?.cancellation.timeLimit}
                   </p>
@@ -599,15 +489,15 @@ const InvPreview = React.memo(() => {
                 
                 {/* Informations de contact simples */}
                 <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/30">
-                  <p className="text-sm sm:text-base md:text-lg text-white mb-3 sm:mb-4 drop-shadow-lg"
+                  <p className="text-base sm:text-lg md:text-xl text-white mb-3 sm:mb-4 drop-shadow-lg font-semibold"
                      style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                     Contact : 
-                    <a href="tel:+243817173177" className="text-yellow-100 hover:text-yellow-200 transition-colors duration-300 ml-2"
+                    <a href="tel:+243817173177" className="text-yellow-100 hover:text-yellow-200 transition-colors duration-300 ml-2 font-bold"
                        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                       +243 817 173 177
                     </a>
                     <span className="text-white mx-2">|</span>
-                    <a href="tel:+243899372792" className="text-yellow-100 hover:text-yellow-200 transition-colors duration-300"
+                    <a href="tel:+243899372792" className="text-yellow-100 hover:text-yellow-200 transition-colors duration-300 font-bold"
                        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
                       +243 899 372 792
                     </a>

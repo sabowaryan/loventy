@@ -23,6 +23,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
 
   // Default templates to use when Supabase is not available
   const getDefaultTemplates = useCallback((): TemplateDetails[] => [
+    // FREE TEMPLATES
     {
       id: '1',
       name: 'Élégance Dorée',
@@ -33,8 +34,8 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       category_icon: 'Crown',
       is_premium: false,
       is_active: true,
-      preview_image_url: 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Design intemporel avec touches dorées',
+      preview_image_url: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=800&q=80',
+      description: 'Design intemporel avec touches dorées et élégance raffinée',
       color_palette: { primary: '#D4A5A5', secondary: '#F5E6D3', accent: '#E8B86D' },
       font_pairs: {
         heading: 'Playfair Display',
@@ -48,45 +49,14 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         animation: 'fade',
         showRSVP: true
       },
-      usage_count: 0,
-      unique_users: 0,
-      total_views: 0,
+      usage_count: 1247,
+      unique_users: 892,
+      total_views: 3421,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     },
     {
       id: '2',
-      name: 'Jardin Secret',
-      slug: 'jardin-secret',
-      category_id: 'nature',
-      category_name: 'Nature',
-      category_slug: 'nature',
-      category_icon: 'Leaf',
-      is_premium: true,
-      is_active: true,
-      preview_image_url: 'https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Motifs floraux délicats et verdure',
-      color_palette: { primary: '#C5D2C2', secondary: '#E8F5E8', accent: '#7FB069' },
-      font_pairs: {
-        heading: 'Cormorant Garamond',
-        body: 'Montserrat'
-      },
-      layout_options: {
-        layouts: ['vertical']
-      },
-      default_settings: {
-        layout: 'vertical',
-        animation: 'slide',
-        showRSVP: true
-      },
-      usage_count: 0,
-      unique_users: 0,
-      total_views: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: '3',
       name: 'Minimaliste Chic',
       slug: 'minimaliste-chic',
       category_id: 'modern',
@@ -95,9 +65,9 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       category_icon: 'Zap',
       is_premium: false,
       is_active: true,
-      preview_image_url: 'https://images.pexels.com/photos/1323712/pexels-photo-1323712.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Simplicité raffinée et moderne',
-      color_palette: { primary: '#131837', secondary: '#F8F9FA', accent: '#6C757D' },
+      preview_image_url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=800&q=80',
+      description: 'Simplicité raffinée et design contemporain épuré',
+      color_palette: { primary: '#2C3E50', secondary: '#ECF0F1', accent: '#3498DB' },
       font_pairs: {
         heading: 'Raleway',
         body: 'Raleway'
@@ -107,31 +77,126 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       },
       default_settings: {
         layout: 'horizontal',
-        animation: 'none',
-        showRSVP: false
+        animation: 'slide',
+        showRSVP: true
       },
-      usage_count: 0,
-      unique_users: 0,
-      total_views: 0,
+      usage_count: 956,
+      unique_users: 743,
+      total_views: 2834,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '3',
+      name: 'Bohème Naturel',
+      slug: 'boheme-naturel',
+      category_id: 'nature',
+      category_name: 'Nature',
+      category_slug: 'nature',
+      category_icon: 'Leaf',
+      is_premium: false,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?auto=format&fit=crop&w=800&q=80',
+      description: 'Inspiration naturelle avec touches bohèmes et organiques',
+      color_palette: { primary: '#8B7355', secondary: '#F4F1E8', accent: '#A0522D' },
+      font_pairs: {
+        heading: 'Libre Baskerville',
+        body: 'Open Sans'
+      },
+      layout_options: {
+        layouts: ['vertical']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'fade',
+        showRSVP: true
+      },
+      usage_count: 678,
+      unique_users: 521,
+      total_views: 1923,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     },
     {
       id: '4',
-      name: 'Romance Vintage',
-      slug: 'romance-vintage',
+      name: 'Simplicité Pure',
+      slug: 'simplicite-pure',
+      category_id: 'modern',
+      category_name: 'Moderne',
+      category_slug: 'modern',
+      category_icon: 'Zap',
+      is_premium: false,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1544531586-fbd96ceaff1c?auto=format&fit=crop&w=800&q=80',
+      description: 'Design ultra-minimaliste pour un mariage moderne et épuré',
+      color_palette: { primary: '#34495E', secondary: '#FFFFFF', accent: '#E74C3C' },
+      font_pairs: {
+        heading: 'Poppins',
+        body: 'Poppins'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'none',
+        showRSVP: false
+      },
+      usage_count: 432,
+      unique_users: 298,
+      total_views: 1156,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+
+    // PREMIUM TEMPLATES
+    {
+      id: '5',
+      name: 'Jardin Secret Premium',
+      slug: 'jardin-secret-premium',
+      category_id: 'nature',
+      category_name: 'Nature',
+      category_slug: 'nature',
+      category_icon: 'Leaf',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?auto=format&fit=crop&w=800&q=80',
+      description: 'Motifs floraux délicats avec animations sophistiquées et éléments interactifs',
+      color_palette: { primary: '#2E8B57', secondary: '#F0FFF0', accent: '#228B22' },
+      font_pairs: {
+        heading: 'Cormorant Garamond',
+        body: 'Montserrat'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'slide',
+        showRSVP: true
+      },
+      usage_count: 1834,
+      unique_users: 1245,
+      total_views: 5672,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '6',
+      name: 'Romance Vintage Luxe',
+      slug: 'romance-vintage-luxe',
       category_id: 'classic',
       category_name: 'Classique',
       category_slug: 'classic',
       category_icon: 'Crown',
       is_premium: true,
       is_active: true,
-      preview_image_url: 'https://images.pexels.com/photos/1509534/pexels-photo-1509534.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Charme rétro et romantique',
-      color_palette: { primary: '#E16939', secondary: '#FDF2E9', accent: '#D4A574' },
+      preview_image_url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80',
+      description: 'Charme rétro avec ornements dorés et typographie élégante',
+      color_palette: { primary: '#8B4513', secondary: '#FDF5E6', accent: '#DAA520' },
       font_pairs: {
         heading: 'Dancing Script',
-        body: 'Roboto'
+        body: 'Crimson Pro'
       },
       layout_options: {
         layouts: ['vertical']
@@ -141,9 +206,195 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         animation: 'zoom',
         showRSVP: true
       },
-      usage_count: 0,
-      unique_users: 0,
-      total_views: 0,
+      usage_count: 2156,
+      unique_users: 1678,
+      total_views: 6789,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '7',
+      name: 'Majesté Royale',
+      slug: 'majeste-royale',
+      category_id: 'luxury',
+      category_name: 'Luxe',
+      category_slug: 'luxury',
+      category_icon: 'Diamond',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
+      description: 'Design luxueux avec dorures, motifs baroques et finitions premium',
+      color_palette: { primary: '#4B0082', secondary: '#F8F8FF', accent: '#FFD700' },
+      font_pairs: {
+        heading: 'Cinzel',
+        body: 'Lato'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'fade',
+        showRSVP: true
+      },
+      usage_count: 987,
+      unique_users: 743,
+      total_views: 3421,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '8',
+      name: 'Océan Mystique',
+      slug: 'ocean-mystique',
+      category_id: 'nature',
+      category_name: 'Nature',
+      category_slug: 'nature',
+      category_icon: 'Leaf',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=800&q=80',
+      description: 'Inspiré par les profondeurs marines avec effets aquatiques animés',
+      color_palette: { primary: '#008B8B', secondary: '#F0FFFF', accent: '#20B2AA' },
+      font_pairs: {
+        heading: 'Merriweather',
+        body: 'Merriweather Sans'
+      },
+      layout_options: {
+        layouts: ['vertical']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'slide',
+        showRSVP: true
+      },
+      usage_count: 1456,
+      unique_users: 1123,
+      total_views: 4567,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '9',
+      name: 'Art Déco Prestige',
+      slug: 'art-deco-prestige',
+      category_id: 'classic',
+      category_name: 'Classique',
+      category_slug: 'classic',
+      category_icon: 'Crown',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+      description: 'Style Art Déco avec géométries sophistiquées et métaux précieux',
+      color_palette: { primary: '#2F4F4F', secondary: '#F5F5DC', accent: '#B8860B' },
+      font_pairs: {
+        heading: 'Bodoni Moda',
+        body: 'Karla'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'horizontal',
+        animation: 'zoom',
+        showRSVP: true
+      },
+      usage_count: 1789,
+      unique_users: 1334,
+      total_views: 5234,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '10',
+      name: 'Constellation Étoilée',
+      slug: 'constellation-etoilee',
+      category_id: 'modern',
+      category_name: 'Moderne',
+      category_slug: 'modern',
+      category_icon: 'Zap',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=800&q=80',
+      description: 'Design cosmique avec animations d\'étoiles et effets de particules',
+      color_palette: { primary: '#191970', secondary: '#F8F8FF', accent: '#FFD700' },
+      font_pairs: {
+        heading: 'Josefin Sans',
+        body: 'Josefin Sans'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'fade',
+        showRSVP: true
+      },
+      usage_count: 2341,
+      unique_users: 1876,
+      total_views: 7123,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '11',
+      name: 'Jardin Japonais Zen',
+      slug: 'jardin-japonais-zen',
+      category_id: 'nature',
+      category_name: 'Nature',
+      category_slug: 'nature',
+      category_icon: 'Leaf',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=80',
+      description: 'Sérénité japonaise avec bambous, cerisiers et calligraphie zen',
+      color_palette: { primary: '#556B2F', secondary: '#F5F5DC', accent: '#DC143C' },
+      font_pairs: {
+        heading: 'Great Vibes',
+        body: 'Lato'
+      },
+      layout_options: {
+        layouts: ['vertical']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'slide',
+        showRSVP: true
+      },
+      usage_count: 1567,
+      unique_users: 1234,
+      total_views: 4891,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '12',
+      name: 'Cristal de Bohème',
+      slug: 'cristal-de-boheme',
+      category_id: 'luxury',
+      category_name: 'Luxe',
+      category_slug: 'luxury',
+      category_icon: 'Diamond',
+      is_premium: true,
+      is_active: true,
+      preview_image_url: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80',
+      description: 'Luxe bohème avec cristaux, plumes et textures précieuses',
+      color_palette: { primary: '#8B008B', secondary: '#FFF8DC', accent: '#FF69B4' },
+      font_pairs: {
+        heading: 'Tangerine',
+        body: 'Montserrat'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'zoom',
+        showRSVP: true
+      },
+      usage_count: 1123,
+      unique_users: 876,
+      total_views: 3456,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -181,6 +432,17 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       description: 'Inspirés par la nature et les éléments organiques',
       is_active: true,
       display_order: 3,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'luxury',
+      name: 'Luxe',
+      slug: 'luxury',
+      icon: 'Diamond',
+      description: 'Designs premium avec finitions luxueuses et éléments sophistiqués',
+      is_active: true,
+      display_order: 4,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }

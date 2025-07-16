@@ -107,8 +107,14 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
     setError(null);
 
     try {
-      // Generate a unique file name
-      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      // Generate a safe file name by removing special characters and spaces
+      const sanitizedFileName = file.name
+        .replace(/[^a-zA-Z0-9.-]/g, '-') // Replace special characters with hyphens
+        .replace(/--+/g, '-') // Replace multiple hyphens with single hyphen
+        .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+        .toLowerCase();
+      
+      const fileName = `${Date.now()}-${sanitizedFileName}`;
       const filePath = `${user.id}/${invitationId}/${sectionId}-${imageType}/${fileName}`;
       
       // Upload the file to Supabase Storage

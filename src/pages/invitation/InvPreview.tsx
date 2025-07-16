@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight, User, Hash, CheckCircle, Download, Printer } from 'lucide-react';
+import { Heart, MapPin, Clock, Wine, MessageCircle, X, ChevronLeft, ChevronRight, User, Hash, CheckCircle,Gavel } from 'lucide-react';
 import { useDatabase } from '../../hooks/useDatabase';
 import { WeddingDetails, GuestInfo, DrinkOptions, WeddingTexts } from '../../data/weddingData';
 import LoventyLogo from '../../components/LoventyLogo';
 import SeoHead from '../../components/SeoHead';
 import { Guest, WeddingData } from '../../lib/database';
-import html2canvas from 'html2canvas';
-import JSZip from 'jszip';
 
 // Import des images de fond
 import fond1 from '../../assets/wedding/fond/fond1.jpg';
@@ -16,6 +14,7 @@ import fond3 from '../../assets/wedding/fond/fond3.jpg';
 import fond4 from '../../assets/wedding/fond/fond4.jpg';
 import fond5 from '../../assets/wedding/fond/fond5.jpg';
 import fond6 from '../../assets/wedding/fond/fond6.jpg';
+import saveImage from '../../assets/wedding/fond/save.png';
 
 // Construction dynamique des sections à partir des données chargées
 const buildWeddingSections = (weddingDetails: WeddingDetails, weddingTexts: WeddingTexts) => {
@@ -39,7 +38,6 @@ const InvPreview = React.memo(() => {
   const [guestFound, setGuestFound] = useState<boolean | null>(null);
   const { loadWeddingData, fetchGuests, saveGuestPreferences, updateExistingGuest, saveGuestMessage } = useDatabase();
   const [loading, setLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [sectionReady, setSectionReady] = useState(false);
@@ -130,138 +128,425 @@ const InvPreview = React.memo(() => {
     console.warn('Erreur de chargement de l\'image de fond, utilisation du fallback');
   }, []);
 
-  // Fonction pour générer et télécharger une image combinée des sections
-  const handleGenerateImages = useCallback(async () => {
-    if (!weddingDetails || !guest) {
-      setToast('Données manquantes pour la génération');
-      setTimeout(() => setToast(null), 2000);
-      return;
+  // Fonction pour rendre dynamiquement la section courante
+  const renderSection = useCallback((index: number) => {
+    // Vérifier que weddingSections est disponible
+    if (!weddingSections || !weddingSections.length) {
+      return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement...</p>
+          </div>
+        </div>
+      );
     }
-
-    setIsGenerating(true);
-    setToast('Génération de l\'image en cours...');
-
-    try {
-      const sectionsToCapture = [0, 1, 2];
-      const currentSectionBackup = currentSection;
-      const canvases: HTMLCanvasElement[] = [];
-
-      // Capturer chaque section
-      for (let i = 0; i < sectionsToCapture.length; i++) {
-        const sectionIndex = sectionsToCapture[i];
-        setSectionReady(false);
-        setCurrentSection(sectionIndex);
-        // Attendre que la section soit prête (max 2s)
-        let tries = 0;
-        while (!sectionReady && tries < 40) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-          tries++;
-        }
-        const sectionElement = sectionRefs.current[sectionIndex];
-        if (sectionElement) {
-          const canvas = await html2canvas(sectionElement, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: null,
-            width: sectionElement.scrollWidth,
-            height: sectionElement.scrollHeight,
-            scrollX: 0,
-            scrollY: 0
-          });
-          canvases.push(canvas);
-        } else {
-          setToast(`Erreur : la section ${sectionIndex + 1} n'a pas pu être capturée.`);
-          setIsGenerating(false);
-          return;
-        }
-      }
-
-      setCurrentSection(currentSectionBackup);
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Créer le canvas combiné
-      if (canvases.length > 0) {
-        const maxWidth = Math.max(...canvases.map(canvas => canvas.width));
-        const totalHeight = canvases.reduce((sum, canvas) => sum + canvas.height, 0);
-        
-        const combinedCanvas = document.createElement('canvas');
-        const ctx = combinedCanvas.getContext('2d');
-        
-        if (ctx) {
-          combinedCanvas.width = maxWidth;
-          combinedCanvas.height = totalHeight;
-          
-          // Remplir le fond avec un dégradé élégant
-          const gradient = ctx.createLinearGradient(0, 0, 0, totalHeight);
-          gradient.addColorStop(0, '#fdf2f8'); // rose-50
-          gradient.addColorStop(1, '#fce7f3'); // rose-100
-          ctx.fillStyle = gradient;
-          ctx.fillRect(0, 0, maxWidth, totalHeight);
-          
-          // Dessiner chaque section
-          let currentY = 0;
-          canvases.forEach((canvas, index) => {
-            const x = (maxWidth - canvas.width) / 2; // Centrer horizontalement
-            ctx.drawImage(canvas, x, currentY);
-            
-            // Ajouter un séparateur élégant entre les sections (sauf après la dernière)
-            if (index < canvases.length - 1) {
-              currentY += canvas.height;
-              const separatorHeight = 40;
-              
-              // Dégradé de séparation
-              const separatorGradient = ctx.createLinearGradient(0, currentY, 0, currentY + separatorHeight);
-              separatorGradient.addColorStop(0, 'rgba(244, 114, 182, 0.1)'); // rose-400 avec transparence
-              separatorGradient.addColorStop(0.5, 'rgba(244, 114, 182, 0.2)');
-              separatorGradient.addColorStop(1, 'rgba(244, 114, 182, 0.1)');
-              
-              ctx.fillStyle = separatorGradient;
-              ctx.fillRect(0, currentY, maxWidth, separatorHeight);
-              
-              // Ligne décorative
-              ctx.strokeStyle = 'rgba(244, 114, 182, 0.3)';
-              ctx.lineWidth = 2;
-              ctx.setLineDash([10, 5]);
-              ctx.beginPath();
-              ctx.moveTo(maxWidth * 0.2, currentY + separatorHeight / 2);
-              ctx.lineTo(maxWidth * 0.8, currentY + separatorHeight / 2);
-              ctx.stroke();
-              ctx.setLineDash([]);
-              
-              currentY += separatorHeight;
-            } else {
-              currentY += canvas.height;
-            }
-          });
-          
-          // Convertir en blob et télécharger
-          combinedCanvas.toBlob((blob) => {
-            if (blob) {
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = `Invitation_${weddingDetails.groomName}_${weddingDetails.brideName}.png`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-              
-              setToast('Image combinée générée et téléchargée !');
-              setTimeout(() => setToast(null), 3000);
-            }
-          }, 'image/png', 0.9);
-        }
-      }
-
-    } catch (error) {
-      console.error('Erreur lors de la génération de l\'image:', error);
-      setToast('Erreur lors de la génération de l\'image');
-      setTimeout(() => setToast(null), 3000);
-    } finally {
-      setIsGenerating(false);
+    
+    // Ajout d'un guard pour les sections qui nécessitent guest
+    if ((index === 1 || index === 2) && !guest) return null;
+    
+    // Vérifier que l'index est valide
+    if (index < 0 || index >= weddingSections.length) {
+      return (
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600">Section non trouvée</p>
+          </div>
+        </div>
+      );
     }
-  }, [weddingDetails, guest, currentSection]);
+    
+    switch (index) {
+      case 0:
+        return (
+          <div 
+            ref={(el) => sectionRefs.current[0] = el}
+            className="relative overflow-hidden w-full animate-fade-in"
+            style={{
+              backgroundImage: `url(${weddingDetails?.couplePhoto})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              minHeight: '100vh',
+              height: 'auto',
+              aspectRatio: '16/9',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'fadeIn 1.5s ease-out'
+            }}
+          >
+            {/* Plus d'overlay ni de carte */}
+            <div className="relative z-10 flex flex-col items-center justify-start p-4 w-full h-full pt-8 sm:pt-12 md:pt-16 lg:pt-20">
+                            {/* Noms des mariés - en haut de la section */}
+              <div className="mb-8 sm:mb-12 md:mb-16 lg:mb-20 animate-slide-down"
+                   style={{ animation: 'slideDown 2s ease-out' }}>
+                <div className="flex items-center justify-center space-x-2 sm:space-x-4 md:space-x-6 lg:space-x-8">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-white drop-shadow-2xl text-center animate-slide-in-left" 
+                      style={{ 
+                        fontFamily: 'Playfair Display, Georgia, serif',
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.8), -2px -2px 4px rgba(0,0,0,0.8)',
+                        animation: 'slideInLeft 2.5s ease-out'
+                      }}>
+                    {weddingDetails?.groomName}
+                  </h1>
+                  {/* Symbole "&" centré */}
+                  <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-yellow-100 font-normal drop-shadow-2xl animate-pulse" 
+                        style={{ 
+                          fontFamily: 'Playfair Display, Georgia, serif',
+                          textShadow: '2px 2px 4px rgba(0,0,0,0.8), -2px -2px 4px rgba(0,0,0,0.8)',
+                          animation: 'pulse 3s ease-in-out infinite'
+                        }}>
+                    &
+                  </span>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-white drop-shadow-2xl text-center animate-slide-in-right" 
+                      style={{ 
+                        fontFamily: 'Playfair Display, Georgia, serif',
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.8), -2px -2px 4px rgba(0,0,0,0.8)',
+                        animation: 'slideInRight 2.5s ease-out'
+                      }}>
+                    {weddingDetails?.brideName}
+                  </h1>
+                </div>
+                {/* Ligne décorative */}
+                <div className="flex items-center justify-center space-x-2 sm:space-x-4 mt-4 sm:mt-6 md:mt-8 animate-expand"
+                     style={{ animation: 'expand 3s ease-out' }}>
+                  <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-yellow-100 to-transparent"></div>
+                  <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-100 fill-yellow-100 drop-shadow-2xl animate-beat" 
+                         style={{ animation: 'beat 2s ease-in-out infinite' }} />
+                  <div className="w-8 sm:w-12 h-px bg-gradient-to-r from-transparent via-yellow-100 to-transparent"></div>
+                </div>
+                </div>
+              
+                            {/* Image de décoration save.png centrée */}
+              <div className="flex items-center justify-center mb-4 sm:mb-6 md:mb-8 lg:mb-10 animate-float"
+                   style={{ animation: 'float 4s ease-in-out infinite' }}>
+                <img 
+                  src={saveImage}
+                  alt="Décoration"
+                  className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 xl:w-64 xl:h-64 2xl:w-72 2xl:h-72 object-contain drop-shadow-2xl animate-rotate-slow"
+                      style={{
+                    filter: 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(45deg)', // Rend l'image jaune doré
+                    opacity: 0.95,
+                    animation: 'rotateSlow 20s linear infinite'
+                      }}
+                    />
+                  </div>
+              
+              {/* Contenu principal centré */}
+              <div className="flex flex-col items-center justify-center flex-1 pb-4 sm:pb-6 md:pb-8 lg:pb-10 animate-fade-in-up"
+                   style={{ animation: 'fadeInUp 3s ease-out' }}>
+                {/* Date et détails */}
+                <div className="space-y-3 sm:space-y-4 md:space-y-6 text-center">
+                  <div className="text-white text-base sm:text-lg md:text-xl font-semibold drop-shadow-2xl" 
+                       style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                    {weddingDetails?.weddingDate.month}
+                  </div>
+                  <div className="flex items-center justify-center space-x-6 sm:space-x-8 md:space-x-12 lg:space-x-16">
+                    <div className="text-center">
+                      <div className="text-sm sm:text-base text-yellow-100 mb-2 drop-shadow-2xl font-medium" 
+                           style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                        {weddingDetails?.weddingDate.dayOfWeek}
+                      </div>
+                      <div className="w-12 sm:w-16 h-px bg-yellow-100/80"></div>
+                    </div>
+                    <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-white drop-shadow-2xl" 
+                         style={{ 
+                           fontFamily: 'Playfair Display, Georgia, serif',
+                           textShadow: '3px 3px 6px rgba(0,0,0,0.9), -3px -3px 6px rgba(0,0,0,0.9)'
+                         }}>
+                      {weddingDetails?.weddingDate.day}
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm sm:text-base text-yellow-100 mb-2 drop-shadow-2xl font-medium" 
+                           style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                        {weddingDetails?.weddingDate.time}
+                      </div>
+                      <div className="w-12 sm:w-16 h-px bg-yellow-100/80"></div>
+                    </div>
+                  </div>
+                  <div className="text-white text-base sm:text-lg md:text-xl font-semibold drop-shadow-2xl" 
+                       style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                    {weddingDetails?.weddingDate.year}
+                  </div>
+                </div>
+                {/* Décoration florale */}
+                <div className="mt-6 sm:mt-8 md:mt-10 flex items-center justify-center space-x-3 animate-bounce"
+                     style={{ animation: 'bounce 2s ease-in-out infinite' }}>
+                  <div className="w-8 sm:w-12 h-px bg-yellow-100/80 animate-pulse"></div>
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-yellow-100 rounded-full drop-shadow-lg animate-ping"></div>
+                  <div className="w-8 sm:w-12 h-px bg-yellow-100/80 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 1:
+        return (
+          <div 
+            ref={(el) => sectionRefs.current[1] = el}
+            className="relative overflow-hidden animate-fade-in"
+            style={{
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'fadeIn 1.5s ease-out'
+            }}
+          >
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/30"></div>
+            {/* Plus d'overlay ni de carte */}
+                        <div className="relative z-10 flex flex-col items-center justify-center p-4 w-full h-full">
+              {/* Contenu principal directement sur l'image */}
+              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-600 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8 animate-expand"
+                   style={{ animation: 'expand 2s ease-out' }}></div>
+                
+                {/* Nom de l'invité avec table */}
+              <div className="mb-6 sm:mb-8 md:mb-10 text-center animate-slide-down"
+                   style={{ animation: 'slideDown 2.5s ease-out' }}>
+                <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light text-white mb-3 sm:mb-4 md:mb-5 italic tracking-wide drop-shadow-2xl" 
+                      style={{ 
+                        fontFamily: 'Crimson Text, Georgia, serif',
+                        fontStyle: 'italic',
+                        fontWeight: 300,
+                        letterSpacing: '0.08em',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8), -2px -2px 4px rgba(0,0,0,0.8)',
+                        transform: 'skew(-2deg)',
+                        transformOrigin: 'center'
+                      }}>
+                      Cher(e) {guest?.name ?? ''}
+                  </h3>
+                {/* Information de table directement sous le nom */}
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white drop-shadow-2xl font-semibold mb-3 sm:mb-4 md:mb-5"
+                   style={{ 
+                     textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                     fontFamily: 'Crimson Text, Georgia, serif'
+                   }}>
+                  Table : <span className="font-bold text-yellow-100" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>{guest?.table_name ?? ''}</span>
+                </p>
+                <div className="flex items-center justify-center space-x-2 sm:space-x-3 md:space-x-4">
+                  <div className="w-6 sm:w-8 md:w-12 h-px bg-gradient-to-r from-transparent via-rose-600 to-transparent"></div>
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-3 md:h-3 bg-rose-600 rounded-full drop-shadow-lg"></div>
+                  <div className="w-6 sm:w-8 md:w-12 h-px bg-gradient-to-r from-transparent via-rose-600 to-transparent"></div>
+                  </div>
+                </div>
+                
+                {/* Message d'invitation personnalisé */}
+              <div className="mb-6 sm:mb-8 md:mb-10 text-center animate-fade-in-up"
+                   style={{ animation: 'fadeInUp 3s ease-out' }}>
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white italic leading-relaxed mb-4 sm:mb-5 md:mb-6 drop-shadow-2xl max-w-3xl mx-auto animate-typewriter font-medium"
+                   style={{ 
+                     textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                     animation: 'typewriter 4s steps(40, end)'
+                   }}>
+                    {weddingTexts?.invitation.loveQuote}
+                  </p>
+                <div className="w-12 sm:w-16 h-px bg-rose-600/80 mx-auto animate-expand"
+                     style={{ animation: 'expand 3.5s ease-out' }}></div>
+                </div>
+
+                {/* Programme des cérémonies */}
+              <div className="mb-6 sm:mb-8 md:mb-10 text-center animate-fade-in-up"
+                   style={{ animation: 'fadeInUp 4s ease-out' }}>
+                <h3 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6 drop-shadow-2xl animate-slide-in-left"
+                    style={{ 
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      animation: 'slideInLeft 4.5s ease-out'
+                    }}>
+                  {weddingTexts?.program.title}
+                </h3>
+                <div className="space-y-4 sm:space-y-6 max-w-2xl mx-auto">
+
+              {/* Mariage civil */}
+<div className="p-3 sm:p-4 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/30 animate-slide-in-up"
+     style={{ animation: 'slideInUp 5.25s ease-out' }}>
+  <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+    <Gavel className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+    <h4 className="text-base sm:text-lg md:text-xl font-bold text-white drop-shadow-lg"
+        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+      Mariage civil
+    </h4>
+  </div>
+  <div className="space-y-1 sm:space-y-2">
+    <p className="text-sm sm:text-base md:text-lg text-white drop-shadow-lg font-semibold"
+       style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+      10h00
+    </p>
+    <div className="flex items-center justify-center space-x-2 text-white">
+      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+      <span className="text-sm sm:text-base drop-shadow-lg font-medium"
+            style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+        Commune de Ngaliema
+      </span>
+    </div>
+    <p className="text-sm text-yellow-100 drop-shadow-lg font-medium"
+       style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+      Kinshasa, RDC
+    </p>
+  </div>
+</div>
+ 
+
+ 
+
+
+   
+                 {/* Cérémonie */}
+                  <div className="p-3 sm:p-4 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/30 animate-slide-in-left"
+                       style={{ animation: 'slideInLeft 5s ease-out' }}>
+                    <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+                      <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                            <h4 className="text-base sm:text-lg md:text-xl font-bold text-white drop-shadow-lg"
+                           style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingTexts?.program.ceremonyTitle}</h4>
+                    </div>
+                    <div className="space-y-1 sm:space-y-2">
+                      <p className="text-sm sm:text-base md:text-lg text-white drop-shadow-lg font-semibold"
+                         style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.ceremony.time}</p>
+                      <div className="flex items-center justify-center space-x-2 text-white">
+                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                        <span className="text-sm sm:text-base drop-shadow-lg font-medium"
+                              style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.ceremony.venue}</span>
+                      </div>
+                      <p className="text-sm text-yellow-100 drop-shadow-lg font-medium"
+                         style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.ceremony.address}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Réception */}
+                  <div className="p-3 sm:p-4 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/30 animate-slide-in-right"
+                       style={{ animation: 'slideInRight 5.5s ease-out' }}>
+                    <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
+                      <Wine className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                                            <h4 className="text-base sm:text-lg md:text-xl font-bold text-white drop-shadow-lg"
+                           style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingTexts?.program.receptionTitle}</h4>
+                    </div>
+                    <div className="space-y-1 sm:space-y-2">
+                      <p className="text-sm sm:text-base md:text-lg text-white drop-shadow-lg font-semibold"
+                         style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.reception.time}</p>
+                      <div className="flex items-center justify-center space-x-2 text-white">
+                        <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                        <span className="text-sm sm:text-base drop-shadow-lg font-medium"
+                              style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.reception.venue}</span>
+                      </div>
+                      <p className="text-sm text-yellow-100 drop-shadow-lg font-medium"
+                         style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{weddingDetails?.reception.address}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              
+            </div>
+          </div>
+        );
+
+      
+      case 5:
+        return (
+          <div 
+            className="relative overflow-hidden animate-fade-in"
+            style={{
+              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              width: '100%',
+              height: '100%',
+              minHeight: '100vh',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'fadeIn 1.5s ease-out'
+            }}
+          >
+            {/* Overlay pour améliorer la lisibilité */}
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 flex items-center justify-center p-4 w-full">
+              <div className="bg-white/20 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-2xl max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl w-full text-center border border-white/30 animate-slide-up"
+                   style={{ animation: 'slideUp 2s ease-out' }}>
+                <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-rose-600 to-transparent mx-auto mb-4 sm:mb-6 md:mb-8 animate-expand"
+                     style={{ animation: 'expand 2.5s ease-out' }}></div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 md:mb-8 drop-shadow-2xl animate-fade-in"
+                    style={{ 
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      animation: 'fadeIn 3s ease-out'
+                    }}>
+                  {weddingTexts?.cancellation.title}
+                </h2>
+                <p className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-white italic leading-relaxed mb-4 sm:mb-6 drop-shadow-lg animate-fade-in-up font-medium"
+                   style={{ 
+                     textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                     animation: 'fadeInUp 3.5s ease-out'
+                   }}>
+                  {weddingTexts?.cancellation.description}
+                </p>
+                <div className="p-3 sm:p-4 md:p-6 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl md:rounded-2xl border border-white/30 shadow-lg animate-slide-up"
+                     style={{ animation: 'slideUp 4s ease-out' }}>
+                  <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                    <X className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+                    <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white drop-shadow-lg"
+                        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>Confirmation de présence</h3>
+                  </div>
+                  <p className="text-sm sm:text-base md:text-lg lg:text-xl text-yellow-100 mb-4 sm:mb-6 drop-shadow-lg font-semibold"
+                     style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                    {weddingTexts?.cancellation.timeLimit}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                    <button
+                      className="px-4 sm:px-6 py-2 sm:py-3 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-300 text-sm sm:text-base font-medium border border-white/30 hover:border-white/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transform hover:scale-105 shadow-lg animate-bounce"
+                      style={{ animation: 'bounce 2s ease-in-out infinite' }}
+                      onClick={() => handleRsvp('confirmed')}
+                      disabled={!guest || guest?.rsvp_status === 'confirmed'}
+                    >
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>Confirmer ma présence</span>
+                    </button>
+                    <button
+                      className="px-4 sm:px-6 py-2 sm:py-3 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-300 text-sm sm:text-base font-medium border border-white/30 hover:border-white/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transform hover:scale-105 shadow-lg animate-pulse"
+                      style={{ animation: 'pulse 2s ease-in-out infinite' }}
+                      onClick={() => handleRsvp('cancelled')}
+                      disabled={!guest || guest?.rsvp_status === 'cancelled'}
+                    >
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <span>Annuler ma venue</span>
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Informations de contact simples */}
+                <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/30">
+                  <p className="text-base sm:text-lg md:text-xl text-white mb-3 sm:mb-4 drop-shadow-lg font-semibold"
+                     style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                    Contact : 
+                    <a href="tel:+243817173177" className="text-yellow-100 hover:text-yellow-200 transition-colors duration-300 ml-2 font-bold"
+                       style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                      +243 817 173 177
+                    </a>
+                    <span className="text-white mx-2">|</span>
+                    <a href="tel:+243899372792" className="text-yellow-100 hover:text-yellow-200 transition-colors duration-300 font-bold"
+                       style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>
+                      +243 899 372 792
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  }, [weddingDetails, weddingTexts, guest, weddingSections, alcoholicDrinks, nonAlcoholicDrinks, selectedAlcoholic, selectedNonAlcoholic, guestbookMessage, handleSendGuestbook, handleSavePreferences, handleRsvp, handleBackgroundImageError]);
 
   // Charger les données de l'invitation et de l'invité
   useEffect(() => {
@@ -341,67 +626,6 @@ const InvPreview = React.memo(() => {
     setCurrentSection(prev => (prev - 1 + weddingSections.length) % weddingSections.length);
   }, [weddingSections]);
 
-  // Gestion du swipe mobile avec throttling
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    let startX = 0;
-    let endX = 0;
-    let isSwiping = false;
-    let isThrottled = false;
-    let hasMoved = false;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      if (isThrottled) return;
-      startX = e.touches[0].clientX;
-      endX = startX;
-      isSwiping = true;
-      hasMoved = false;
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isSwiping || isThrottled) return;
-      endX = e.touches[0].clientX;
-      
-      // Vérifier s'il y a eu un mouvement significatif
-      const diff = Math.abs(endX - startX);
-      if (diff > 5) {
-        hasMoved = true;
-      }
-    };
-    
-    const handleTouchEnd = () => {
-      if (!isSwiping || isThrottled) return;
-      isSwiping = false;
-      
-      const diff = startX - endX;
-      const threshold = 50;
-      
-      // S'assurer qu'il y a eu un mouvement ET que le seuil est atteint
-      if (hasMoved && Math.abs(diff) > threshold) {
-        isThrottled = true;
-        setTimeout(() => { isThrottled = false; }, 300);
-        
-        if (diff > 0) {
-          nextSection();
-        } else {
-          prevSection();
-        }
-      }
-    };
-    
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: true });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-    
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [nextSection, prevSection]);
-
   const goToSection = useCallback((index: number) => {
     if (!weddingSections || !weddingSections.length) {
       console.warn('weddingSections non disponible pour la navigation');
@@ -472,103 +696,9 @@ const InvPreview = React.memo(() => {
     );
   }
 
-  // --- Place cette fonction juste avant le return principal du composant ---
-  const renderSection = useCallback((index: number) => {
-    // Vérifier que weddingSections est disponible
-    if (!weddingSections || !weddingSections.length) {
-      return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Chargement...</p>
-          </div>
-        </div>
-      );
-    }
-    // Ajout d'un guard pour les sections qui nécessitent guest
-    if ((index === 1 || index === 2) && !guest) return null;
-    // Vérifier que l'index est valide
-    if (index < 0 || index >= weddingSections.length) {
-      return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-gray-600">Section non trouvée</p>
-          </div>
-        </div>
-      );
-    }
-    switch (index) {
-      case 0:
-        return (
-          <div ref={(el) => { sectionRefs.current[0] = el; if (currentSection === 0 && el) setSectionReady(true); }}
-            className="relative overflow-hidden"
-            style={{
-              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              width: '100%',
-              height: '100%',
-              minHeight: '100vh',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {/* Place ici tout le JSX détaillé de la section 0 (Accueil) */}
-          </div>
-        );
-      case 1:
-        return (
-          <div ref={(el) => { sectionRefs.current[1] = el; if (currentSection === 1 && el) setSectionReady(true); }}
-            className="relative overflow-hidden"
-            style={{
-              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              width: '100%',
-              height: '100%',
-              minHeight: '100vh',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {/* Place ici tout le JSX détaillé de la section 1 (Invitation) */}
-          </div>
-        );
-      case 2:
-        return (
-          <div ref={(el) => { sectionRefs.current[2] = el; if (currentSection === 2 && el) setSectionReady(true); }}
-            className="relative overflow-hidden"
-            style={{
-              backgroundImage: `url(${weddingSections[index]?.backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              width: '100%',
-              height: '100%',
-              minHeight: '100vh',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {/* Place ici tout le JSX détaillé de la section 2 (Programme) */}
-          </div>
-        );
-      // ... Ajoute les autres cases si besoin ...
-      default:
-        return null;
-    }
-  }, [weddingSections, guest, currentSection, sectionRefs, sectionReady, setSectionReady]);
-
+  // Affichage vertical de toutes les sections
   return (
-    <div ref={containerRef} className="relative h-screen sm:h-auto sm:min-h-screen sm:overflow-y-auto">
+    <div ref={containerRef} className="relative min-h-screen sm:overflow-y-auto flex flex-col pb-24">
       {/* SEO Head avec titre et description dynamiques */}
       <SeoHead 
         overrides={{
@@ -579,42 +709,16 @@ const InvPreview = React.memo(() => {
           ogImageUrl: weddingDetails?.couplePhoto
         }}
       />
-      {/* Navigation Dots */}
-      {weddingSections && weddingSections.length > 0 && (
-        <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 z-50 flex space-x-2 sm:space-x-3">
-          {weddingSections.map((section, index) => (
-            <button
-              key={section.id}
-              onClick={() => goToSection(index)}
-              className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 shadow-lg ${
-                currentSection === index 
-                  ? 'bg-white scale-125 shadow-xl ring-2 ring-rose-300' 
-                  : 'bg-white/80 hover:bg-white hover:scale-110'
-              }`}
-              title={section.title}
-            />
-          ))}
-        </div>
-      )}
-      {/* Navigation Arrows */}
-      {weddingSections && weddingSections.length > 0 && (
-        <>
-          <button
-            onClick={prevSection}
-            className="fixed left-2 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
-          >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-          <button
-            onClick={nextSection}
-            className="fixed right-2 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 w-10 h-10 sm:w-12 sm:h-12 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-rose-600 hover:bg-white hover:scale-110 transition-all duration-300 shadow-xl border border-rose-200"
-          >
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-        </>
-      )}
-      {/* Section courante uniquement */}
-      {renderSection(currentSection)}
+      {/* Afficher toutes les sections verticalement */}
+      {weddingSections.map((section, index) => {
+        // Retirer les sections 2 (Programme), 3 (Livre d'or) et 4 (Boissons)
+        if (index === 2 || index === 3 || index === 4) return null;
+        return (
+          <div key={section.id} className="w-full">
+            {renderSection(index)}
+          </div>
+        );
+      })}
       {/* Footer Loventy */}
       <footer className="fixed bottom-0 left-0 w-full z-40 bg-white/80 backdrop-blur-sm border-t border-rose-100 flex items-center justify-center py-2 px-4 gap-2 text-xs sm:text-sm text-gray-700 font-medium shadow-sm">
         <LoventyLogo className="h-6 w-6 mr-2 inline-block align-middle" />

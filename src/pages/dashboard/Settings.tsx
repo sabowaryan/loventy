@@ -1,46 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
-  Mail, 
   Lock, 
   Bell, 
   Shield, 
   CreditCard, 
   Download, 
-  Trash2, 
-  Eye, 
-  EyeOff, 
-  Check, 
-  X, 
-  Crown, 
-  Globe, 
-  Smartphone, 
-  Palette, 
-  Save,
   AlertCircle,
   CheckCircle,
-  Camera,
-  Upload,
-  Settings as SettingsIcon,
-  Heart,
-  LogOut,
-  Calendar,
-  Clock,
-  Languages,
-  Moon,
-  Sun,
-  FileText,
-  Archive,
-  RefreshCw,
-  Loader2
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+  Settings as SettingsIcon} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useStripe } from '../../hooks/useStripe';
 import { supabase } from '../../lib/supabase';
-import SubscriptionStatus from '../../components/SubscriptionStatus';
 import ProfileTab from '../../components/settings/ProfileTab';
 import AccountTab from '../../components/settings/AccountTab';
 import NotificationsTab from '../../components/settings/NotificationsTab';

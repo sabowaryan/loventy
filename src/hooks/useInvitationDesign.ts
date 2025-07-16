@@ -12,8 +12,8 @@ interface UseInvitationDesignProps {
 
 export const useInvitationDesign = ({ invitationId, initialDesignSettings }: UseInvitationDesignProps) => {
   const [designSettings, setDesignSettings] = useState<InvitationDesignSettings>({
-    ...defaultDesignSettings,
-    ...initialDesignSettings
+    ...defaultDesignSettings as InvitationDesignSettings,
+    ...(initialDesignSettings as Partial<InvitationDesignSettings>)
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -39,8 +39,8 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
 
       if (data?.design_settings) {
         setDesignSettings({
-          ...defaultDesignSettings,
-          ...data.design_settings
+          ...defaultDesignSettings as InvitationDesignSettings,
+          ...(data.design_settings as Partial<InvitationDesignSettings>)
         });
       }
     } catch (err) {
@@ -112,7 +112,7 @@ export const useInvitationDesign = ({ invitationId, initialDesignSettings }: Use
       const filePath = `${user.id}/${invitationId}/${sectionId}-${imageType}/${fileName}`;
       
       // Upload the file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('invitation-media')
         .upload(filePath, file);
 

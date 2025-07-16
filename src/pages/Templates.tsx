@@ -14,13 +14,13 @@ import SeoHead from '../components/SeoHead';
 
 const Templates: React.FC = () => {
   usePageTitle('Modèles');
-  
+
   const { limits, canCreateInvitation, isLoading: limitsLoading, features } = usePlanLimits();
   const { createInvitation, isLoading: creatingInvitation, error: creationError, clearError } = useCreateInvitation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // État pour le modèle sélectionné
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,12 +29,12 @@ const Templates: React.FC = () => {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   // Utiliser le hook useTemplates pour charger les modèles depuis la base de données
-  const { 
-    templates, 
-    categories, 
-    selectedCategory, 
-    setSelectedCategory, 
-    isLoading: templatesLoading, 
+  const {
+    templates,
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    isLoading: templatesLoading,
     error: templatesError,
     refreshTemplates
   } = useTemplates({
@@ -49,11 +49,11 @@ const Templates: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const templateId = params.get('template');
     const eventId = params.get('event');
-    
+
     if (templateId) {
       setSelectedTemplateId(templateId);
     }
-    
+
     if (eventId) {
       setSelectedEventId(eventId);
     }
@@ -63,10 +63,10 @@ const Templates: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSearching(true);
-    
+
     // Rafraîchir les modèles avec le terme de recherche
     refreshTemplates();
-    
+
     setTimeout(() => {
       setIsSearching(false);
     }, 500);
@@ -76,10 +76,10 @@ const Templates: React.FC = () => {
   const clearSearch = () => {
     setSearchTerm('');
     setIsSearching(true);
-    
+
     // Rafraîchir les modèles sans terme de recherche
     refreshTemplates();
-    
+
     setTimeout(() => {
       setIsSearching(false);
     }, 500);
@@ -89,7 +89,7 @@ const Templates: React.FC = () => {
   const handleTemplateSelect = async (template: TemplateDetails) => {
     // Effacer les erreurs précédentes
     clearError();
-    
+
     // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
     // en conservant l'information sur le modèle sélectionné
     if (!isAuthenticated) {
@@ -134,9 +134,9 @@ const Templates: React.FC = () => {
   // Fonction pour gérer la sélection d'un événement
   const handleEventSelected = async (eventId: string) => {
     if (!selectedTemplateId) return;
-    
+
     setShowEventModal(false);
-    
+
     try {
       await createInvitation({
         title: `Invitation ${templates.find(t => t.id === selectedTemplateId)?.name || 'Personnalisée'}`,
@@ -152,7 +152,7 @@ const Templates: React.FC = () => {
   // Afficher un état de chargement pendant que les données sont récupérées
   // Amélioration: vérifier tous les états de chargement pertinents
   const isLoading = (limitsLoading && isAuthenticated) || authLoading || templatesLoading || eventsLoading;
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-accent flex items-center justify-center">
@@ -174,7 +174,7 @@ const Templates: React.FC = () => {
           </div>
           <h2 className="text-xl font-bold text-primary mb-2">Erreur de chargement</h2>
           <p className="text-gray-600 mb-4">{templatesError}</p>
-          <button 
+          <button
             onClick={refreshTemplates}
             className="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
           >
@@ -190,8 +190,8 @@ const Templates: React.FC = () => {
 
   return (
     <>
-      <SeoHead 
-        pagePath="/templates" 
+      <SeoHead
+        pagePath="/templates"
         entityId={selectedTemplateId || undefined}
         overrides={selectedTemplate ? {
           title: `${selectedTemplate.name} - Modèle d'invitation de mariage | Loventy`,
@@ -234,7 +234,7 @@ const Templates: React.FC = () => {
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div 
+                  <div
                     className="bg-secondary h-2 rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(limits.percentageUsed?.invitations || 0, 100)}%` }}
                   />
@@ -258,7 +258,7 @@ const Templates: React.FC = () => {
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   {searchTerm && (
-                    <button 
+                    <button
                       type="button"
                       onClick={clearSearch}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
@@ -268,30 +268,28 @@ const Templates: React.FC = () => {
                   )}
                 </form>
               </div>
-              
+
               {/* Filtres par catégorie */}
               <div className="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
                 <Filter className="h-5 w-5 text-gray-400 flex-shrink-0" />
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                    selectedCategory === 'all'
+                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === 'all'
                       ? "text-[#D4A5A5] bg-[#D4A5A5]/10 border border-[#D4A5A5]/30"
                       : "text-gray-700 hover:text-[#D4A5A5] hover:bg-[#D4A5A5]/5 border border-gray-200"
-                  }`}
+                    }`}
                 >
                   Tous
                 </button>
-                
+
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.slug)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                      selectedCategory === category.slug
+                    className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === category.slug
                         ? "text-[#D4A5A5] bg-[#D4A5A5]/10 border border-[#D4A5A5]/30"
                         : "text-gray-700 hover:text-[#D4A5A5] hover:bg-[#D4A5A5]/5 border border-gray-200"
-                    }`}
+                      }`}
                   >
                     {category.name}
                   </button>
@@ -320,7 +318,7 @@ const Templates: React.FC = () => {
                 Aucun modèle trouvé
               </h3>
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                {searchTerm 
+                {searchTerm
                   ? `Aucun modèle ne correspond à "${searchTerm}". Essayez d'autres termes de recherche.`
                   : 'Aucun modèle disponible dans cette catégorie pour le moment.'}
               </p>
@@ -334,9 +332,9 @@ const Templates: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {templates.map((template) => (
-                <TemplateCard 
-                  key={template.id} 
-                  template={template} 
+                <TemplateCard
+                  key={template.id}
+                  template={template}
                   onTemplateSelect={handleTemplateSelect}
                   isSelected={selectedTemplateId === template.id}
                   isCreating={creatingInvitation && selectedTemplateId === template.id}
@@ -355,7 +353,7 @@ const Templates: React.FC = () => {
                   backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.2'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
                 }}></div>
               </div>
-              
+
               <div className="relative z-10">
                 <Crown className="h-12 w-12 mx-auto mb-4 animate-bounce-in" />
                 <h3 className="text-2xl font-bold mb-2 font-serif">Débloquez tous les modèles</h3>
@@ -389,14 +387,14 @@ const Templates: React.FC = () => {
 export default Templates;
 
 // Template Card Component
-const TemplateCard = ({ 
-  template, 
-  onTemplateSelect, 
-  isSelected, 
-  isCreating, 
-  error 
-}: { 
-  template: TemplateDetails; 
+const TemplateCard = ({
+  template,
+  onTemplateSelect,
+  isSelected,
+  isCreating,
+  error
+}: {
+  template: TemplateDetails;
   onTemplateSelect: (template: TemplateDetails) => void;
   isSelected: boolean;
   isCreating: boolean;
@@ -405,12 +403,12 @@ const TemplateCard = ({
   const { limits, canCreateInvitation, features } = usePlanLimits();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
   // Vérifier si l'utilisateur peut utiliser ce modèle
-  const canUseTemplate = isAuthenticated && 
-                        canCreateInvitation && 
-                        (!template.is_premium || features?.hasAnalytics === true);
-  
+  const canUseTemplate = isAuthenticated &&
+    canCreateInvitation &&
+    (!template.is_premium || features?.hasAnalytics === true);
+
   // Extraire les couleurs du modèle
   const colors = {
     primary: template.color_palette?.primary || '#D4A5A5',
@@ -419,88 +417,87 @@ const TemplateCard = ({
   };
 
   return (
-    <div className={`group relative card hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:scale-[1.02] ${
-      isSelected ? 'ring-4 ring-[#D4A5A5] scale-[1.02]' : ''
-    }`}>
+    <div className={`group relative card hover:shadow-2xl transition-all duration-500 overflow-hidden transform hover:scale-[1.02] ${isSelected ? 'ring-4 ring-[#D4A5A5] scale-[1.02]' : ''
+      }`}>
       {template.is_premium && (
         <div className="absolute top-4 right-4 z-20 bg-gradient-to-r from-[#D4A5A5] to-[#E16939] text-white px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 shadow-lg">
           <Crown className="h-3 w-3" />
           <span>Premium</span>
         </div>
       )}
-      
+
       {/* Template Preview avec image de fond */}
       <div className="relative h-96 overflow-hidden">
         {/* Image de fond avec overlay */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-          style={{ 
+          style={{
             backgroundImage: `url(${template.preview_image_url || 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg?auto=compress&cs=tinysrgb&w=800'})`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40"></div>
-        
+
         {/* Invitation card flottante */}
         <div className="absolute inset-0 flex items-center justify-center p-6">
-          <div 
+          <div
             className="w-full max-w-xs bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 transform group-hover:scale-105 transition-all duration-500 border border-white/20"
-            style={{ 
-              boxShadow: `0 25px 50px -12px ${colors.primary}40` 
+            style={{
+              boxShadow: `0 25px 50px -12px ${colors.primary}40`
             }}
           >
             <div className="text-center">
               {/* Ornement décoratif */}
               <div className="flex items-center justify-center mb-4">
                 <div className="flex items-center space-x-2">
-                  <div 
+                  <div
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: colors.primary }}
                   />
-                  <Heart 
-                    className="h-6 w-6 fill-current animate-pulse" 
+                  <Heart
+                    className="h-6 w-6 fill-current animate-pulse"
                     style={{ color: colors.primary }}
                   />
-                  <div 
+                  <div
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: colors.primary }}
                   />
                 </div>
               </div>
-              
+
               {/* Noms des mariés */}
-              <h3 
+              <h3
                 className="text-xl font-serif mb-1 font-bold"
                 style={{ color: colors.primary }}
               >
                 Grâce & Emmanuel
               </h3>
-              
+
               <p className="text-primary-light text-sm font-medium mb-4">
                 Vous invitent à leur mariage
               </p>
-              
+
               {/* Détails de l'événement */}
               <div className="space-y-2 text-xs text-gray-700 mb-4">
                 <div className="flex items-center justify-center space-x-2">
-                  <Calendar 
-                    className="h-3 w-3 flex-shrink-0" 
-                    style={{ color: colors.accent }} 
+                  <Calendar
+                    className="h-3 w-3 flex-shrink-0"
+                    style={{ color: colors.accent }}
                   />
                   <span>15 Juin 2025</span>
                 </div>
-                
+
                 <div className="flex items-center justify-center space-x-2">
-                  <Clock 
-                    className="h-3 w-3 flex-shrink-0" 
-                    style={{ color: colors.accent }} 
+                  <Clock
+                    className="h-3 w-3 flex-shrink-0"
+                    style={{ color: colors.accent }}
                   />
                   <span>14h30</span>
                 </div>
-                
+
                 <div className="flex items-center justify-center space-x-2">
-                  <MapPin 
-                    className="h-3 w-3 flex-shrink-0" 
-                    style={{ color: colors.accent }} 
+                  <MapPin
+                    className="h-3 w-3 flex-shrink-0"
+                    style={{ color: colors.accent }}
                   />
                   <div className="text-center">
                     <div className="font-medium">Église Saint-Joseph</div>
@@ -508,19 +505,19 @@ const TemplateCard = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* Bouton RSVP */}
-              <button 
+              <button
                 className="w-full py-2.5 rounded-lg text-white font-medium text-sm hover:opacity-90 transition-all duration-300 shadow-lg"
                 style={{ backgroundColor: colors.primary }}
               >
                 Confirmer ma présence
               </button>
-              
+
               {/* Ornement décoratif bas */}
               <div className="flex items-center justify-center mt-4 space-x-1">
                 {[1, 2, 3].map((i) => (
-                  <div 
+                  <div
                     key={i}
                     className="w-1 h-1 rounded-full"
                     style={{ backgroundColor: colors.accent }}
@@ -537,7 +534,7 @@ const TemplateCard = ({
             <Sparkles className="h-8 w-8 text-[#D4A5A5]" />
           </div>
         </div>
-        
+
         {/* Overlay Premium pour les utilisateurs non premium */}
         {template.is_premium && isAuthenticated && features?.hasAnalytics === false && (
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center p-6 z-10">
@@ -556,16 +553,16 @@ const TemplateCard = ({
           </div>
         )}
       </div>
-      
+
       {/* Template Info */}
       <div className="p-6 bg-gradient-to-b from-white to-gray-50">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xl font-semibold text-primary group-hover:text-[#D4A5A5] transition-colors duration-300">
             {template.name}
           </h3>
-          <span 
+          <span
             className="text-xs px-3 py-1 rounded-full font-medium border"
-            style={{ 
+            style={{
               backgroundColor: `${colors.primary}15`,
               borderColor: `${colors.primary}30`,
               color: colors.primary
@@ -574,15 +571,15 @@ const TemplateCard = ({
             {template.category_name || 'Classique'}
           </span>
         </div>
-        
+
         <p className="text-gray-600 text-sm mb-4 leading-relaxed">{template.description}</p>
-        
+
         {/* Palette de couleurs */}
         <div className="flex items-center space-x-2 mb-4">
           <span className="text-xs text-gray-500">Couleurs:</span>
           <div className="flex space-x-1">
             {Object.values(colors).map((color, index) => (
-              <div 
+              <div
                 key={index}
                 className="w-4 h-4 rounded-full border border-white shadow-sm"
                 style={{ backgroundColor: color }}
@@ -590,7 +587,7 @@ const TemplateCard = ({
             ))}
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-secondary font-semibold text-sm">
@@ -600,7 +597,7 @@ const TemplateCard = ({
               <Crown className="h-4 w-4 text-secondary" />
             )}
           </div>
-          
+
           {isAuthenticated ? (
             canUseTemplate ? (
               <button
@@ -627,7 +624,7 @@ const TemplateCard = ({
             </button>
           )}
         </div>
-        
+
         {error && isSelected && (
           <div className="mt-3 p-3 notification-error rounded-lg text-xs">
             {error}

@@ -1,33 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
-  Search, 
-  Filter, 
   Download, 
   Upload, 
-  Mail, 
-  Phone, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  CheckCircle, 
-  Clock, 
-  X, 
-  Users, 
-  Send, 
-  FileText, 
   AlertCircle,
-  Crown,
-  UserPlus,
-  MessageSquare,
-  Calendar,
-  MapPin,
-  Heart,
-  Link as LinkIcon,
-  ExternalLink
-} from 'lucide-react';
+  Crown} from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+
 import { usePermissions } from '../../hooks/usePermissions';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { usePlanLimits } from '../../hooks/usePlanLimits';
@@ -39,7 +18,6 @@ import AddGuestModal from '../../components/guests/AddGuest';
 import ImportGuestsModal from '../../components/guests/ImportGuestsModal';
 import DeleteGuestModal from '../../components/guests/DeleteGuestModal';
 import EmailGuestsModal from '../../components/guests/EmailGuestsModal';
-import GuestActionMenu from '../../components/guests/GuestActionMenu';
 import { useInvitationGuests } from '../../hooks/useInvitationGuests';
 import type { GuestDetails } from '../../types/models';
 
@@ -48,9 +26,9 @@ const Guests: React.FC = () => {
   
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  
   const { canManageGuests, canExportGuests, canImportGuests, isPremiumUser } = usePermissions();
-  const { limits, canAddGuest } = usePlanLimits();
+  const { canAddGuest } = usePlanLimits();
   
   // État pour les filtres et la recherche
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +45,7 @@ const Guests: React.FC = () => {
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
   const [guestToDelete, setGuestToDelete] = useState<string | null>(null);
   const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
-  const [guestToPreview, setGuestToPreview] = useState<string | null>(null);
+  const [, setGuestToPreview] = useState<string | null>(null);
   
   // Récupérer les invités depuis le hook
   const { 

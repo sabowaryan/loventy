@@ -36,6 +36,18 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       preview_image_url: 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg?auto=compress&cs=tinysrgb&w=800',
       description: 'Design intemporel avec touches dorées',
       color_palette: { primary: '#D4A5A5', secondary: '#F5E6D3', accent: '#E8B86D' },
+      font_pairs: {
+        heading: 'Playfair Display',
+        body: 'Inter'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'fade',
+        showRSVP: true
+      },
       usage_count: 0,
       unique_users: 0,
       total_views: 0,
@@ -55,6 +67,18 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       preview_image_url: 'https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&w=800',
       description: 'Motifs floraux délicats et verdure',
       color_palette: { primary: '#C5D2C2', secondary: '#E8F5E8', accent: '#7FB069' },
+      font_pairs: {
+        heading: 'Cormorant Garamond',
+        body: 'Montserrat'
+      },
+      layout_options: {
+        layouts: ['vertical']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'slide',
+        showRSVP: true
+      },
       usage_count: 0,
       unique_users: 0,
       total_views: 0,
@@ -74,6 +98,18 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       preview_image_url: 'https://images.pexels.com/photos/1323712/pexels-photo-1323712.jpeg?auto=compress&cs=tinysrgb&w=800',
       description: 'Simplicité raffinée et moderne',
       color_palette: { primary: '#131837', secondary: '#F8F9FA', accent: '#6C757D' },
+      font_pairs: {
+        heading: 'Raleway',
+        body: 'Raleway'
+      },
+      layout_options: {
+        layouts: ['vertical', 'horizontal']
+      },
+      default_settings: {
+        layout: 'horizontal',
+        animation: 'none',
+        showRSVP: false
+      },
       usage_count: 0,
       unique_users: 0,
       total_views: 0,
@@ -93,6 +129,18 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       preview_image_url: 'https://images.pexels.com/photos/1509534/pexels-photo-1509534.jpeg?auto=compress&cs=tinysrgb&w=800',
       description: 'Charme rétro et romantique',
       color_palette: { primary: '#E16939', secondary: '#FDF2E9', accent: '#D4A574' },
+      font_pairs: {
+        heading: 'Dancing Script',
+        body: 'Roboto'
+      },
+      layout_options: {
+        layouts: ['vertical']
+      },
+      default_settings: {
+        layout: 'vertical',
+        animation: 'zoom',
+        showRSVP: true
+      },
       usage_count: 0,
       unique_users: 0,
       total_views: 0,
@@ -144,14 +192,14 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       setConnectionStatus('checking');
       const isConnected = await testSupabaseConnection();
       setConnectionStatus(isConnected ? 'connected' : 'failed');
-      
+
       if (!isConnected) {
         console.warn('Supabase connection failed, using default data');
         setCategories(getDefaultCategories());
         setError('Connection to database failed. Using offline mode.');
       }
     };
-    
+
     checkConnection();
   }, [getDefaultCategories]);
 
@@ -178,7 +226,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         handleSupabaseError(error, 'loadCategories');
         return;
       }
-      
+
       console.log(`Loaded ${data?.length || 0} categories`);
       setCategories(data || []);
     } catch (err) {
@@ -199,7 +247,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
     if (connectionStatus === 'checking') {
       return; // Wait for connection check to complete
     }
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -208,7 +256,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       if (connectionStatus === 'failed') {
         const defaultTemplates = getDefaultTemplates();
         const isPremium = isAuthenticated && hasRole('premium');
-        
+
         // Filter templates based on user's premium status
         const filteredTemplates = defaultTemplates.filter(template => {
           if (!template.is_premium) return true;
@@ -216,16 +264,16 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         });
 
         // Apply category filter
-        const categoryFilteredTemplates = selectedCategory === 'all' 
-          ? filteredTemplates 
+        const categoryFilteredTemplates = selectedCategory === 'all'
+          ? filteredTemplates
           : filteredTemplates.filter(t => t.category_slug === selectedCategory);
 
         // Apply search filter
-        const searchFilteredTemplates = searchTerm 
-          ? categoryFilteredTemplates.filter(t => 
-              t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              t.description.toLowerCase().includes(searchTerm.toLowerCase())
-            )
+        const searchFilteredTemplates = searchTerm
+          ? categoryFilteredTemplates.filter(t =>
+            t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()))
+          )
           : categoryFilteredTemplates;
 
         setTemplates(searchFilteredTemplates);
@@ -236,7 +284,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       // Vérifier si l'utilisateur est premium
       const isPremium = isAuthenticated && hasRole('premium');
       console.log('Loading templates, isPremium:', isPremium);
-      
+
       // Build query
       let query = supabase
         .from('invitation_templates')
@@ -245,28 +293,28 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
           template_categories(name, slug, icon)
         `)
         .eq('is_active', true);
-        
+
       if (selectedCategory !== 'all') {
         query = query.eq('template_categories.slug', selectedCategory);
       }
-      
+
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
-      
+
       if (isPremiumOnly) {
         query = query.eq('is_premium', true);
       }
-      
+
       query = query.limit(limit);
-      
+
       const { data, error } = await query;
-      
+
       if (error) {
         handleSupabaseError(error, 'loadTemplates');
         return;
       }
-      
+
       // Transformer les données pour correspondre au format attendu
       const transformedData = data.map(item => ({
         ...item,
@@ -277,7 +325,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         unique_users: 0,
         total_views: 0
       }));
-      
+
       // Filtrer les modèles premium si l'utilisateur n'est pas premium
       const filteredTemplates = transformedData.filter(template => {
         if (!template.is_premium) return true;
@@ -289,16 +337,16 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
     } catch (err) {
       console.error('Error loading templates:', err);
       setError('Unable to load templates. Using default templates.');
-      
+
       // Use default templates as fallback
       const defaultTemplates = getDefaultTemplates();
       const isPremium = isAuthenticated && hasRole('premium');
-      
+
       const filteredTemplates = defaultTemplates.filter(template => {
         if (!template.is_premium) return true;
         return isPremium;
       });
-      
+
       setTemplates(filteredTemplates);
     } finally {
       setIsLoading(false);
@@ -311,7 +359,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
       loadCategories();
     }
   }, [loadCategories, connectionStatus]);
-  
+
   // Charger les modèles une fois que l'authentification est chargée et la connexion vérifiée
   useEffect(() => {
     if (!authLoading && connectionStatus !== 'checking') {
@@ -347,7 +395,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         handleSupabaseError(error, 'getTemplateDetails');
         return;
       }
-      
+
       // Transformer les données pour correspondre au format attendu
       const transformedData = {
         ...data,
@@ -358,7 +406,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         unique_users: 0,
         total_views: 0
       };
-      
+
       return transformedData;
     } catch (err) {
       console.error('Error loading template details:', err);
@@ -393,12 +441,12 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
   // Fonction pour obtenir les modèles recommandés
   const getRecommendedTemplates = useCallback(async (limit: number = 4) => {
     if (!isAuthenticated) return [];
-    
+
     if (connectionStatus === 'failed') {
       const defaultTemplates = getDefaultTemplates();
       return defaultTemplates.slice(0, limit);
     }
-    
+
     try {
       const { data, error } = await supabase
         .from('invitation_templates')
@@ -413,7 +461,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         handleSupabaseError(error, 'getRecommendedTemplates');
         return [];
       }
-      
+
       // Transformer les données
       const transformedData = (data || []).map(item => ({
         ...item,
@@ -424,10 +472,10 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
         usage_count: 0,
         unique_users: 0
       }));
-      
+
       // Trier par score
       transformedData.sort((a, b) => b.score - a.score);
-      
+
       return transformedData;
     } catch (err) {
       console.error('Error loading recommended templates:', err);

@@ -21,13 +21,13 @@ import {
   Mail
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { usePermissions } from '../hooks/usePermissions';
-import { usePageTitle } from '../hooks/usePageTitle';
-import { usePlanLimits } from '../hooks/usePlanLimits';
-import { useEvents, Event } from '../hooks/useEvents';
-import PlanLimitWarning from '../components/PlanLimitWarning';
-import Modal from '../components/Modal';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
+import { usePageTitle } from '../../hooks/usePageTitle';
+import { usePlanLimits } from '../../hooks/usePlanLimits';
+import { useEvents, Event } from '../../hooks/useEvents';
+import PlanLimitWarning from '../../components/PlanLimitWarning';
+import Modal from '../../components/Modal';
 
 const Events: React.FC = () => {
   usePageTitle('Mes événements');

@@ -26,21 +26,25 @@ export const useRedirects = () => {
       setError(null);
 
       try {
-        // Create abort controller with shorter timeout since redirects are not critical
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          controller.abort();
-        }, 5000); // Reduced to 5 seconds for faster fallback
+        // Create a timeout promise for the query
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error('Request timeout'));
+          }, 5000); // 5 seconds timeout
+        });
 
-        const { data, error: dbError } = await supabase
+        // Race the query against the timeout
+        const queryPromise = supabase
           .from('redirects')
           .select('new_path, redirect_type')
           .eq('old_path', path)
           .eq('is_active', true)
-          .maybeSingle()
-          .abortSignal(controller.signal);
+          .maybeSingle();
 
-        clearTimeout(timeoutId);
+        const { data, error: dbError } = await Promise.race([
+          queryPromise,
+          timeoutPromise
+        ]) as any;
 
         if (dbError) {
           // Handle specific error cases

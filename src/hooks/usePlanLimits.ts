@@ -11,7 +11,10 @@ interface UsageStats {
   events: number; // Nouveau champ pour les événements
 }
 
-interface PlanLimits extends StripeProduct['limits'] {
+// Create a type alias for the limits to avoid interface extension issues
+type StripeLimits = StripeProduct['limits'];
+
+interface PlanLimits extends StripeLimits {
   isActive: boolean;
   usage: UsageStats;
   canCreate: {
@@ -103,23 +106,23 @@ export const usePlanLimits = () => {
           .select('id', { count: 'exact' })
           .eq('user_id', user.id)
           .gte('created_at', startOfMonth.toISOString()),
-        
+
         supabase
           .from('guests')
           .select('id', { count: 'exact' })
           .eq('user_id', user.id),
-        
+
         supabase
           .from('email_logs')
           .select('id', { count: 'exact' })
           .eq('user_id', user.id)
           .gte('sent_at', startOfMonth.toISOString()),
-        
+
         supabase
           .from('user_files')
           .select('file_size')
           .eq('user_id', user.id),
-        
+
         // Nouvelle requête pour compter les événements
         supabase
           .from('event')
@@ -132,19 +135,19 @@ export const usePlanLimits = () => {
       if (invitationsResult.status === 'rejected') {
         console.error('Error loading invitations count:', invitationsResult.reason);
       }
-      
+
       if (guestsResult.status === 'rejected') {
         console.error('Error loading guests count:', guestsResult.reason);
       }
-      
+
       if (emailsResult.status === 'rejected') {
         console.error('Error loading emails count:', emailsResult.reason);
       }
-      
+
       if (storageResult.status === 'rejected') {
         console.error('Error loading storage usage:', storageResult.reason);
       }
-      
+
       if (eventsResult.status === 'rejected') {
         console.error('Error loading events count:', eventsResult.reason);
       }
@@ -154,12 +157,12 @@ export const usePlanLimits = () => {
       const guestsCount = guestsResult.status === 'fulfilled' ? guestsResult.value.count || 0 : 0;
       const emailsCount = emailsResult.status === 'fulfilled' ? emailsResult.value.count || 0 : 0;
       const eventsCount = eventsResult.status === 'fulfilled' ? eventsResult.value.count || 0 : 0;
-      
+
       // Calculer l'utilisation du stockage en MB
       const storageUsed = storageResult.status === 'fulfilled' && storageResult.value.data
         ? storageResult.value.data.reduce((total, file) => total + (file.file_size || 0), 0)
         : 0;
-      
+
       const storageUsedMB = Math.round(storageUsed / (1024 * 1024));
 
       return {
@@ -235,11 +238,11 @@ export const usePlanLimits = () => {
     } catch (err) {
       console.error('Error loading plan limits:', err, { user });
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des limites');
-      
+
       // En cas d'erreur, utiliser les limites par défaut
       const usage = await loadUsageStats();
       const defaultLimits = getDefaultLimits();
-      
+
       setLimits({
         ...defaultLimits,
         isActive: false,
@@ -301,9 +304,9 @@ export const usePlanLimits = () => {
   // Fonction pour obtenir les informations de quota pour l'UI
   const getQuota = useCallback((action: 'invitation' | 'guest' | 'email' | 'storage' | 'event'): QuotaInfo | null => {
     if (!limits) return null;
-    
+
     const { usage } = limits;
-    
+
     switch (action) {
       case 'invitation':
         return {
@@ -377,7 +380,7 @@ export const usePlanLimits = () => {
 
     // Créer un seul canal pour toutes les tables
     const channelId = `plan-limits-changes-${user.id}`;
-    
+
     try {
       const channel = supabase.channel(channelId);
 

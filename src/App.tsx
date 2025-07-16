@@ -38,7 +38,7 @@ import Editor from './pages/Editor';
 import Invitations from './pages/dashboard/Invitations';
 import Guests from './pages/dashboard/Guests';
 import Settings from './pages/dashboard/Settings';
-import Events from './pages/Events';
+import Events from './pages/dashboard/Events';
 
 // Invitation Pages
 import InvitationView from './pages/invitation/InvitationView';

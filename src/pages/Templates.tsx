@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Heart, Crown, Leaf, Sparkles, AlertTriangle, Loader2, Calendar, MapPin, Clock, Lock, Search, Filter, X } from 'lucide-react';
+import { Heart, Crown, Sparkles, AlertTriangle, Loader2, Calendar, MapPin, Clock, Lock, Search, Filter, X, Star, Users, Eye, Zap, Diamond, Leaf } from 'lucide-react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanLimits } from '../hooks/usePlanLimits';
 import { useCreateInvitation } from '../hooks/useCreateInvitation';
@@ -11,6 +11,21 @@ import PlanLimitWarning from '../components/PlanLimitWarning';
 import EventCreatorModal from '../components/events/EventCreatorModal';
 import type { TemplateDetails } from '../types/models';
 import SeoHead from '../components/SeoHead';
+import { diagnoseTemplateIssues } from '../utils/templateDiagnostic';
+
+// Fonction utilitaire pour obtenir l'icône de catégorie
+const getCategoryIcon = (iconName: string) => {
+  const icons: Record<string, React.ComponentType<any>> = {
+    Crown,
+    Zap,
+    Leaf,
+    Diamond,
+    Star,
+    Heart,
+    Sparkles
+  };
+  return icons[iconName] || Crown;
+};
 
 const Templates: React.FC = () => {
   usePageTitle('Modèles');
@@ -213,6 +228,8 @@ const Templates: React.FC = () => {
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Découvrez notre collection de modèles élégants, conçus pour rendre votre invitation unique et mémorable
             </p>
+            
+
           </div>
 
           {/* Plan Limit Warning - Seulement pour les utilisateurs authentifiés */}
@@ -243,6 +260,28 @@ const Templates: React.FC = () => {
             </div>
           )}
 
+          {/* Statistiques des templates */}
+          {templates.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+                <div className="text-2xl font-bold text-[#D4A5A5] mb-1">{templates.length}</div>
+                <div className="text-sm text-gray-600">Modèles disponibles</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+                <div className="text-2xl font-bold text-[#E16939] mb-1">{templates.filter(t => !t.is_premium).length}</div>
+                <div className="text-sm text-gray-600">Modèles gratuits</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+                <div className="text-2xl font-bold text-[#C5D2C2] mb-1">{templates.filter(t => t.is_premium).length}</div>
+                <div className="text-sm text-gray-600">Modèles premium</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-100">
+                <div className="text-2xl font-bold text-gray-700 mb-1">{categories.length}</div>
+                <div className="text-sm text-gray-600">Catégories</div>
+              </div>
+            </div>
+          )}
+
           {/* Barre de recherche et filtres */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
@@ -269,31 +308,46 @@ const Templates: React.FC = () => {
                 </form>
               </div>
 
-              {/* Filtres par catégorie */}
+              {/* Filtres par catégorie avec icônes */}
               <div className="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
                 <Filter className="h-5 w-5 text-gray-400 flex-shrink-0" />
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === 'all'
+                  className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center space-x-2 ${selectedCategory === 'all'
                       ? "text-[#D4A5A5] bg-[#D4A5A5]/10 border border-[#D4A5A5]/30"
                       : "text-gray-700 hover:text-[#D4A5A5] hover:bg-[#D4A5A5]/5 border border-gray-200"
                     }`}
                 >
-                  Tous
+                  <span>Tous</span>
+                  <span className="bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                    {templates.length}
+                  </span>
                 </button>
 
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.slug)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${selectedCategory === category.slug
-                        ? "text-[#D4A5A5] bg-[#D4A5A5]/10 border border-[#D4A5A5]/30"
-                        : "text-gray-700 hover:text-[#D4A5A5] hover:bg-[#D4A5A5]/5 border border-gray-200"
-                      }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+                {categories.map((category) => {
+                  const categoryTemplates = templates.filter(t => t.category_slug === category.slug);
+                  const IconComponent = getCategoryIcon(category.icon || 'Crown');
+                  
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.slug)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 flex items-center space-x-2 ${selectedCategory === category.slug
+                          ? "text-[#D4A5A5] bg-[#D4A5A5]/10 border border-[#D4A5A5]/30"
+                          : "text-gray-700 hover:text-[#D4A5A5] hover:bg-[#D4A5A5]/5 border border-gray-200"
+                        }`}
+                    >
+                      <IconComponent className="h-4 w-4" />
+                      <span>{category.name}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs ${selectedCategory === category.slug
+                          ? "bg-[#D4A5A5]/20 text-[#D4A5A5]"
+                          : "bg-gray-200 text-gray-600"
+                        }`}>
+                        {categoryTemplates.length}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -574,17 +628,51 @@ const TemplateCard = ({
 
         <p className="text-gray-600 text-sm mb-4 leading-relaxed">{template.description}</p>
 
-        {/* Palette de couleurs */}
-        <div className="flex items-center space-x-2 mb-4">
-          <span className="text-xs text-gray-500">Couleurs:</span>
-          <div className="flex space-x-1">
-            {Object.values(colors).map((color, index) => (
-              <div
-                key={index}
-                className="w-4 h-4 rounded-full border border-white shadow-sm"
-                style={{ backgroundColor: color }}
-              />
-            ))}
+        {/* Palette de couleurs et statistiques */}
+        <div className="space-y-3 mb-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500">Couleurs:</span>
+            <div className="flex space-x-1">
+              {Object.values(colors).map((color, index) => (
+                <div
+                  key={index}
+                  className="w-4 h-4 rounded-full border border-white shadow-sm"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+          
+          {/* Statistiques d'utilisation */}
+          {(template.usage_count > 0 || template.unique_users > 0 || template.total_views > 0) && (
+            <div className="flex items-center space-x-4 text-xs text-gray-500">
+              {template.usage_count > 0 && (
+                <div className="flex items-center space-x-1">
+                  <Heart className="h-3 w-3" />
+                  <span>{template.usage_count.toLocaleString()} utilisations</span>
+                </div>
+              )}
+              {template.unique_users > 0 && (
+                <div className="flex items-center space-x-1">
+                  <Users className="h-3 w-3" />
+                  <span>{template.unique_users.toLocaleString()} utilisateurs</span>
+                </div>
+              )}
+              {template.total_views > 0 && (
+                <div className="flex items-center space-x-1">
+                  <Eye className="h-3 w-3" />
+                  <span>{template.total_views.toLocaleString()} vues</span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Typographie */}
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500">Police:</span>
+            <span className="text-xs text-gray-700 font-medium">
+              {template.font_pairs?.heading || 'Playfair Display'}
+            </span>
           </div>
         </div>
 

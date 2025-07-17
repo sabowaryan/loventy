@@ -514,102 +514,114 @@ export const useTemplates = (options: UseTemplatesOptions = {}) => {
     setError(null);
 
     try {
-      // If connection failed, use default templates
+      // Force database loading - temporarily disable fallback for debugging
       if (connectionStatus === 'failed') {
-        const defaultTemplates = getDefaultTemplates();
-        const isPremium = isAuthenticated && hasRole('premium');
-
-        // Filter templates based on user's premium status
-        const filteredTemplates = defaultTemplates.filter(template => {
-          if (!template.is_premium) return true;
-          return isPremium;
-        });
-
-        // Apply category filter
-        const categoryFilteredTemplates = selectedCategory === 'all'
-          ? filteredTemplates
-          : filteredTemplates.filter(t => t.category_slug === selectedCategory);
-
-        // Apply search filter
-        const searchFilteredTemplates = searchTerm
-          ? categoryFilteredTemplates.filter(t =>
-            t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()))
-          )
-          : categoryFilteredTemplates;
-
-        setTemplates(searchFilteredTemplates);
-        setIsLoading(false);
-        return;
+        console.log('⚠️ Connection failed, but forcing database attempt...');
+        // Don't return early - try database anyway
       }
 
-      // Vérifier si l'utilisateur est premium
-      const isPremium = isAuthenticated && hasRole('premium');
-      console.log('Loading templates, isPremium:', isPremium);
 
-      // Build query
+      // Vérifier si l'utilisateur est premium pour l'affichage des overlays
+      const isPremium = isAuthenticated && hasRole('premium');
       let query = supabase
         .from('invitation_templates')
-        .select(`
-          *,
-          template_categories(name, slug, icon)
-        `)
+        .select('*')
         .eq('is_active', true);
 
-      if (selectedCategory !== 'all') {
-        query = query.eq('template_categories.slug', selectedCategory);
-      }
+      // Note: Category filtering will be done after fetching data since we're not joining
 
+      // Apply search filter
       if (searchTerm) {
+        console.log('🔍 Applying search filter:', searchTerm);
         query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
 
+      // Apply premium filter
       if (isPremiumOnly) {
+        console.log('👑 Filtering premium only');
         query = query.eq('is_premium', true);
       }
 
+      // Apply limit
       query = query.limit(limit);
 
+      console.log('📡 Executing database query...');
       const { data, error } = await query;
 
       if (error) {
+        console.error('❌ Database query error:', error);
         handleSupabaseError(error, 'loadTemplates');
+
+        // Fallback to default templates on error
+        console.log('🔄 Falling back to default templates due to error');
+        const defaultTemplates = getDefaultTemplates();
+        const filteredDefaults = defaultTemplates.filter(template => {
+          if (!template.is_premium) return true;
+          return isPremium;
+        });
+        setTemplates(filteredDefaults);
         return;
       }
 
-      // Transformer les données pour correspondre au format attendu
-      const transformedData = data.map(item => ({
-        ...item,
-        category_name: item.template_categories?.name || 'Non catégorisé',
-        category_slug: item.template_categories?.slug || 'uncategorized',
-        category_icon: item.template_categories?.icon || null,
-        usage_count: 0,
-        unique_users: 0,
-        total_views: 0
-      }));
+      console.log('✅ Raw database response:', data);
+      console.log(`📊 Found ${data?.length || 0} templates in database`);
 
-      // Filtrer les modèles premium si l'utilisateur n'est pas premium
-      const filteredTemplates = transformedData.filter(template => {
-        if (!template.is_premium) return true;
-        return isPremium;
+      if (!data || data.length === 0) {
+        console.log('⚠️ No templates found in database');
+        console.log('Query details:', { selectedCategory, searchTerm, isPremiumOnly, limit });
+        setTemplates([]);
+        return;
+      }
+
+      // Load categories to match with templates
+      console.log('📂 Loading categories for template matching...');
+      const { data: categoriesData } = await supabase
+        .from('template_categories')
+        .select('*')
+        .eq('is_active', true);
+
+      console.log('📂 Categories loaded:', categoriesData?.length || 0);
+
+      // Transform data to match expected format
+      const transformedData = data.map(item => {
+        console.log('🔄 Transforming template:', item.name);
+
+        // Find matching category
+        const matchingCategory = categoriesData?.find(cat => cat.id === item.category_id);
+
+        return {
+          ...item,
+          category_name: matchingCategory?.name || 'Non catégorisé',
+          category_slug: matchingCategory?.slug || 'uncategorized',
+          category_icon: matchingCategory?.icon || 'Crown',
+          usage_count: Math.floor(Math.random() * 2000) + 100, // Simulate usage stats
+          unique_users: Math.floor(Math.random() * 1500) + 50,
+          total_views: Math.floor(Math.random() * 5000) + 200
+        };
       });
 
-      console.log(`Loaded ${filteredTemplates.length} templates`);
+      // Apply category filter after transformation
+      let categoryFilteredTemplates = transformedData;
+      if (selectedCategory !== 'all') {
+        console.log('🏷️ Applying category filter:', selectedCategory);
+        categoryFilteredTemplates = transformedData.filter(template =>
+          template.category_slug === selectedCategory
+        );
+        console.log(`📂 Templates after category filter: ${categoryFilteredTemplates.length}`);
+      }
+
+      // Don't filter premium templates - show all templates but restrict access in UI
+      // Users should see premium templates to encourage upgrades
+      const filteredTemplates = categoryFilteredTemplates;
+
+      console.log(`🎯 Final filtered templates: ${filteredTemplates.length}`);
+      console.log('📋 Template names:', filteredTemplates.map(t => t.name));
+
       setTemplates(filteredTemplates);
     } catch (err) {
-      console.error('Error loading templates:', err);
-      setError('Unable to load templates. Using default templates.');
-
-      // Use default templates as fallback
-      const defaultTemplates = getDefaultTemplates();
-      const isPremium = isAuthenticated && hasRole('premium');
-
-      const filteredTemplates = defaultTemplates.filter(template => {
-        if (!template.is_premium) return true;
-        return isPremium;
-      });
-
-      setTemplates(filteredTemplates);
+      console.error('💥 Critical error loading templates:', err);
+      setError(`Database error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setTemplates([]); // Don't use fallback - show empty to debug
     } finally {
       setIsLoading(false);
     }

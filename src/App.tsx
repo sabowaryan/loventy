@@ -7,11 +7,14 @@ import ScrollToTop from './components/ScrollToTop';
 // Layouts
 import PublicLayout from './components/layouts/PublicLayout';
 import DashboardLayout from './components/layouts/DashboardLayout';
+import AdminLayout from './components/layouts/AdminLayout';
 
 // Route Guards
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import KeyProtectedRoute from './components/KeyProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+import AdminRouteGuard from './components/admin/AdminRouteGuard';
 
 // Public Pages
 import Home from './pages/Home';
@@ -50,6 +53,10 @@ import Error404 from './pages/Error404';
 import Error500 from './pages/Error500';
 import ConnectionError from './pages/ConnectionError';
 
+// Admin Pages
+import AdminDashboard from './pages/dashboard/admin/AdminDashboard';
+import UserManagementPage from './pages/dashboard/admin/UserManagementPage';
+
 // Global error handling component
 import ConnectionErrorBanner from './components/ConnectionErrorBanner';
 import { useRedirects } from './hooks/useRedirects';
@@ -57,10 +64,10 @@ import { useRedirects } from './hooks/useRedirects';
 // SEO wrapper component
 const AppWithSeo: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  
+
   // Handle redirects
   useRedirects();
-  
+
   return (
     <>
       <SeoHead pagePath={location.pathname} />
@@ -76,10 +83,10 @@ function App() {
       <AppWithSeo>
         {/* Global connection error banner */}
         <ConnectionErrorBanner />
-        
+
         {/* Cookie Banner */}
         <CookieBannerV2 />
-        
+
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={
@@ -87,13 +94,13 @@ function App() {
               <Home />
             </PublicLayout>
           } />
-          
+
           <Route path="/templates" element={
             <PublicLayout>
               <Templates />
             </PublicLayout>
           } />
-          
+
           <Route path="/pricing" element={
             <PublicLayout>
               <Pricing />
@@ -118,13 +125,13 @@ function App() {
               <Privacy />
             </PublicLayout>
           } />
-          
+
           <Route path="/terms" element={
             <PublicLayout>
               <Terms />
             </PublicLayout>
           } />
-          
+
           <Route path="/cookies" element={
             <PublicLayout>
               <Cookies />
@@ -177,7 +184,7 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/dashboard/events" element={
             <ProtectedRoute>
               <DashboardLayout>
@@ -185,7 +192,7 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/dashboard/events/:eventId" element={
             <ProtectedRoute>
               <DashboardLayout>
@@ -193,7 +200,7 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/dashboard/events/edit/:eventId" element={
             <ProtectedRoute>
               <DashboardLayout>
@@ -201,7 +208,7 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           } />
-          
+
           <Route path="/editor/:templateId?" element={
             <ProtectedRoute requiredPermission="invitations.create">
               <Editor />
@@ -210,14 +217,105 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/dashboard/admin" element={
-            <ProtectedRoute requiredRole="admin">
-              <DashboardLayout>
-                <div className="p-8">
-                  <h1 className="text-2xl font-bold">Administration</h1>
-                  <p>Panel d'administration réservé aux administrateurs.</p>
+            <AdminRouteGuard>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/users" element={
+            <AdminRouteGuard requiredPermission="admin.users.read">
+              <UserManagementPage />
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/events" element={
+            <AdminRouteGuard requiredPermission="admin.events.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Supervision des événements</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
                 </div>
-              </DashboardLayout>
-            </ProtectedRoute>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/system" element={
+            <AdminRouteGuard requiredPermission="admin.system.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Santé du système</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/security" element={
+            <AdminRouteGuard requiredPermission="admin.security.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Sécurité et audit</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/finances" element={
+            <AdminRouteGuard requiredPermission="admin.finances.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Gestion financière</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/support" element={
+            <AdminRouteGuard requiredPermission="admin.support.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Support et communication</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/moderation" element={
+            <AdminRouteGuard requiredPermission="admin.moderation.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Modération de contenu</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/config" element={
+            <AdminRouteGuard requiredPermission="admin.config.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Configuration de la plateforme</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
+          } />
+
+          <Route path="/dashboard/admin/stats" element={
+            <AdminRouteGuard requiredPermission="admin.stats.read">
+              <AdminLayout>
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-4">Statistiques et analyses</h1>
+                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
+                </div>
+              </AdminLayout>
+            </AdminRouteGuard>
           } />
 
           {/* Premium Routes */}

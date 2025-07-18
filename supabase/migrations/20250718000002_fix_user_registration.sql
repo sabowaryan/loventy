@@ -6,38 +6,24 @@
 -- 1. CORRECTION DE LA FONCTION handle_new_user_with_plan
 -- =====================================================
 
--- Supprimer d'abord le trigger qui dépend de la fonction
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-
--- Maintenant supprimer l'ancienne fonction problématique
 DROP FUNCTION IF EXISTS handle_new_user_with_plan();
 
--- Créer une nouvelle fonction robuste avec gestion d'erreurs
 CREATE OR REPLACE FUNCTION handle_new_user_with_plan()
 RETURNS TRIGGER AS $$
 DECLARE
   v_plan_limits JSONB;
 BEGIN
-  -- Log pour debug
   RAISE LOG 'Creating new user profile for user_id: %', NEW.id;
   
+  -- Étape 1 : Créer le profil utilisateur
   BEGIN
-    -- Créer le profil utilisateur (compatible avec le système de rôles granulaire)
-    INSERT INTO profiles (
-      id, 
-      email, 
-      first_name, 
-      last_name, 
-      avatar_url,
-      phone,
-      timezone,
-      language,
-      is_active,
-      email_verified
+    INSERT INTO public.profiles (
+      id, email, first_name, last_name, avatar_url,
+      phone, timezone, language, is_active, email_verified
     )
     VALUES (
-      NEW.id,
-      NEW.email,
+      NEW.id, NEW.email,
       COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'given_name', ''),
       COALESCE(NEW.raw_user_meta_data->>'last_name', NEW.raw_user_meta_data->>'family_name', ''),
       COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture'),
@@ -47,65 +33,50 @@ BEGIN
       true,
       COALESCE(NEW.email_confirmed_at IS NOT NULL, false)
     );
-    
     RAISE LOG 'Profile created successfully for user_id: %', NEW.id;
-    
   EXCEPTION WHEN OTHERS THEN
     RAISE LOG 'Error creating profile for user_id: %. Error: %', NEW.id, SQLERRM;
     RAISE EXCEPTION 'Erreur lors de la création du profil: %', SQLERRM;
   END;
-  
+
+  -- Étape 2 : Assigner le rôle 'host'
   BEGIN
-    -- Assigner le rôle par défaut (host)
-    INSERT INTO user_roles (user_id, role, granted_by, is_active)
+    INSERT INTO public.user_roles (user_id, role, granted_by, is_active)
     VALUES (NEW.id, 'host', NEW.id, true);
-    
     RAISE LOG 'Role assigned successfully for user_id: %', NEW.id;
-    
   EXCEPTION WHEN OTHERS THEN
     RAISE LOG 'Error assigning role for user_id: %. Error: %', NEW.id, SQLERRM;
     RAISE EXCEPTION 'Erreur lors de l''assignation du rôle: %', SQLERRM;
   END;
-  
+
+  -- Étape 3 : Assigner le plan gratuit (via la table plans)
   BEGIN
-    -- Récupérer les limites du plan gratuit de manière sécurisée
     SELECT get_plan_limits('free') INTO v_plan_limits;
-    
-    -- Assigner le plan gratuit par défaut
-    INSERT INTO user_subscriptions (
-      user_id, 
-      plan, 
-      status,
-      max_events,
-      max_guests_per_event,
-      max_storage_mb,
-      features,
-      current_period_start,
-      current_period_end
+
+    INSERT INTO public.user_subscriptions (
+      user_id, plan, status,
+      max_events, max_guests_per_event, max_storage_mb,
+      features, current_period_start, current_period_end
     )
     VALUES (
       NEW.id,
       'free',
       'active',
-      COALESCE((v_plan_limits->>'max_events')::INTEGER, 1),
-      COALESCE((v_plan_limits->>'max_guests_per_event')::INTEGER, 50),
-      COALESCE((v_plan_limits->>'max_storage_mb')::INTEGER, 100),
-      COALESCE(v_plan_limits->'features', '{}'),
+      COALESCE((v_plan_limits->>'events')::INTEGER, 1),
+      COALESCE((v_plan_limits->>'guests')::INTEGER, 50),
+      COALESCE((v_plan_limits->>'storage')::INTEGER, 100),
+      v_plan_limits->'features',
       CURRENT_TIMESTAMP,
-      NULL -- Plan gratuit sans expiration
+      NULL
     );
-    
     RAISE LOG 'Subscription created successfully for user_id: %', NEW.id;
-    
   EXCEPTION WHEN OTHERS THEN
-    RAISE LOG 'Error creating subscription for user_id: %. Error: %', NEW.id, SQLERRM;
-    -- Ne pas faire échouer l'inscription si la création de l'abonnement échoue
-    -- L'utilisateur pourra toujours utiliser le service avec des limites par défaut
+    RAISE EXCEPTION 'Erreur lors de l''insertion dans user_subscriptions pour user_id % : %', NEW.id, SQLERRM;
   END;
-  
+
+  -- Étape 4 : (optionnel) créer une session d’audit
   BEGIN
-    -- Créer une session d'audit (optionnel, ne doit pas faire échouer l'inscription)
-    INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent, expires_at)
+    INSERT INTO public.user_sessions (user_id, session_token, ip_address, user_agent, expires_at)
     VALUES (
       NEW.id,
       generate_secure_token(),
@@ -113,22 +84,22 @@ BEGIN
       'Registration',
       CURRENT_TIMESTAMP + INTERVAL '24 hours'
     );
-    
     RAISE LOG 'Session created successfully for user_id: %', NEW.id;
-    
   EXCEPTION WHEN OTHERS THEN
     RAISE LOG 'Error creating session for user_id: %. Error: %', NEW.id, SQLERRM;
-    -- Ne pas faire échouer l'inscription si la création de session échoue
   END;
-  
+
   RAISE LOG 'User registration completed successfully for user_id: %', NEW.id;
   RETURN NEW;
-  
-EXCEPTION WHEN OTHERS THEN
-  RAISE LOG 'Fatal error in handle_new_user_with_plan for user_id: %. Error: %', NEW.id, SQLERRM;
-  RAISE EXCEPTION 'Erreur fatale lors de l''inscription: %', SQLERRM;
+
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION handle_new_user_with_plan();
+
 
 -- =====================================================
 -- 2. VÉRIFICATION ET CORRECTION DES CONTRAINTES

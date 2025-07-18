@@ -205,126 +205,127 @@ INSERT INTO role_permissions (role, resource, action) VALUES
 -- Fonction pour obtenir les limites d'un plan
 CREATE OR REPLACE FUNCTION get_plan_limits(plan_type subscription_plan_enum)
 RETURNS JSONB AS $$
+DECLARE
+  v_limits JSONB;
+  v_features JSONB;
+  v_result JSONB;
 BEGIN
-  RETURN CASE plan_type
-    WHEN 'free' THEN jsonb_build_object(
-      'max_events', 1,
-      'max_guests_per_event', 50,
-      'max_storage_mb', 100,
-      'features', jsonb_build_object(
-        'custom_templates', false,
-        'analytics', false,
-        'qr_codes', true,
-        'email_invitations', true,
-        'custom_domain', false,
-        'priority_support', false
-      )
-    )
-    WHEN 'premium' THEN jsonb_build_object(
-      'max_events', 5,
-      'max_guests_per_event', 200,
-      'max_storage_mb', 500,
-      'features', jsonb_build_object(
-        'custom_templates', true,
-        'analytics', true,
-        'qr_codes', true,
-        'email_invitations', true,
-        'custom_domain', false,
-        'priority_support', false
-      )
-    )
-    WHEN 'pro' THEN jsonb_build_object(
-      'max_events', 20,
-      'max_guests_per_event', 1000,
-      'max_storage_mb', 2000,
-      'features', jsonb_build_object(
-        'custom_templates', true,
-        'analytics', true,
-        'qr_codes', true,
-        'email_invitations', true,
-        'custom_domain', true,
-        'priority_support', true
-      )
-    )
-    WHEN 'enterprise' THEN jsonb_build_object(
-      'max_events', -1, -- Illimité
-      'max_guests_per_event', -1, -- Illimité
-      'max_storage_mb', -1, -- Illimité
-      'features', jsonb_build_object(
-        'custom_templates', true,
-        'analytics', true,
-        'qr_codes', true,
-        'email_invitations', true,
-        'custom_domain', true,
-        'priority_support', true,
-        'white_label', true,
-        'api_access', true
-      )
-    )
-  END;
+  SELECT limits, features
+  INTO v_limits, v_features
+  FROM plans
+  WHERE type = plan_type
+  LIMIT 1;
+
+  IF v_limits IS NULL THEN
+    RAISE EXCEPTION 'Aucun plan trouvé pour le type "%"', plan_type;
+  END IF;
+
+  -- Fusionner les limits et features dans un seul JSONB (optionnel)
+  v_result := v_limits || jsonb_build_object('features', v_features);
+
+  RETURN v_result;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 -- =====================================================
 -- FONCTIONS D'AUTHENTIFICATION MISES À JOUR
 -- =====================================================
 
--- Fonction pour créer un utilisateur avec rôle et plan par défaut
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS handle_new_user_with_plan();
+
 CREATE OR REPLACE FUNCTION handle_new_user_with_plan()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_plan_limits JSONB;
 BEGIN
-  -- Créer le profil utilisateur (sans colonne role)
-  INSERT INTO profiles (id, email, first_name, last_name, avatar_url)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'given_name'),
-    COALESCE(NEW.raw_user_meta_data->>'last_name', NEW.raw_user_meta_data->>'family_name'),
-    COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture')
-  );
+  RAISE LOG 'Creating new user profile for user_id: %', NEW.id;
   
-  -- Assigner le rôle par défaut (host)
-  INSERT INTO user_roles (user_id, role, granted_by)
-  VALUES (NEW.id, 'host', NEW.id);
-  
-  -- Assigner le plan gratuit par défaut
-  INSERT INTO user_subscriptions (
-    user_id, 
-    plan, 
-    status,
-    max_events,
-    max_guests_per_event,
-    max_storage_mb,
-    features
-  )
-  SELECT 
-    NEW.id,
-    'free',
-    'active',
-    (get_plan_limits('free')->>'max_events')::INTEGER,
-    (get_plan_limits('free')->>'max_guests_per_event')::INTEGER,
-    (get_plan_limits('free')->>'max_storage_mb')::INTEGER,
-    get_plan_limits('free')->'features';
-  
-  -- Créer une session d'audit
-  INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent, expires_at)
-  VALUES (
-    NEW.id,
-    generate_secure_token(),
-    '0.0.0.0'::inet,
-    'Registration',
-    CURRENT_TIMESTAMP + INTERVAL '24 hours'
-  );
-  
+  -- Étape 1 : Créer le profil utilisateur
+  BEGIN
+    INSERT INTO public.profiles (
+      id, email, first_name, last_name, avatar_url,
+      phone, timezone, language, is_active, email_verified
+    )
+    VALUES (
+      NEW.id, NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'given_name', ''),
+      COALESCE(NEW.raw_user_meta_data->>'last_name', NEW.raw_user_meta_data->>'family_name', ''),
+      COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture'),
+      COALESCE(NEW.raw_user_meta_data->>'phone', NULL),
+      COALESCE(NEW.raw_user_meta_data->>'timezone', 'UTC'),
+      COALESCE(NEW.raw_user_meta_data->>'language', 'fr'),
+      true,
+      COALESCE(NEW.email_confirmed_at IS NOT NULL, false)
+    );
+    RAISE LOG 'Profile created successfully for user_id: %', NEW.id;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE LOG 'Error creating profile for user_id: %. Error: %', NEW.id, SQLERRM;
+    RAISE EXCEPTION 'Erreur lors de la création du profil: %', SQLERRM;
+  END;
+
+  -- Étape 2 : Assigner le rôle 'host'
+  BEGIN
+    INSERT INTO public.user_roles (user_id, role, granted_by, is_active)
+    VALUES (NEW.id, 'host', NEW.id, true);
+    RAISE LOG 'Role assigned successfully for user_id: %', NEW.id;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE LOG 'Error assigning role for user_id: %. Error: %', NEW.id, SQLERRM;
+    RAISE EXCEPTION 'Erreur lors de l''assignation du rôle: %', SQLERRM;
+  END;
+
+  -- Étape 3 : Assigner le plan gratuit (via la table plans)
+  BEGIN
+    SELECT get_plan_limits('free') INTO v_plan_limits;
+
+    INSERT INTO public.user_subscriptions (
+      user_id, plan, status,
+      max_events, max_guests_per_event, max_storage_mb,
+      features, current_period_start, current_period_end
+    )
+    VALUES (
+      NEW.id,
+      'free',
+      'active',
+      COALESCE((v_plan_limits->>'events')::INTEGER, 1),
+      COALESCE((v_plan_limits->>'guests')::INTEGER, 50),
+      COALESCE((v_plan_limits->>'storage')::INTEGER, 100),
+      v_plan_limits->'features',
+      CURRENT_TIMESTAMP,
+      NULL
+    );
+    RAISE LOG 'Subscription created successfully for user_id: %', NEW.id;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION 'Erreur lors de l''insertion dans user_subscriptions pour user_id % : %', NEW.id, SQLERRM;
+  END;
+
+  -- Étape 4 : (optionnel) créer une session d’audit
+  BEGIN
+    INSERT INTO public.user_sessions (user_id, session_token, ip_address, user_agent, expires_at)
+    VALUES (
+      NEW.id,
+      generate_secure_token(),
+      '127.0.0.1'::inet,
+      'Registration',
+      CURRENT_TIMESTAMP + INTERVAL '24 hours'
+    );
+    RAISE LOG 'Session created successfully for user_id: %', NEW.id;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE LOG 'Error creating session for user_id: %. Error: %', NEW.id, SQLERRM;
+  END;
+
+  RAISE LOG 'User registration completed successfully for user_id: %', NEW.id;
   RETURN NEW;
+
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Remplacer l'ancien trigger
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user_with_plan();
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION handle_new_user_with_plan();
+
 
 -- Fonction pour obtenir le profil utilisateur complet avec rôles et plan
 CREATE OR REPLACE FUNCTION get_user_profile_complete(target_user_id UUID DEFAULT NULL)

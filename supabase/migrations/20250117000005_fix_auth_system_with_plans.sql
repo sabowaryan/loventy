@@ -277,7 +277,7 @@ BEGIN
 
   -- Étape 3 : Assigner le plan gratuit (via la table plans)
   BEGIN
-    SELECT get_plan_limits('free') INTO v_plan_limits;
+    SELECT get_plan_limits('free'::subscription_plan_enum) INTO v_plan_limits;
 
     INSERT INTO public.user_subscriptions (
       user_id, plan, status,

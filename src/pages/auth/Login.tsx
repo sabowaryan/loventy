@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import AuthLayout from '../../components/layouts/AuthLayout';
 import PublicRoute from '../../components/PublicRoute';
 import { usePageTitle } from '../../hooks/usePageTitle';
+import { useRoleBasedRedirect } from '../../hooks/useRoleBasedRedirect';
 
 const Login: React.FC = () => {
   usePageTitle('Connexion');
@@ -22,19 +23,30 @@ const Login: React.FC = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isFocused, setIsFocused] = useState<string | null>(null);
   
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { getRedirectPath } = useRoleBasedRedirect();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Récupérer l'URL de redirection et le template sélectionné
   const searchParams = new URLSearchParams(location.search);
-  const redirectPath = searchParams.get('redirect') || '/dashboard';
+  const redirectPath = searchParams.get('redirect');
   const templateId = searchParams.get('template');
-  
-  // Construire l'URL de redirection complète
-  const from = templateId 
-    ? `${redirectPath}?template=${templateId}` 
-    : redirectPath;
+
+  // Rediriger automatiquement les utilisateurs déjà connectés
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      // Déterminer la route de redirection appropriée
+      let targetPath = redirectPath || getRedirectPath('/dashboard');
+      
+      // Si un template est spécifié, l'ajouter à l'URL
+      if (templateId) {
+        targetPath = `${targetPath}?template=${templateId}`;
+      }
+      
+      navigate(targetPath, { replace: true });
+    }
+  }, [authLoading, isAuthenticated, redirectPath, templateId, getRedirectPath, navigate]);
 
   // Vérifier si l'utilisateur vient de s'inscrire
   useEffect(() => {
@@ -62,7 +74,15 @@ const Login: React.FC = () => {
       setError(signInError);
       setIsLoading(false);
     } else {
-      navigate(from, { replace: true });
+      // Déterminer la route de redirection appropriée
+      let targetPath = redirectPath || getRedirectPath('/dashboard');
+      
+      // Si un template est spécifié, l'ajouter à l'URL
+      if (templateId) {
+        targetPath = `${targetPath}?template=${templateId}`;
+      }
+      
+      navigate(targetPath, { replace: true });
     }
   };
 

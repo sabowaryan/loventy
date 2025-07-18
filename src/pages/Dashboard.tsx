@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Users, Mail, CheckCircle, Clock, BarChart3, Download, Eye, Send, Edit, X, Crown, AlertCircle, Loader2, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -10,12 +10,15 @@ import { useInvitationGuests } from '../hooks/useInvitationGuests';
 import UserWelcome from '../components/UserWelcome';
 import UsageDisplay from '../components/UsageDisplay';
 import { useFeature, useFeatureFlag } from '../hooks/useFeature';
+import { useRoleBasedRedirect } from '../hooks/useRoleBasedRedirect';
 
 const Dashboard: React.FC = () => {
   usePageTitle('Tableau de bord');
   
   const [activeTab, setActiveTab] = useState('overview');
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { shouldRedirectBasedOnRole } = useRoleBasedRedirect();
+  const navigate = useNavigate();
   const {
     canCreateInvitations,
     canEditInvitations,
@@ -53,6 +56,13 @@ const Dashboard: React.FC = () => {
     pendingGuests: 0,
     responseRate: 0
   });
+
+  // Rediriger automatiquement les utilisateurs admin vers leur dashboard approprié
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && shouldRedirectBasedOnRole('/dashboard')) {
+      navigate('/dashboard/admin', { replace: true });
+    }
+  }, [authLoading, isAuthenticated, shouldRedirectBasedOnRole, navigate]);
 
   // Calculer les statistiques à partir des données réelles
   useEffect(() => {

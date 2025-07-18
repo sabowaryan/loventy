@@ -11,9 +11,9 @@ import AdminLayout from './components/layouts/AdminLayout';
 
 // Route Guards
 import ProtectedRoute from './components/ProtectedRoute';
-import PublicRoute from './components/PublicRoute';
+
 import KeyProtectedRoute from './components/KeyProtectedRoute';
-import AdminRoute from './components/AdminRoute';
+
 import AdminRouteGuard from './components/admin/AdminRouteGuard';
 
 // Public Pages
@@ -34,6 +34,7 @@ import Register from './pages/auth/Register';
 import EmailConfirmation from './pages/auth/EmailConfirmation';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import OAuthCallback from './pages/auth/OAuthCallback';
 
 // Protected Pages
 import Dashboard from './pages/Dashboard';
@@ -56,6 +57,7 @@ import ConnectionError from './pages/ConnectionError';
 // Admin Pages
 import AdminDashboard from './pages/dashboard/admin/AdminDashboard';
 import UserManagementPage from './pages/dashboard/admin/UserManagementPage';
+import SecurityPage from './pages/dashboard/admin/SecurityPage';
 
 // Global error handling component
 import ConnectionErrorBanner from './components/ConnectionErrorBanner';
@@ -151,6 +153,7 @@ function App() {
           <Route path="/auth/confirm" element={<EmailConfirmation />} />
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={
@@ -226,7 +229,9 @@ function App() {
 
           <Route path="/dashboard/admin/users" element={
             <AdminRouteGuard requiredPermission="admin.users.read">
-              <UserManagementPage />
+              <AdminLayout>
+                <UserManagementPage />
+              </AdminLayout>
             </AdminRouteGuard>
           } />
 
@@ -255,10 +260,7 @@ function App() {
           <Route path="/dashboard/admin/security" element={
             <AdminRouteGuard requiredPermission="admin.security.read">
               <AdminLayout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold mb-4">Sécurité et audit</h1>
-                  <p className="text-gray-600">Cette section sera implémentée dans une tâche future.</p>
-                </div>
+                <SecurityPage />
               </AdminLayout>
             </AdminRouteGuard>
           } />

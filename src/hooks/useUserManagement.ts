@@ -97,7 +97,7 @@ export const useUserManagement = (): UserManagementHook => {
       return;
     }
 
-    if (!hasAdminPermission('users:suspend')) {
+    if (!hasAdminPermission('users', 'suspend')) {
       setError('Insufficient permissions to suspend users');
       return;
     }
@@ -154,7 +154,7 @@ export const useUserManagement = (): UserManagementHook => {
       return;
     }
 
-    if (!hasAdminPermission('users:reactivate')) {
+    if (!hasAdminPermission('users', 'reactivate')) {
       setError('Insufficient permissions to reactivate users');
       return;
     }
@@ -254,7 +254,7 @@ export const useUserManagement = (): UserManagementHook => {
       return;
     }
 
-    if (!hasAdminPermission('users:edit')) {
+    if (!hasAdminPermission('users', 'edit')) {
       setError('Insufficient permissions to edit users');
       return;
     }
@@ -284,9 +284,9 @@ export const useUserManagement = (): UserManagementHook => {
 
       // Prepare update data
       const updateData = {
-        first_name: updates.firstName,
-        last_name: updates.lastName,
-        avatar_url: updates.avatarUrl,
+        first_name: updates.first_name,
+        last_name: updates.last_name,
+        avatar_url: updates.avatar_url,
         updated_at: new Date().toISOString()
       };
 
@@ -312,9 +312,9 @@ export const useUserManagement = (): UserManagementHook => {
           avatar_url: currentData?.avatar_url
         },
         {
-          first_name: updates.firstName,
-          last_name: updates.lastName,
-          avatar_url: updates.avatarUrl
+          first_name: updates.first_name,
+          last_name: updates.last_name,
+          avatar_url: updates.avatar_url
         }
       );
 
@@ -337,7 +337,7 @@ export const useUserManagement = (): UserManagementHook => {
       return;
     }
 
-    if (!hasAdminPermission('users:delete')) {
+    if (!hasAdminPermission('users', 'delete')) {
       setError('Insufficient permissions to delete users');
       return;
     }
@@ -406,12 +406,7 @@ export const useUserManagement = (): UserManagementHook => {
     searchUsers,
     suspendUser,
     reactivateUser,
-    getUserDetails,
-    // Additional methods not in the interface but useful for the implementation
-    filterUsers,
-    getUserActivity,
-    updateUser,
-    deleteUser
+    getUserDetails
   };
 };
 

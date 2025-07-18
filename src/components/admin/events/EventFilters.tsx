@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   eventStatusOptions,
-  eventSortOptions,
+  sortOptions,
   sortDirectionOptions
 } from '../../../utils/eventFilters';
 
@@ -168,7 +168,7 @@ const EventFilters: React.FC<EventFiltersProps> = ({
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
             >
-              {eventSortOptions.map((option) => (
+              {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

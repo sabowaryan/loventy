@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "List Migration Files",
+  "description": "Lists all files in the migrations directory whenever any migration file is modified",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "supabase/migrations/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "List all files in the migrations directory (supabase/migrations/) without exception. Show the complete file listing with their names and any relevant details."
+  }
+}

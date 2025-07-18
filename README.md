@@ -1,107 +1,183 @@
-💌 Loventy
+# Supabase CLI
 
-Modern Wedding Invitations & Guest Management – Powered by Love & Tech
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-🔮 Inspiration
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-Loventy est né du besoin de simplifier et de moderniser la gestion des invitations de mariage, particulièrement dans les régions à forte utilisation mobile. Les méthodes traditionnelles sont coûteuses, lentes et manquent de flexibilité. Loventy offre une solution élégante, connectée et adaptée aux réalités culturelles et numériques.
+This repository contains all the functionality for Supabase CLI.
 
-✨ Fonctionnalités
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-Loventy permet aux couples de :
+## Getting started
 
-    Créer des invitations de mariage digitales élégantes
+### Install the CLI
 
-    Générer des accès sécurisés avec identifiants temporaires
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
-    Suivre les présences et confirmations en temps réel (RSVP)
+```bash
+npm i supabase --save-dev
+```
 
-    Vérifier les invités à l’aide de QR codes à l’entrée
+To install the beta release channel:
 
-    Gérer l’événement à partir d’un espace hôte temporaire
+```bash
+npm i supabase@beta --save-dev
+```
 
-    Utiliser l’application en plusieurs langues
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-🛠️ Stack Technique
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
 
-    Frontend : React
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-    Backend : Supabase (authentification, base de données, RLS)
+<details>
+  <summary><b>macOS</b></summary>
 
-    QR codes : Générés par invitation avec durée de validité
+  Available via [Homebrew](https://brew.sh). To install:
 
-    Design : UI mobile-first, épurée, responsive
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-TypeScript
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-// Exemple : récupération d’un invité avec un token sécurisé
-const { data, error } = await supabase
-  .from('guests')
-  .select('*')
-  .eq('token', guestToken);
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-🧩 Défis rencontrés
+<details>
+  <summary><b>Windows</b></summary>
 
-    Gestion des accès temporaires avec Supabase Auth + RLS (Row-Level Security)
+  Available via [Scoop](https://scoop.sh). To install:
 
-    Sécurisation des données par événement
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-    Check-in offline et rapide le jour du mariage
+  To upgrade:
 
-    Design intuitif pour les invités et les hôtes
+  ```powershell
+  scoop update supabase
+  ```
+</details>
 
-🏆 Réalisations
+<details>
+  <summary><b>Linux</b></summary>
 
-    Prototype fonctionnel avec QR check-in
+  Available via [Homebrew](https://brew.sh) and Linux packages.
 
-    Intégration Supabase complète (authentification + données temps réel)
+  #### via Homebrew
 
-    UI/UX agréable même en zone de faible connexion
+  To install:
 
-    Architecture scalable (multi-invitations, multi-événements)
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-📚 Ce que nous avons appris
+  To upgrade:
 
-    Supabase RLS avancé (politiques par utilisateur/événement)
+  ```sh
+  brew upgrade supabase
+  ```
 
-    Pensée événementielle pour les accès temporaires
+  #### via Linux packages
 
-    Design mobile-first orienté invités
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
 
-    MVP (Minimum Viable Product) priorisant l'impact utilisateur réel
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
 
-🚀 Prochaines étapes
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
 
-    Suggestions automatiques (AI) pour l'organisation
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
 
-    Suivi écologique (zéro impression)
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
 
-    Templates culturels et multilingues
+<details>
+  <summary><b>Other Platforms</b></summary>
 
-    SaaS pour les wedding planners
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
 
-    Lancement public via Loventy.org
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
 
-🎖️ Participation au Hackathon
+  Add a symlink to the binary in `$PATH` for easier access:
 
-Ce projet a été réalisé dans le cadre du World’s Largest Hackathon organisé par Bolt.new.
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
 
-    ✅ Badge visible sur la page d’accueil
+  This works on other non-standard Linux distros.
+</details>
 
-    ✅ Badge cliquable redirigeant vers https://bolt.new
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
 
-    ✅ Projet hébergé avec l’infrastructure Bolt
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
 
-📽️ Démo vidéo
+  ```bash
+  pkgx install supabase
+  ```
 
-👉 Regarder la démo sur YouTube
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
 
-📫 Contact
+### Run the CLI
 
-    🌐 Site web : https://loventy.org
+```bash
+supabase bootstrap
+```
 
-    📧 Email : contact@loventy.org
+Or using npx:
 
-    🐦 Twitter : @sabowaryan
+```bash
+npx supabase bootstrap
+```
 
-© 2025 Loventy – Built with ❤️ in Kinshasa
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```

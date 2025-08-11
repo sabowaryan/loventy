@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import LoventyLogo from '../LoventyLogo';
-import BoltBadge from '../Boltbadge'; // Corrected import path and filename
 
 
 interface PublicLayoutProps {
@@ -87,21 +86,21 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
   const isActive = (path: string) => location.pathname === path;
 
   const getUserDisplayName = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
     }
-    if (user?.firstName) {
-      return user.firstName;
+    if (user?.first_name) {
+      return user.first_name;
     }
     return user?.email?.split('@')[0] || 'Utilisateur';
   };
 
   const getUserInitials = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase();
     }
-    if (user?.firstName) {
-      return user.firstName[0].toUpperCase();
+    if (user?.first_name) {
+      return user.first_name[0].toUpperCase();
     }
     return user?.email?.[0]?.toUpperCase() || 'U';
   };
@@ -372,7 +371,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             </div>
           </div>
           <div className="mt-6 flex justify-center">
-      <BoltBadge />
+     
     </div>
 
           <div className="border-t border-gray-700 mt-8 pt-8 flex flex-col md:flex-row md:justify-between items-center text-sm text-gray-400">

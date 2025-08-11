@@ -1,0 +1,6 @@
+-- =====================================================
+-- SCRIPT DE NETTOYAGE COMPLET DE LA BASE DE DONNÉES
+-- =====================================================
+-- Ce script supprime toutes les fonctions, triggers, policies RLS,
+-- buckets de stockage et vues existantes dans la base de données
+-- Loventy pour permettre un redémarra

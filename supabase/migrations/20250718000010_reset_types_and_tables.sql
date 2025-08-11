@@ -50,6 +50,7 @@ CREATE TYPE audit_action_enum AS ENUM (
   'SESSION_CREATE', 'SESSION_TERMINATE', 'CONTENT_MODERATE', 'CONTENT_FLAG'
 );
 CREATE TYPE audit_severity_enum AS ENUM ('low', 'medium', 'high', 'critical');
+CREATE TYPE alert_severity_enum AS ENUM ('info', 'warning', 'high', 'critical');
 
 -- =========================
 -- 3. SUPPRESSION DES TABLES

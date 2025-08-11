@@ -47,7 +47,9 @@ CREATE INDEX idx_guests_access_token ON guests(access_token);
 CREATE INDEX idx_guests_status ON guests(status);
 CREATE INDEX idx_guests_email ON guests(email);
 CREATE INDEX idx_guests_invitation_status ON guests(invitation_id, status);
-CREATE INDEX idx_guests_token_expires ON guests(access_token, access_expires_at) WHERE access_expires_at > CURRENT_TIMESTAMP;
+-- Index composite sur le jeton et sa date d'expiration
+CREATE INDEX idx_guests_token_and_expiry ON guests(access_token, access_expires_at);
+
 
 -- Index fichiers
 CREATE INDEX idx_user_files_user_id ON user_files(user_id);
